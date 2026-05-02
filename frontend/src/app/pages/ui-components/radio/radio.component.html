@@ -1,0 +1,22 @@
+<div class="row">
+    <div class="col-lg-4 col-md-3 col-sm-3 col-xs-3 d-flex align-items-center justify-content-end">
+        <mat-label class="mat-subtitle-2 f-w-600 d-block m-b-24">{{ label }}</mat-label>
+    </div>
+    <div class="col-lg-8 col-md-9 col-sm-9 col-xs-9">
+        <mat-radio-group
+        [formControl]="formField"
+        (change)="updateValue($event.value)"
+        class="w-100"
+      >
+        <mat-radio-button
+          *ngFor="let option of options"
+          [value]="option.value"
+          color="primary"
+          class="d-block m-b-10"
+        >
+          {{ option.label }}
+        </mat-radio-button>
+      </mat-radio-group>
+    </div>
+  </div>
+  

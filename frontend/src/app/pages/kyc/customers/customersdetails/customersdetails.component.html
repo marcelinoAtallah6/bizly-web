@@ -1,0 +1,134 @@
+<custom-card [cardTitle]="config.cardTitle">
+    <form [formGroup]="customerForm" (ngSubmit)="onSubmit()">
+      <custom-fieldset name="General Information"></custom-fieldset>
+  
+      <div class="customer-container">
+        <div class="image-container">
+          <custom-image-upload></custom-image-upload>
+        </div>
+        <div class="form-container">
+          <div class="row">
+            <div class="col-lg-6 col-md-6 col-sm-12">
+              <input-field
+                icon="person"
+                label="First Name"
+                placeholder="Enter your first name"
+                formControlName="firstName"
+                [isRequired]="true"
+                type="text"
+                [parentForm]="customerForm"
+                fieldName="firstName"
+              ></input-field>
+            </div>
+            <div class="col-lg-6 col-md-6 col-sm-12">
+              <input-field
+                icon="person"
+                label="Last Name"
+                placeholder="Enter your last name"
+                formControlName="lastName"
+                [isRequired]="true"
+                type="text"
+                [parentForm]="customerForm"
+                fieldName="lastName"
+              ></input-field>
+            </div>
+            <!-- <div class="col-lg-6 col-md-6 col-sm-12"> -->
+                <!-- <custom-datepicker
+                label="Birth Date"
+                placeholder="'Select your birth date'"
+                [isRequired]="true"
+                [parentForm]="customerForm"
+                fieldName="birthDate"
+            ></custom-datepicker> -->
+      
+            <!-- </div> -->
+            <div class="col-lg-6 col-md-6 col-sm-12">
+              <input-field
+                icon="email"
+                label="Email"
+                placeholder="Enter email"
+                [isRequired]="true"
+                type="email"
+                [parentForm]="customerForm"
+                formControlName="email"
+                fieldName="email"
+              ></input-field>
+            </div>
+            <div class="col-lg-6 col-md-6 col-sm-12">
+              <input-field
+                icon="phone"
+                label="Phone Number"
+                placeholder="Enter phone number"
+                formControlName="phone"
+                [isRequired]="true"
+                type="tel"
+                [parentForm]="customerForm"
+                fieldName="phone"
+              ></input-field>
+            </div>
+            <div class="col-lg-6 col-md-6 col-sm-12">
+              <custom-dropdown
+                [list]="genderOption"
+                label="Gender"
+                [selectedValue]="1"
+                [parentForm]="customerForm"
+                fieldName="gender"
+                icon="wc"
+                placeholder="Enter Gender"
+              >
+              </custom-dropdown>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <custom-fieldset name="Address Information"></custom-fieldset>
+  
+      <div class="form-container">
+        <div class="row">
+          <div class="col-lg-4 col-md-4 col-sm-12">
+            <input-field
+              icon="address"
+              label="Country"
+              placeholder="Enter your Country"
+              formControlName="country"
+              [isRequired]="false"
+              type="text"
+              [parentForm]="customerForm"
+              fieldName="country"
+            ></input-field>
+          </div>
+  
+          <div class="col-lg-4 col-md-4 col-sm-12">
+            <input-field
+              icon="address"
+              label="City"
+              placeholder="Enter your City"
+              formControlName="city"
+              [isRequired]="false"
+              type="text"
+              [parentForm]="customerForm"
+              fieldName="city"
+            ></input-field>
+          </div>
+  
+          <div class="col-lg-4 col-md-4 col-sm-12">
+            <input-field
+              icon="address"
+              label="Street"
+              placeholder="Enter your Street Address"
+              formControlName="street"
+              [isRequired]="false"
+              type="text"
+              [parentForm]="customerForm"
+              fieldName="street"
+            ></input-field>
+          </div>
+        </div>
+        <div class="button-container">
+          <custom-button name="Submit" type="submit"> </custom-button>
+        </div>
+      </div>
+    </form>
+  </custom-card>
+  

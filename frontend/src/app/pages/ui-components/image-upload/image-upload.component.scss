@@ -1,0 +1,60 @@
+.image-upload-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 250px;
+  cursor: pointer;
+  border: 2px dashed #ccc;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  transition: border-color 0.3s, background-color 0.3s;
+  position: relative;
+  overflow: hidden; /* Ensure images are clipped properly */
+  // background-color: #f9f9f9; /* Light background color for the container */
+
+  &.drag-over {
+    border-color: var(--primary); /* Change border color on drag over */
+    background-color: rgba(
+      0,
+      123,
+      255,
+      0.1
+    ); /* Light background on drag over */
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.5); /* Add shadow on drag over */
+  }
+
+  .upload-label {
+    width: 100%;
+  }
+
+  .upload-preview {
+    width: 100%;
+    height: 150px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: transform 0.2s; /* Add transition for smooth hover effect */
+    cursor: pointer;
+
+    &:hover {
+      transform: scale(1.05); /* Scale effect on hover */
+    }
+
+    .placeholder {
+      color: #aaa;
+      font-size: 14px;
+    }
+  }
+
+  .upload-text {
+    font-weight: bold; /* Make the text bold for emphasis */
+    color: var(--textPrimary); /* Darker text color for better contrast */
+    margin-top: 5px; /* Add some spacing above the text */
+  }
+}

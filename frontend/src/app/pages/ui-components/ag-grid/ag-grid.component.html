@@ -1,0 +1,29 @@
+<div *ngIf="isQuickSearch" class="row">
+  <div class="col-sm-3">
+    <mat-form-field appearance="outline" class="mat-mdc-form-field w-100">
+      <mat-icon matPrefix>search</mat-icon>
+      <input
+        matInput
+        (input)="onQuickSearch($event)"
+        placeholder="Search..."
+        type="search"
+        name="Seacrh"
+      />
+    </mat-form-field>
+  </div>
+</div>
+
+<div style="width: 100%; height: 500px" class="ag-theme-alpine">
+  <ag-grid-angular
+    style="width: 100%; height: 100%"
+    class="ag-theme-alpine"
+    [enableAdvancedFilter]="isAdvancedSearch"
+    [gridOptions]="gridOptions"
+    [pivotMode]="pivotMode"
+    [sideBar]="sideBar"
+    [pivotPanelShow]="pivotPanelShow"
+    [pagination]="isPagination"
+    [paginationPageSize]="PageSize"
+  >
+  </ag-grid-angular>
+</div>

@@ -1,0 +1,21 @@
+<mat-list class="mat-mdc-list mat-mdc-list-base mdc-list">
+    <mat-list-item
+      *ngFor="let item of items; let i = index"
+      class="mat-mdc-list-item mdc-list-item"
+    >
+      <span class="mdc-list-item__content">
+        <span
+          class="mat-mdc-list-item-unscoped-content mdc-list-item__primary-text"
+        >
+          {{ item }}
+        </span>
+      </span>
+      <mat-divider
+        *ngIf="i < items.length - 1"
+        role="separator"
+        class="mat-divider mat-divider-horizontal"
+        aria-orientation="horizontal"
+      ></mat-divider>
+    </mat-list-item>
+  </mat-list>
+  

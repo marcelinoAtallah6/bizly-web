@@ -1,0 +1,164 @@
+*,
+:after,
+:before {
+  box-sizing: border-box;
+  direction: var(--direction);
+
+}
+
+body {
+  font-family: $font-family;
+  color: var(--textPrimary);
+  font-size: 14px;
+  line-height: 1.334rem;
+  margin: 0;
+}
+
+html .mat-drawer-container {
+  background-color: var(--background);
+}
+
+.mainWrapper {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  flex: 1;
+  height: 100%;
+  direction: var(--direction)  !important;
+}
+
+.mat-drawer-inner-container 
+{
+  overflow-x: hidden !important;
+}
+
+.pageWrapperBody{
+  padding: 15px;
+  min-height: calc(100vh - 38px);
+  margin: 0 auto;
+  max-width: var(--boxedWidth);
+  overflow-x: hidden !important;
+  margin: 5px auto;
+}
+
+
+// .pageWrapper {
+//   padding: 15px;
+//   min-height: calc(100vh - 70px);
+//   margin: 0 auto;
+//   max-width: var(--boxedWidth);
+// }
+
+.pageWrapper {
+  // padding: 15px;
+  min-height: calc(100vh - 70px); /* Adjusts the height to account for the fixed topbar */
+  margin: 0 auto;
+  // max-width: var(--boxedWidth);
+  // margin-top: 70px; /* Ensures the content starts below the topbar */
+}
+
+// // .pageWrapper .maxWidth{
+//   max-width: var(--boxedWidth);
+// }
+
+.pageWrapper  .customizerBtn {
+  position: fixed;
+  right: 30px;
+  bottom: 30px;
+  z-index: 9;
+}
+
+.w-100 {
+  width: 100%;
+}
+
+.h-100 {
+  height: 100%;
+}
+
+.shadow-none {
+  box-shadow: none !important;
+}
+
+.rounded {
+  border-radius: var(--border-radius) !important;
+}
+
+.rounded-circle {
+  border-radius: 50% !important;
+}
+
+.rounded-pill {
+  border-radius: 25px !important;
+}
+
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.text-decoration-none {
+  text-decoration: none;
+}
+
+.position-relative {
+  position: relative;
+}
+
+.table-responsive {
+  overflow-x: auto;
+
+  td,
+  mat-cell {
+    white-space: nowrap;
+    padding: 16px;
+  }
+}
+
+.op-5 {
+  opacity: 0.5;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+
+.customizerNav {
+  .customizer-button-group {
+    gap: 16px;
+  }
+
+  .theme-circle {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    &.blue { background-color: #2196f3; }
+    &.aqua { background-color: #00ffff; }
+    &.purple { background-color: #9c27b0; }
+    &.green { background-color: #4caf50; }
+    &.cyan { background-color: #00bcd4; }
+    &.orange { background-color: #ff9800; }
+
+    .theme-icon {
+      display: none;
+    }
+
+    &.selected .theme-icon {
+      display: block;
+    }
+  }
+
+  .fill-icon {
+    fill: currentColor;
+  }
+
+ 
+
+
+}
+/////////// new style Component UI /////////////
+

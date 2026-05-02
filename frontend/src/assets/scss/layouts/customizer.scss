@@ -1,0 +1,92 @@
+/* Ensure the button group has visible borders and space between buttons */
+.customizer-button-group .mat-button-toggle {
+    border: 1px solid var(--background); /* Adjust color as needed */
+    border-radius: 4px;
+    margin: 0 4px; /* Adjust space between buttons */
+    transition: all 0.2s ease-in-out;
+}
+
+/* Adjust border for the active/checked button */
+.customizer-button-group .mat-button-toggle.mat-button-toggle-checked {
+    background-color: var(--background); /* Background color for checked state */
+}
+
+
+/* Hover effect for each button */
+.customizer-button-group .mat-button-toggle:hover {
+    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.2);/* Shadow on hover */
+    transform: scale(1.05);
+}
+
+.mat-button-toggle-group-appearance-standard .mat-button-toggle-appearance-standard+.mat-button-toggle-appearance-standard
+{
+    border-left: none !important;
+    border-right: none !important;
+
+}
+
+/* Remove default styling if needed */
+.mat-button-toggle-appearance-standard {
+    border: none; /* Remove default border */
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Shadow on hover */
+    background-color: var(--background) !important; /* Background color on hover */
+    transition: all 1.05s ease-in-out;
+}
+
+.mat-button-toggle-group-appearance-standard {
+    border: none !important;
+}
+
+.customizer-button-group .mat-button-toggle-appearance-standard.mat-button-toggle-checked i-tabler.fill-icon {
+    color: var(--primary);
+    fill: var(--white);
+}
+
+.mat-button-toggle-standalone, .mat-button-toggle-group {
+    padding: 15px !important;
+}
+
+/* Ensure button group behaves as a flex container */
+.customizer-button-group {
+    display: flex;
+    gap: 8px; /* Adjust spacing between buttons */
+    align-items: center;
+   
+
+
+    .mat-pseudo-checkbox {
+        display: none;
+    }
+
+    .theme-circle {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+      
+      &.blue { background-color: #2196f3; }
+      &.aqua { background-color: #00ffff; }
+      &.purple { background-color: #9c27b0; }
+    //   &.green { background-color: #4caf50; }
+    //   &.cyan { background-color: #00bcd4; }
+    //   &.orange { background-color: #ff9800; }
+  
+    //   .theme-icon {
+    //     display: none;
+    //   }
+  
+    //   &.selected .theme-icon {
+    //     display: block;
+    //   }
+    }
+  
+    // .fill-icon {
+    //   fill: currentColor;
+    // }
+
+    .mat-button-toggle-group {
+        border: none;
+    }
+    
+    
+}

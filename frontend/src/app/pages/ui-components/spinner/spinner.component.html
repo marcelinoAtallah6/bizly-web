@@ -1,0 +1,29 @@
+<div 
+  [ngClass]="{
+    'p-24 rounded bg-light-primary m-t-16': withBackground
+  }"
+>
+  <h2 
+    *ngIf="withBackground" 
+    [ngClass]="{ 
+      'mat-body-2 f-w-600 m-b-16': withBackground 
+    }"
+  >
+    {{ label }}
+  </h2>
+
+  <mat-label
+  *ngIf="!withBackground"
+  class="mat-subtitle-2 f-w-600 d-block m-b-24"
+  >{{ label }}</mat-label
+>
+
+  <mat-spinner
+    role="progressbar"
+    tabindex="-1"
+    [mode]="spinnerMode"
+    [color]="spinnerColor"
+    style="width: 100px; height: 100px;"
+  >
+  </mat-spinner>
+</div>

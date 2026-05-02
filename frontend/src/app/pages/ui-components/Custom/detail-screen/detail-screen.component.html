@@ -1,0 +1,53 @@
+<custom-card cardTitle="{{config.cardTitle}}">
+  <!-- <custom-fieldset name="Information"></custom-fieldset> -->
+  <form [formGroup]="fieldsForm" (ngSubmit)="onSubmit()">
+    <div  class="row">
+        
+      <div *ngFor="let field of config.fields" class="col-lg-3 col-md-6 col-sm-8 col-xs-12">
+        <input-field
+          *ngIf="field.type === 'input'"
+          [label]="field.label"
+          [type]="field.inputType ?? 'text'"
+          [placeholder]="field.placeholder ?? ''"
+          [parentForm]="fieldsForm"
+          [fieldName]="field.key"
+          [isRequired]="field.required"
+          [formControlName]="field.key"
+        >
+        </input-field>
+        
+        <custom-datepicker
+        *ngIf="field.type === 'datepicker'"
+        [label]="field.label"
+        [placeholder]="field.placeholder ?? ''"
+        [parentForm]="fieldsForm"
+        [isRequired]="field.required"
+        [fieldName]="field.key">
+      </custom-datepicker>
+
+      <custom-dropdown
+        *ngIf="field.type === 'dropdown'"
+        [label]="field.label"
+        [list]="field.options ?? []"
+        [parentForm]="fieldsForm"
+        [fieldName]="field.key"
+        [isRequired]="field.required"
+        [selectedValue]="1"
+        [isMultiple]="field.multiple ?? false"
+        >
+      </custom-dropdown>
+
+      <custom-radio
+        *ngIf="field.type === 'radio'"
+        [label]="field.label"
+        [parentForm]="fieldsForm"
+        [fieldName]="field.key" 
+        [options]="transformOptions(field.options)">
+    </custom-radio>
+      </div>
+
+    </div>
+
+    <custom-button type="submit" name="Submit">Submit</custom-button>
+  </form>
+</custom-card>

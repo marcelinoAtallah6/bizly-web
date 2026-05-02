@@ -1,0 +1,39 @@
+<custom-card [cardTitle]="config.cardTitle">
+    <form [formGroup]="categoryForm" (ngSubmit)="onSubmit()">
+      <div class="customer-container">
+        <div class="form-container">
+          <div class="row">
+         
+            <div class="col-lg-6 col-md-6 col-sm-12">
+              <input-field
+                icon="package-import"
+                label="Category Name"
+                placeholder="Enter your Item Name"
+                formControlName="categoryName"
+                [isRequired]="true"
+                type="text"
+                [parentForm]="categoryForm"
+                fieldName="categoryName"
+              ></input-field>
+            </div>
+            <div class="col-lg-6 col-md-6 col-sm-12">
+              <input-field
+                icon="file-description"
+                label="Description"
+                placeholder="Enter Description"
+                formControlName="description"
+                type="text"
+                [parentForm]="categoryForm"
+                fieldName="description"
+              ></input-field>
+            </div>
+           
+          </div>
+        </div>
+      </div>
+      <div class="button-container">
+          <custom-button name="Submit" type="submit"> </custom-button>
+        </div>
+    </form>
+  </custom-card>
+  

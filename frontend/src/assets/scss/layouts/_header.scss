@@ -1,0 +1,142 @@
+html .topbar {
+  background-color: var(--toolbar);
+  position: sticky;
+  top: 0;
+  z-index: 9;
+  // height: $header-height;
+  height: 47px !important;
+}
+
+.topbar-dd {
+  min-width: 200px !important;
+}
+
+.object-cover {
+  object-fit: cover;
+}
+
+// /* Styles for large menu */
+// .large-menu {
+//   width: 800px !important;
+//   max-width: 1000px !important;
+//   overflow: hidden !important;
+
+//   background-color: var(--cardbg) !important;
+//   color: var(--textPrimary) !important;
+//   border: 1px solid var(--borderColor) !important;
+// }
+
+// /* Styles for small menu */
+// .small-menu {
+//   width: 300px !important;
+//   max-width: 1000px !important;
+//   overflow: hidden !important;
+
+//   background-color: var(--cardbg) !important;
+//   color: var(--textPrimary) !important;
+//   border: 1px solid var(--borderColor) !important;
+// }
+
+
+.mat-mdc-menu-panel {
+  background-color: var(--background) !important;
+}
+/* Simplified Menu */
+// .topbar {
+//   background-color: var(--toolbar);
+//   position: fixed !important; /* Ensure it remains at the top */
+//   top: 0;
+//   left: 0;
+//   width: 100%; /* Ensures it spans full width */
+//   // z-index: 9999; /* Keeps it above other elements */
+//   height: 47px !important;
+// }
+.simple-menu {
+  width: 250px !important;
+  max-width: 300px !important;
+  background-color: var(--cardbg) !important;
+  border: 1px solid var(--borderColor) !important;
+  padding: 8px 0;
+  margin: 10px 10px;
+}
+
+/* Menu Item Styling */
+.menu-item {
+  padding: 8px 12px;
+}
+
+.menu-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: var(--textPrimary);
+  padding: 8px 12px;
+  border-radius: 4px;
+  transition: background 0.2s ease-in-out;
+}
+
+.menu-link:hover {
+  background-color: var(--hoverBg);
+}
+
+/* Icon Styles */
+.menu-icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 12px;
+  object-fit: contain;
+}
+
+/* Text Styles */
+.menu-name {
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+// .menu-name:hover{
+//   transform: scale(1.1);
+// }
+//profile 
+
+.profile-menu {
+  width: 260px !important;
+  padding: 10px 0;
+  margin: 5px 10px;
+  background-color: var(--cardbg) !important;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+}
+
+.profile-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-info {
+  margin-left: 12px;
+}
+
+.profile-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.profile-email {
+  font-size: 12px;
+  color: gray;
+}
+
+.profile-img {
+  transition: transform 0.2s ease-in-out;
+}
+
+.profile-img:hover {
+  transform: scale(1.1);
+}

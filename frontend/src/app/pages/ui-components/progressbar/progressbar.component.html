@@ -1,0 +1,26 @@
+<mat-label
+  *ngIf="!withBackground"
+  class="mat-subtitle-2 f-w-600 d-block m-b-24"
+  >{{ label }}</mat-label
+>
+<div
+  [ngClass]="{
+    'p-24 rounded bg-light-primary m-t-16': withBackground
+  }"
+>
+  <h2 *ngIf="withBackground" class="mat-body-2 f-w-600 m-b-16">{{ label }}</h2>
+  <mat-progress-bar
+    role="progressbar"
+    aria-valuemin="0"
+    aria-valuemax="100"
+    [mode]="progressMode"
+    [value]="
+      progressMode === 'determinate' || progressMode === 'buffer'
+        ? progressValue
+        : null
+    "
+    [color]="color"
+    tabindex="-1"
+    class="mat-mdc-progress-bar mdc-linear-progress mat-primary mdc-linear-progress--animation-ready"
+  ></mat-progress-bar>
+</div>

@@ -1,0 +1,99 @@
+<custom-card [cardTitle]="config.cardTitle">
+  <form [formGroup]="itemForm" (ngSubmit)="onSubmit()">
+    <custom-fieldset name="General Information"></custom-fieldset>
+
+    <div class="customer-container">
+      <div class="image-container">
+        <custom-image-upload></custom-image-upload>
+      </div>
+      <div class="form-container">
+        <div class="row">
+          <div class="col-lg-6 col-md-6 col-sm-12">
+            <custom-dropdown
+              [list]="categoryOption"
+              label="Category"
+              [selectedValue]="1"
+              [parentForm]="itemForm"
+              fieldName="category"
+              icon="category"
+              placeholder="Enter Category"
+            >
+            </custom-dropdown>
+          </div>
+          <div class="col-lg-6 col-md-6 col-sm-12">
+            <input-field
+              icon="package-import"
+              label="Item Name"
+              placeholder="Enter your Item Name"
+              formControlName="itemName"
+              [isRequired]="true"
+              type="text"
+              [parentForm]="itemForm"
+              fieldName="itemName"
+            ></input-field>
+          </div>
+          <div class="col-lg-6 col-md-6 col-sm-12">
+            <input-field
+              icon="file-description"
+              label="Description"
+              placeholder="Enter Description"
+              formControlName="description"
+              type="text"
+              [parentForm]="itemForm"
+              fieldName="description"
+            ></input-field>
+          </div>
+          <div class="col-lg-6 col-md-6 col-sm-12">
+            <input-field
+              icon="code"
+              label="Product Code"
+              placeholder="Enter Product Code"
+              formControlName="productCode"
+              type="text"
+              [parentForm]="itemForm"
+              fieldName="productCode"
+            ></input-field>
+          </div>
+          <div class="col-lg-6 col-md-6 col-sm-12">
+            <input-field
+              icon="branch"
+              label="Branch"
+              placeholder="Enter Product Code"
+              formControlName="branch"
+              type="text"
+              [parentForm]="itemForm"
+              fieldName="branch"
+            ></input-field>
+          </div>
+          <div class="col-lg-6 col-md-6 col-sm-12">
+            <input-field
+              icon="currency"
+              label="Price"
+              placeholder="Enter email"
+              [isRequired]="true"
+              type="number"
+              [parentForm]="itemForm"
+              formControlName="price"
+              fieldName="price"
+            ></input-field>
+          </div>
+          <div class="col-lg-6 col-md-6 col-sm-12">
+            <input-field
+              icon="quatity"
+              label="Quantity"
+              placeholder="Enter Item Quantity"
+              formControlName="quatity"
+              [isRequired]="true"
+              type="number"
+              [parentForm]="itemForm"
+              fieldName="quatity"
+            ></input-field>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="button-container">
+        <custom-button name="Submit" type="submit"> </custom-button>
+      </div>
+  </form>
+</custom-card>

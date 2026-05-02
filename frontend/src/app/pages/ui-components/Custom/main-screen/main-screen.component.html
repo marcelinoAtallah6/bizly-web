@@ -1,0 +1,153 @@
+<custom-card
+  cardTitle="{{cardTitle}}"
+  [switchOption]="switchOption"
+  [toolbar]="filteredToolbar"
+>
+  <div class="container" *ngIf="SwitchValue === 'card'">
+    <!-- Header with search and add button -->
+    <!-- <mat-card class="header-card">
+      <mat-card-content>
+        <form [formGroup]="mainScreenForm" (ngSubmit)="onSubmit()">
+          <div class="row">
+            <div class="col-lg-8 col-md-8 col-sm-8 col-xs-12">
+              <input-field
+                placeholder="Search"
+                formControlName="search"
+                type="search"
+                [parentForm]="mainScreenForm"
+                fieldName="search"
+              ></input-field>
+            </div>
+            <div class="col-lg-3 col-md-3 col-sm-3 col-xs-12">
+              <custom-dropdown
+                [list]="sortByList"
+                label="Sort By"
+                [selectedValue]="1"
+                [parentForm]="mainScreenForm"
+                fieldName="sortBy"
+              >
+              </custom-dropdown>
+            </div>
+            <div class="col-lg-1 col-md-1 col-sm-1 col-xs-12">
+              <custom-button
+                name="Add Item"
+                color="primary"
+                [isMiniFab]="true"
+                icon="add"
+                type="button"
+                (click)="openMenuDialog('add')"
+              >
+              </custom-button>
+            </div>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card> -->
+
+    <!-- Grid of items -->
+    <div class="cards-grid">
+      <mat-card
+        *ngFor="let item of usedData"
+        class="item-card"
+        [class.low-stock]="item.stock < 10"
+      >
+        <img
+          *ngIf="cardConfig.generalConfiguration.showImage"
+          mat-card-image
+          [src]="item.imageUrl"
+          [alt]="item.title"
+          (click)="openImagePreview(item)"
+        />
+
+        <mat-card-header *ngIf="cardConfig.generalConfiguration.showHeader">
+          <mat-card-title
+            *ngIf="cardConfig.generalConfiguration.showTitleField"
+            >{{  item?.[cardConfig.header.titleField] }}</mat-card-title
+          >
+          <div
+            class="category-badge"
+            *ngIf="cardConfig.generalConfiguration.showSubTitleField"
+          >
+            {{ item?.[cardConfig.header.subtitleField]  }}
+          </div>
+          <button
+            *ngIf="cardConfig.generalConfiguration.showMenuOption"
+            mat-icon-button
+            [matMenuTriggerFor]="menu"
+            class="more-button"
+          >
+            <mat-icon>more_vert</mat-icon>
+          </button>
+          <mat-menu #menu="matMenu">
+            <button
+              mat-menu-item
+              *ngFor="let menu of cardConfig.header.menuOptions"
+              (click)="openMenuDialog(menu.action)"
+            >
+              <mat-icon>{{ menu.icon }}</mat-icon>
+              <span>{{ menu.label }}</span>
+            </button>
+          </mat-menu>
+        </mat-card-header>
+
+        <mat-card-content *ngIf="cardConfig.generalConfiguration.showContent">
+          <p>{{ item?.[cardConfig.content.description]  }}</p>
+
+          <div class="details-grid">
+            <div
+              class="detail-item"
+              *ngFor="let subContent of cardConfig.content.fields"
+            >
+              <span class="label"> {{ subContent.label }}</span>
+              <span
+                class="value price"
+                *ngIf="
+                  subContent.field === 'price' &&
+                  subContent.format === 'currency'
+                "
+                >{{ item.price | currency }}</span
+              >
+              <span class="value price" *ngIf="subContent.field !== 'price'"
+                >{{   item?.[subContent.field] }}
+              </span>
+            </div>
+          </div>
+        </mat-card-content>
+        <mat-card-actions *ngIf="cardConfig.generalConfiguration.showAction">
+          <div *ngIf="cardConfig.generalConfiguration.showActionButtons">
+            <button
+              mat-button
+              color="primary"
+              *ngFor="let buttonAction of cardConfig.actions.buttons"
+              (click)="cardAction(buttonAction.action)"
+            >
+              <mat-icon>{{ buttonAction.icon }}</mat-icon>
+            </button>
+          </div>
+
+          <span class="date-info" *ngFor="let footer of cardConfig.actions.span">
+            Updated: {{ item.lastUpdated | date : "short" }}
+          </span>
+        </mat-card-actions>
+      </mat-card>
+    </div>
+  </div>
+
+  <div class="container" *ngIf="SwitchValue === 'grid'">
+    <!-- Grid  -->
+
+    <custom-grid
+      [columnDefs]="gridConfig"
+      [rowData]="usedData"
+      [pivotMode]="false"
+      [PageSize]="10"
+      [isPagination]="true"
+      [isAdvancedSearch]="true"
+      [isQuickSearch]="true"
+    ></custom-grid>
+  </div>
+
+  </custom-card>
+
+
+

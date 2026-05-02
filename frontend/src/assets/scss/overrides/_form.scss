@@ -1,0 +1,231 @@
+// for radius
+
+.mdc-text-field--outlined {
+  .mdc-notched-outline__leading,
+  .mdc-notched-outline__trailing,
+  .mdc-notched-outline__notch {
+    border-color: var(--borderColor) !important;
+  }
+
+  .mdc-notched-outline .mdc-notched-outline__leading {
+    border-top-left-radius: var(--border-radius);
+    border-bottom-left-radius: var(--border-radius);
+  }
+
+  .mdc-notched-outline .mdc-notched-outline__trailing {
+    border-top-right-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+  }
+}
+
+.mdc-form-field > label {
+  font-size: 14px;
+}
+
+.hide-hint {
+  .mat-mdc-form-field-subscript-wrapper {
+    display: none;
+  }
+}
+
+/////////// new style Component UI /////////////
+
+///accordion header //////////////////////////////////
+.mat-expansion-panel {
+  background-color: var(--background) !important;
+}
+
+.mat-expansion-panel-header-title {
+  color: var(--textPrimary) !important;
+}
+
+.mat-expansion-indicator::after {
+  color: var(--textPrimary) !important;
+}
+
+///calendar //////////////////////////////////
+
+.mat-datepicker-content-container {
+  background-color: var(--background) !important;
+}
+
+.mdc-text-field--outlined:not(.mdc-text-field--disabled)
+  .mdc-text-field__input {
+  color: var(--textPrimary) !important;
+}
+
+///card header color///
+.mat-expansion-panel-content {
+  color: var(--textPrimary) !important;
+}
+
+///Field Form //////////////////////////////////
+
+.mdc-form-field {
+  color: var(--labelText) !important;
+}
+
+.mat-mdc-radio-button {
+  // color: var(--iconColor) !important;
+  --mdc-radio-unselected-hover-icon-color: var(--iconColor) !important;
+  --mdc-radio-unselected-icon-color: var(--iconColor) !important;
+}
+//color of dropdown background ///
+.mat-mdc-select-arrow {
+  color: var(--iconColor) !important;
+}
+
+.mat-mdc-select-panel {
+  background-color: var(--background) !important;
+}
+.mat-mdc-select {
+  color: var(--textPrimary) !important;
+}
+.mdc-list-item__primary-text {
+  color: var(--textPrimary) !important;
+}
+//color of sheckMAark///
+.mat-primary {
+  --mat-minimal-pseudo-checkbox-selected-checkmark-color: var(
+    --textPrimary
+  ) !important;
+  --mdc-radio-selected-icon-color: var(--primary) !important;
+}
+
+///form wizaed background color //////////////////////////////////////////////////////////////////
+.mat-stepper-horizontal {
+  background-color: var(--background) !important;
+}
+
+.mat-stepper-vertical {
+  background-color: var(--background) !important;
+}
+
+.mat-step-icon {
+  // background-color: var(--primary) !important;
+  color: var(--white) !important;
+}
+
+.mat-step-icon-selected {
+  background-color: var(--primary) !important;
+  color: var(--white) !important;
+}
+
+.mat-step-text-label {
+  color: var(--textPrimary) !important;
+}
+
+
+
+//tabs ui //////////////////////////////////
+.mat-mdc-tab .mdc-tab__text-label {
+  color: var(--textPrimary) !important;
+}
+
+.mat-mdc-tab-header-pagination {
+  --mat-tab-header-pagination-icon-color: var(--textPrimary) !important;
+}
+
+.mat-calendar-body-cell-content {
+  color: var(--textPrimary) !important;
+}
+
+.mat-calendar-table-header th {
+  color: var(--textPrimary) !important;
+}
+
+.mat-calendar-body-label {
+  color: var(--textPrimary) !important;
+}
+.mat-tree {
+  background-color: var(--background) !important;
+}
+
+.row{
+   margin-right: 0px !important; 
+
+}
+
+
+//checkbox////////////////////////////////
+.mdc-checkbox .mdc-checkbox__native-control:enabled:checked~.mdc-checkbox__background
+{
+  background-color:var(--primary) !important;
+}
+
+//dialog //////////////////////////////////////////////////////////////////
+.dialog-container {
+  &.info {
+    background-color: var(--accent) !important;
+  }
+  &.success {
+    background-color: var(--success) !important;
+  }
+  &.warn {
+    background-color:var(--warning) !important;
+  }
+  &.error {
+    background-color: var(--error) !important;
+  }
+  &.confirm {
+    background-color: var(--background) !important;
+  }
+  &.dialog {
+    background-color: var(--background) !important;
+  }
+
+  h2 {
+    margin: 0;
+    font-weight: 600; 
+  }
+
+  .mat-dialog-content {
+    padding-top: 12px !important;
+    color: var(--textPrimary) !important;
+  }
+
+  .mdc-dialog__title {
+    color: var(--textPrimary) !important;
+
+  }
+
+
+a
+  mat-dialog-actions {
+    margin-top: 16px !important;
+  }
+}
+
+.mat-mdc-dialog-container .mat-mdc-dialog-title+.mat-mdc-dialog-content {
+  padding-top: 5px !important;
+}
+
+.mat-mdc-dialog-container .mdc-dialog__content 
+{
+  color: var(--textPrimary) !important;
+}
+
+
+//end dialog//
+
+
+//input //
+
+// .error-border {
+//   border: 1px solid red !important;
+// }
+.mat-mdc-form-field-error{
+  font-size: 10px !important;
+}
+
+.justify-content-end {
+  justify-content: normal !important;
+}
+
+//end input//
+
+///dropdown//
+.mat-mdc-select-placeholder{
+  color: var(--textPrimary) !important;
+}
+///end drop down/// 

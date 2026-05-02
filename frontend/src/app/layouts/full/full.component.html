@@ -1,0 +1,117 @@
+<mat-sidenav-container
+  class="mainWrapper blue_theme light-theme"
+  [ngClass]="{ 'sidebarNav-mini': isMini, 'sidebarNav-full': !isMini }"
+  autosize
+  autoFocus
+>
+  <!--   class="mainWrapper blue_theme  light-theme sidebarNav-mini"
+ -->
+  <!-- ============================================================== -->
+  <!-- Vertical Sidebar -->
+  <!-- ============================================================== -->
+
+
+
+  <mat-sidenav *ngIf="isVertical"
+    #leftsidenav
+    [mode]="isOver ? 'over' : 'side'"
+    [opened]="!isOver || !isMini"
+    (openedChange)="onSidenavOpenedChange($event)"
+    (closedStart)="onSidenavClosedStart()"
+    class="sidebarNav" (mouseenter)="onSidenavOpenedHoverEnter()" (mouseleave)="onSidenavOpenedHoverLeave()"
+  >
+    <app-sidebar></app-sidebar>
+
+  </mat-sidenav>
+
+  
+
+
+
+  <mat-sidenav #sidenav mode="over" position="end" class="mat-drawer mat-sidenav" role="dialog">
+    <div cdkscrollable class="mat-drawer-inner-container">
+      <div class="p-x-16 p-y-20 d-flex align-items-center justify-content-between">
+        <h3 class="mat-subtitle-1 f-s-21 f-w-600">Settings</h3>
+        <button mat-button (click)="sidenav.close()">Close</button>
+      </div>
+      <mat-divider></mat-divider>
+      <app-customizer (layoutType)="handleAction($event)" ></app-customizer>
+    </div>
+  </mat-sidenav>
+
+
+
+  <!-- ============================================================== -->
+  <!-- Main Content -->
+  <!-- ============================================================== -->
+  <mat-sidenav-content class="contentWrapper">
+    <!-- <app-header 
+      [showToggle]="isOver"
+      (toggleCollapsed)="toggleCollapsed()"
+      (toggleMobileNav)="sidenav.toggle()"
+    ></app-header> -->
+
+    <main class="pageWrapper">
+      <!-- ============================================================== -->
+      <!-- VerticalHeader -->
+      <!-- ============================================================== -->
+
+       <div *ngIf="!isVertical">
+
+          <app-header
+          [showToggle]="!isOver"
+
+        ></app-header>
+
+          <app-top-side-bar></app-top-side-bar>
+
+       </div>
+
+       
+       <div *ngIf="isVertical">
+        
+          <app-header
+          [showToggle]="isOver"
+          (toggleCollapsed)="toggleCollapsed()"
+          (toggleMobileNav)="toggleSidenav()"
+        ></app-header>
+        
+       </div>
+
+
+      <div class="pageWrapperBody">
+        <custom-breadcrumb></custom-breadcrumb>
+
+        <!-- ============================================================== -->
+        <!-- Outlet -->
+        <!-- ============================================================== -->
+        <router-outlet></router-outlet>
+      </div>
+
+
+      <div class="customizerBtn">
+        <button  (click)="toggleCustomizeSidenav(sidenav)"
+          mat-fab=""
+          color="primary"
+          mat-ripple-loader-class-name="mat-mdc-button-ripple"
+          class="mdc-fab mat-mdc-fab mat-primary mat-mdc-button-base"
+        >
+          <span class="mat-mdc-button-persistent-ripple mdc-fab__ripple"></span
+          ><mat-icon
+            role="img"
+            class="mat-icon notranslate material-icons mat-ligature-font mat-icon-no-color"
+            aria-hidden="true"
+            data-mat-icon-type="font"
+            >settings</mat-icon
+          ><span class="mdc-button__label"></span
+          ><span class="mat-mdc-focus-indicator"></span
+          ><span class="mat-mdc-button-touch-target"></span
+          ><span class="mat-ripple mat-mdc-button-ripple"></span>
+        </button>
+      </div>
+      
+    </main>
+
+
+  </mat-sidenav-content>
+</mat-sidenav-container>

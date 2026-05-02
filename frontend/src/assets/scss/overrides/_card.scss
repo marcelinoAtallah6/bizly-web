@@ -1,0 +1,70 @@
+// card
+.mat-mdc-card {
+  margin-bottom: 30px !important;
+  margin: 5px;
+  border-radius: var(--border-radius);
+}
+.mat-mdc-card-header {
+  // padding: 24px 24px 0;
+}
+
+.mat-mdc-card-content {
+  padding: 0 24px;
+}
+
+.mat-mdc-card {
+  background-color: var(--cardbg);
+}
+
+.cardWithShadow {
+  box-shadow:var(--cardshadow) !important;
+}
+
+.mat-mdc-card-title {
+  line-height: 1.6rem;
+}
+
+.mdc-card__actions {
+  padding: 24px;
+}
+// .dark-mode .bg-light-accent
+// {
+//   background-color: var(--accent) !important;
+// }
+.bg-light-accent {
+  background-color: rgba(var(--accent-rgb), 0.2) !important; /* 20% opacity */
+}
+
+.bg-light-success {
+  background-color: rgba(var(--success-rgb), 0.2) !important;
+}
+
+.bg-light-warning {
+  background-color: rgba(var(--warning-rgb), 0.2) !important;
+}
+
+.bg-light-error {
+  background-color: rgba(var(--error-rgb), 0.2) !important;
+}
+
+.bg-light-primary {
+  background-color: rgba(var(--primary-rgb), 0.2) !important;
+}
+
+
+
+.theme-card.mat-mdc-card {
+  .mat-mdc-card-header {
+    // padding: 16px 24px;
+    padding: 10px 24px;
+  }
+  .mat-mdc-card-content {
+    padding: 20px;
+  }
+}
+
+// chip
+.mat-mdc-chip {
+  height: 24px;
+  font-size: 14px;
+}

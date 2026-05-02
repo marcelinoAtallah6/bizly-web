@@ -1,0 +1,11 @@
+<div class="layout-controls">
+  <mat-button-toggle-group
+    [value]="selectedValue"
+    (change)="onSelectionChange($event.value)"
+  >
+    <mat-button-toggle *ngFor="let button of buttons" [value]="button.value">
+      <mat-icon>{{ button.icon }}</mat-icon>
+      <span>{{ button.label }}</span>
+    </mat-button-toggle>
+  </mat-button-toggle-group>
+</div>

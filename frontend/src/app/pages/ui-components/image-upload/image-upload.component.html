@@ -1,0 +1,31 @@
+<div
+  class="image-upload-container"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave($event)"
+  (drop)="onDrop($event)"
+>
+  <label for="file-upload" class="upload-label">
+    <input
+      type="file"
+      id="file-upload"
+      (change)="onFileSelected($event)"
+      hidden
+      accept="image/*"
+    />
+    <div
+      class="upload-preview"
+      [ngStyle]="{ 'background-image': 'url(' + previewUrl + ')' }"
+    >
+      <div *ngIf="!previewUrl" class="placeholder">Upload Image</div>
+    </div>
+    <div class="upload-text">Choose an image or drag & drop here</div>
+  </label>
+  <custom-button
+    icon="delete"
+    type="submit"
+    [isMiniFab]="true"
+    [disabled]="false"
+    (click)="removeImage()"
+    *ngIf="previewUrl"
+  ></custom-button>
+</div>

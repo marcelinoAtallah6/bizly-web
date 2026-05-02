@@ -1,0 +1,146 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap");
+
+// font
+$font-family: 'Plus Jakarta Sans', sans-serif;
+
+
+:root {
+  /* Light Mode */
+  --sidebarbg: var(--white);
+  --background: var(--white);
+  --toolbar: var(--white);
+  --cardbg: var(--white);
+  --cardshadow: rgba(145, 158, 171, 0.3) 0px 0px 2px 0px, rgba(145, 158, 171, 0.12) 0px 12px 24px -4px;
+  --hoverBgColor: #f6f9fc;
+  --textPrimary: #2a3547;
+  --labelText: #2a3547;;
+  --iconColor:#2a3547;;
+
+  --primary: #5d87ff;
+  --accent: #49beff;
+  --warning: #ffae1f;
+  --error: #fa896b;
+  --success: #13deb9;
+  --white: #ffffff;
+
+    --primary-rgb: 93, 135, 255; /* equivalent to #5d87ff */
+  --accent-rgb: 73, 190, 255;  /* equivalent to #49beff */
+  --warning-rgb: 255, 174, 31; /* equivalent to #ffae1f */
+  --error-rgb: 250, 137, 107;  /* equivalent to #fa896b */
+  --success-rgb: 19, 222, 185; /* equivalent to #13deb9 */
+
+  --light-primary: #ecf2ff;
+  --light-accent: #e8f7ff;
+  --light-warning: #fef5e5;
+  --light-error: #fdede8;
+  --light-success: #e6fffa;
+
+  /* Borders and Text */
+  --borderColor: #e5eaef;
+  --borderformColor: #dfe5ef;
+  --border-radius: 7px;
+  --gray-100: #7c8fac;
+
+  /* Layout */
+  --sidenav-desktop: 270px;
+  --sidenav-mini: 80px;
+  --header-height: 70px;
+  --boxedWidth: 1500px;
+  --direction :ltr;
+
+  --font-family: 'Plus Jakarta Sans', sans-serif;
+    /////Material colors Udjustment///////////
+    --mdc-outlined-text-field-input-text-placeholder-color: var(--labelText) !important;
+    --mdc-form-field-label-text-color: var(--labelText) !important;
+    --mdc-radio-unselected-hover-icon-color:var(--iconColor) !important;
+    --mdc-radio-unselected-icon-color:var(--iconColor) !important;
+}
+
+body.dark-blue-mode {
+  /* Dark Mode */
+  --sidebarbg: #2a3447;
+  --background: #2a3447;
+  --toolbar: #2a3447;
+  --cardbg: #2a3447;
+  --cardshadow: rgba(145, 158, 171, 0.3) 0px 0px 2px 0px, rgba(145, 158, 171, 0.02) 0px 12px 24px -4px;
+  --hoverBgColor: #333f55;
+  --textPrimary: white;
+  --labelText: white;
+  --iconColor:white;
+  /////Material colors Udjustment///////////
+  --mdc-outlined-text-field-input-text-placeholder-color: var(--labelText) !important;
+  --mdc-form-field-label-text-color: var(--labelText) !important;
+  --mdc-radio-unselected-hover-icon-color:var(--iconColor) !important;
+  --mdc-radio-unselected-icon-color:var(--iconColor) !important;
+  ////////////////////
+
+
+  // --primary: #5d87ff;
+  --accent: #49beff;
+  --warning: #ffae1f;
+  --error: #fa896b;
+  --success: #13deb9;
+
+  /* Dark theme light colors */
+  --light-primary: #253662;
+  --light-accent: #1C455D;
+  --light-warning: #4D3A2A;
+  --light-error: #4B313D;
+  --light-success: #1B3C48;
+
+  --borderColor: #333f55;
+  --borderformColor: #465670;
+
+  --font-family: 'Plus Jakarta Sans', sans-serif;
+
+}
+
+body.dark-mode {
+  /* Dark Mode */
+  --sidebarbg: #1E1E1E;
+  --background: #121212 ;
+  --toolbar: #1E1E1E;
+  --cardbg: #1E1E1E;
+  //1E1E1E dialog background
+  --cardshadow: rgba(145, 158, 171, 0.3) 0px 0px 2px 0px,
+    rgba(145, 158, 171, 0.02) 0px 12px 24px -4px;
+  --hoverBgColor: #B0BEC5;
+  --textPrimary: #FFFFFF;
+//Text Secondary Color: #B0BEC5 (Light Gray)
+// Text Disabled Color: #7E7E7E (Gray)
+  --labelText: white;
+  --iconColor: white;
+  /////Material colors Udjustment///////////
+  --mdc-outlined-text-field-input-text-placeholder-color: var(
+    --labelText
+  ) !important;
+  --mdc-form-field-label-text-color: var(--labelText) !important;
+  --mdc-radio-unselected-hover-icon-color: var(--iconColor) !important;
+  --mdc-radio-unselected-icon-color: var(--iconColor) !important;
+  ////////////////////
+
+  // --primary: #3700B3;
+  // --accent: #018786;
+  // --warning: #B00020;
+  // --error: #fa896b;
+  // --success: #13deb9;
+
+  /* Dark theme light colors */
+  --light-primary: #253662;
+  --light-accent: #1c455d;
+  --light-warning: #4d3a2a;
+  --light-error: #4b313d;
+  --light-success: #1b3c48;
+
+  --borderColor: #333f55;
+  --borderformColor: #465670;
+
+  --font-family: "Plus Jakarta Sans", sans-serif;
+}
+
+
+
+
+
+
+

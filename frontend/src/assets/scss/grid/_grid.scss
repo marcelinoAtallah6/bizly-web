@@ -1,0 +1,192 @@
+@use 'variables';
+@use 'mixins';
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-right: variables.$grid-gutter * -.5;
+  margin-left: variables.$grid-gutter * -.5;
+}
+
+.no-gutters {
+  margin-right: 0;
+  margin-left: 0;
+
+  > .col,
+  > [class*='col-'] {
+    padding-right: 0;
+    padding-left: 0;
+  }
+}
+
+@include mixins.make-grid-columns();
+
+
+@each $breakpoint, $infix in variables.$breakpoint-infixs {
+  @if ($breakpoint== 'xsmall') {
+    @include mixins.loop-grid-columns(variables.$grid-columns, $infix);
+  }
+
+  @else {
+    @include mixins.bp-gt($breakpoint) {
+      @include mixins.loop-grid-columns(variables.$grid-columns, $infix);
+    }
+  }
+}
+
+
+body {
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important ;
+}
+
+.ag-theme-alpine {
+  background-color: var(--background) !important ;
+  font-family: var(--font-family) !important;
+}
+
+/* Define your CSS classes */
+.custom-row {
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important ;
+}
+.other-row {
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important ;
+}
+
+.ag-center-cols-viewport {
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important;
+}
+
+.ag-header-cell-text {
+  color: var(--textPrimary) !important;
+}
+
+.ag-header {
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important;
+}
+
+.ag-paging-panel {
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important;
+}
+
+.ag-icon {
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important;
+}
+
+// .ag-root-wrapper
+// {
+//   background-color: var(--background) !important;
+//   border:none !important;
+//   border-radius: 8px !important;;
+//   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;;
+//   padding: 10px !important;;
+// }
+
+.ag-root-wrapper {
+  background-color: var(--background) !important;
+  border: none !important;
+  border-radius: none !important;
+  box-shadow: none !important;
+  padding: 0px !important;
+  color: var(--textPrimary) !important;
+}
+
+.ag-filter-body-wrapper {
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important;
+}
+
+.ag-advanced-filter-header {
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important;
+}
+
+.ag-panel {
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important;
+  border: none !important;
+  border-radius: none !important;
+  // box-shadow: none !important;
+  padding: 0px !important;
+}
+
+.ag-default-panel .ag-dialog .ag-ltr .ag-popup-child {
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important;
+}
+
+.ag-advanced-filter {
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important;
+}
+
+.ag-input-field-input {
+  border-color: var(--borderColor) !important;
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important;
+}
+
+.ag-theme-alpine .ag-panel-title-bar-title {
+  color: var(--textPrimary) !important;
+}
+.ag-advanced-filter-builder-button {
+  color: var(--textPrimary) !important;
+}
+
+.ag-virtual-list-viewport {
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important;
+}
+
+.ag-advanced-filter-builder-button-panel {
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important;
+}
+
+.ag-standard-button {
+  border-color: transparent !important;
+  background-color: var(--primary) !important;
+  color: var(--white) !important;
+}
+
+.ag-large-text-input {
+  height: auto;
+  background-color: var(--background) !important;
+  padding: 0px !important;
+}
+
+.ag-tool-panel-wrapper {
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important;
+}
+
+.ag-unselectable {
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important;
+}
+
+.ag-theme-alpine .ag-column-drop-empty-message {
+  color: var(--textPrimary) !important;
+}
+
+
+.ag-picker-field-wrapper {
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important;
+}
+
+.ag-theme-alpine .ag-menu {
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important;
+}
+
+.ag-theme-alpine .ag-tabs-header {
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important;
+}

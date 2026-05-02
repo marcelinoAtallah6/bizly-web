@@ -1,0 +1,22 @@
+<button mat-flat-button color="primary" [matMenuTriggerFor]="mainMenu" class="m-t-8">
+    Animal Index
+  </button>
+  
+  <mat-menu #mainMenu="matMenu">
+    <ng-container *ngFor="let item of menuItems">
+      <button mat-menu-item [matMenuTriggerFor]="itemMenu">{{ item.name }}</button>
+  
+      <mat-menu #itemMenu="matMenu">  <!-- Use a reference variable for the menu -->
+        <ng-container *ngFor="let subItem of item.subItems">
+          <button mat-menu-item [matMenuTriggerFor]="subItemMenu">{{ subItem.name }}</button>
+  
+          <mat-menu #subItemMenu="matMenu">  <!-- Use a reference variable for the submenu -->
+            <ng-container *ngFor="let nestedItem of subItem.subItems">
+              <button mat-menu-item>{{ nestedItem.name }}</button>
+            </ng-container>
+          </mat-menu>
+        </ng-container>
+      </mat-menu>
+    </ng-container>
+  </mat-menu>
+  

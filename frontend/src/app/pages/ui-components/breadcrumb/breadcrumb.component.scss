@@ -1,0 +1,42 @@
+.breadcrumb-container {
+  margin: 16px 0;
+  background-color: var(--background);
+  // background-color: #f8f9fa;
+  border-radius: 4px;
+  padding: 8px 16px;
+
+  .breadcrumb {
+    display: flex; /* Ensure horizontal layout */
+    flex-wrap: nowrap; /* Prevent wrapping */
+    list-style: none; /* Remove default list styling */
+    margin: 0;
+    padding: 0;
+    background: transparent;
+
+    .breadcrumb-item {
+      display: inline; /* Inline for horizontal layout */
+      margin-right: 8px; /* Space between items */
+
+      &:not(:last-child)::after {
+        content: '>'; /* Add separator between items */
+        margin-left: 8px; /* Space after the separator */
+        color: var(--textPrimary);
+      }
+
+      a {
+        color: var(--primary);
+        text-decoration: none;
+
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+
+      &.active {
+        color: #6c757d;
+        pointer-events: none;
+        font-weight: bold; /* Highlight the active breadcrumb */
+      }
+    }
+  }
+}

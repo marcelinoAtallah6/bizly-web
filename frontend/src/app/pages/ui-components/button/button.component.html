@@ -1,0 +1,24 @@
+
+<!-- button.component.html -->
+<button
+  *ngIf="!isMiniFab; else miniFabTemplate"
+  mat-flat-button
+  [color]="color"
+  [type]="type"
+  [disabled]="disabled"
+  class="responsive-button"
+>
+<mat-icon *ngIf="icon!=''">{{ icon }}</mat-icon>
+  {{ name }}
+</button>
+
+<ng-template #miniFabTemplate>
+  <button
+    mat-mini-fab
+    [color]="color"
+    [type]="type"
+    [disabled]="disabled"
+  >
+    <mat-icon>{{ icon }}</mat-icon>
+  </button>
+</ng-template>

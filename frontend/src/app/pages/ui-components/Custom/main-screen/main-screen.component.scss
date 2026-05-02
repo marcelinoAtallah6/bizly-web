@@ -1,0 +1,146 @@
+.container {
+  padding: 20px;
+  max-width: var(--boxedWidth);
+  margin: 0 auto;
+}
+
+.header-card {
+  margin-bottom: 20px;
+}
+
+.mat-mdc-card-header {
+  padding: 5px 10px !important;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.mat-mdc-card-content {
+  padding: 10px !important;
+  //   min-height: 150px !important;
+}
+
+// html .theme-card.mat-mdc-card .mat-mdc-card-content {
+//     padding: 10px !important;
+// }
+
+html .mat-mdc-card {
+  margin-bottom: 5px !important;
+}
+
+.header-content {
+  display: flex;
+  gap: 16px;
+  //   align-items: center;
+  align-items: flex-start;
+}
+
+.search-field {
+  flex: 1;
+}
+
+.sort-field {
+  width: 150px;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  padding: 20px 0;
+}
+
+.item-card {
+  position: relative;
+  transition: transform 0.2s;
+}
+
+.item-card:hover {
+  transform: translateY(-5px);
+  cursor: pointer;
+}
+
+.more-button {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+}
+
+.stock-badge {
+  display: inline-block;
+  //   padding: 4px 8px;
+  padding: 3px 5px;
+  border-radius: 4px;
+  background: #e0e0e0;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.stock-badge.critical {
+  background: #ff4444;
+  color: var(--background);
+}
+
+mat-card-actions {
+  display: flex;
+  align-items: center;
+  padding: 8px;
+}
+
+.date-info {
+  margin-left: auto;
+  font-size: 12px;
+  color: #666;
+}
+
+img {
+  height: 200px;
+  object-fit: cover;
+}
+.category-badge {
+  display: inline-block;
+
+  font-weight: 500;
+  // margin-bottom: 8px;
+
+  padding: 3px 5px;
+  border-radius: 4px;
+  // background: #e0e0e0;
+  background-color: #e3f2fd;
+  color: var(--primary);
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+///details CArd /////
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--textPrimary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.value {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.87);
+  font-weight: 500;
+}
+
+.price {
+  color: var(--primary);
+  font-size: 16px;
+}

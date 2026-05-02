@@ -1,0 +1,45 @@
+<!-- 
+<a *ngIf="item.isActive"
+  mat-list-item
+  (click)="onItemSelected(item)"
+  [ngClass]="{
+    'mat-toolbar mat-primary activeMenu': item.route
+      ? router.isActive(item.route, true)
+      : false,
+  }"
+  class="menu-list-item"
+>
+  <i-tabler
+    class="routeIcon"
+    name="{{ item.icon }}"
+    matListItemIcon
+  ></i-tabler>
+  <span class="hide-menu">{{ item.name }}</span>
+</a> -->
+
+
+<!-- Parent or Child Menu Item -->
+<a *ngIf="item.isActive"
+  mat-list-item
+  (click)="toggleSubMenu(item, $event)"
+  [ngClass]="{
+    'mat-toolbar mat-primary activeMenu': item.route
+      ? router.isActive(item.route, true)
+      : false
+  }"
+  class="menu-list-item"
+>
+  <i-tabler class="routeIcon" name="{{ item.icon }}" matListItemIcon></i-tabler>
+  <span class="hide-menu">{{ item.name }}</span>
+
+  <!-- Material Icon for Expand/Collapse -->
+  <mat-icon *ngIf="item.menus?.length" class="submenu-icon"
+    [ngClass]="{ 'expanded': isExpanded(item) }">
+    {{ isExpanded(item) ? 'expand_less' : 'expand_more' }}
+  </mat-icon>
+</a>
+
+<!-- Nested Submenu (Recursively Rendered) -->
+<ng-container *ngIf="item.menus?.length && isExpanded(item)">
+  <app-nav-item *ngFor="let child of item.menus" [item]="child"></app-nav-item>
+</ng-container>

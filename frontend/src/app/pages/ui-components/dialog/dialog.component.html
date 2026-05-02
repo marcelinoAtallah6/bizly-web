@@ -1,0 +1,28 @@
+<div class="dialog-container" [ngClass]="config.type">
+
+<h2 mat-dialog-title *ngIf="config.header">{{ config.header }}</h2>
+
+<mat-dialog-content>
+  <ng-container *ngIf="isTemplate(config.body); else componentBody">
+    <ng-template [ngTemplateOutlet]="config.body" ></ng-template>
+  </ng-container>
+
+  <ng-template #componentBody>
+    <ng-container *ngComponentOutlet="isComponent(config.body) ? config.body : null"></ng-container>
+  </ng-template>
+</mat-dialog-content>
+
+<mat-dialog-actions >
+
+
+  <ng-container *ngIf="isTemplate(config.footer); else componentFooter">
+    <ng-template [ngTemplateOutlet]="config.footer" ></ng-template>
+  </ng-container>
+
+  <ng-template #componentFooter>
+    <ng-container *ngComponentOutlet="isComponent(config.footer) ? config.footer : null"></ng-container>
+  </ng-template>
+
+</mat-dialog-actions>
+
+</div>
