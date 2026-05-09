@@ -1,66 +1,62 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { finalize, firstValueFrom } from 'rxjs';
 import { NavService } from '../../../services/nav.service';
-import axios from 'axios';
 import { GlobalConstants } from 'src/app/common/GlobalConstants';
 import { NavGroupItem, NavItem } from './nav-item/nav-item';
+import { AuthService } from 'src/app/services/auth.service';
+import { BusinessApiService } from 'src/app/services/business-api.service';
 
 @Component({
   selector: 'app-sidebar',
   templateUrl: './sidebar.component.html',
 })
 export class SidebarComponent implements OnInit {
-  navItems: NavGroupItem[] = []; // Initialize as an empty array
+  navItems: NavGroupItem[] = []; 
   @Input() isVertical: boolean | undefined;
   public filteredMenus: NavItem[] = [];
+  isSigningOut = false;
 
-  constructor(public navService: NavService) { }
+  constructor(
+    public navService: NavService,
+    private readonly authService: AuthService,
+    private readonly router: Router,
+    private readonly businessApiService: BusinessApiService
+  ) {}
 
   async ngOnInit(): Promise<void> {
     await this.getNavItems();
-
-    // this.navService.currentUrl.subscribe((url: any) => {
-    //   this.filterMenusByRoute(url);
-    // });
   }
 
-  private apiUrl = GlobalConstants.API_ENDPOINTS.application.getAll; // Update the URL if necessary
+  private apiUrl = GlobalConstants.API_ENDPOINTS.application.getAll; 
 
   async getNavItems(): Promise<void> {
     try {
-      const response = await axios.get<NavGroupItem[]>(this.apiUrl);
-      this.navItems = response.data; // Assign the resolved data to navItems
+      this.navItems = await firstValueFrom(
+        this.businessApiService.post<NavGroupItem[]>(this.apiUrl, {})
+      );
     } catch (error) {
       console.error('Error fetching nav items:', error);
     }
   }
 
-  // filterMenusByRoute(route: string): void {
+  onSignOut(): void {
+    if (this.isSigningOut) {
+      return;
+    }
 
-  //   if (!this.navItems || this.navItems.length === 0) {
-  //     console.log('navItems is empty or undefined.');
-  //     return;
-  //   }
-
-    // const filteredMenus: NavItem[] = [];
-    // this.navItems.forEach((group) => {
-    //   group.applications?.forEach((application) => {
-    //     if (application.route === route) {
-    //       filteredMenus.push(application);
-    //     }
-
-    //     application.menus?.forEach((menu) => {
-    //       if (menu.route === route) {
-    //         filteredMenus.push(menu);
-    //       }
-    //     });
-    //   });
-    // });
-
-    // this.filteredMenus = filteredMenus;
-    // this.sharedService.setMenus(this.filteredMenus[0].menus);
-  // }
-
-
+    this.isSigningOut = true;
+    this.authService
+      .logout()
+      .pipe(finalize(() => (this.isSigningOut = false)))
+      .subscribe({
+        next: () => this.router.navigate(['/authentication/login']),
+        error: () => {
+          this.authService.clearSession();
+          this.router.navigate(['/authentication/login']);
+        },
+      });
+  }
 
 }
 

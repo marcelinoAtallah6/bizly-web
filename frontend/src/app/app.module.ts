@@ -1,7 +1,7 @@
-import { NgModule } from '@angular/core';
+import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -26,6 +26,8 @@ import { TopSideBarComponent } from './layouts/full/topSideBar/top-side-bar/top-
 import { BrandingComponent } from './layouts/full/sidebar/branding.component';
 import { AppNavItemComponent } from './layouts/full/sidebar/nav-item/nav-item.component';
 import { BreadcrumbComponent } from './pages/ui-components/breadcrumb/breadcrumb.component';
+import { CustomHTTPInterceptor } from './common/CustomHTTPInterceptor';
+import { DeviceIdService } from './services/device-id.service';
 
 @NgModule({
   declarations: [
@@ -51,6 +53,19 @@ import { BreadcrumbComponent } from './pages/ui-components/breadcrumb/breadcrumb
     TablerIconsModule.pick(TablerIcons),
   ],
   exports: [TablerIconsModule],
+  providers: [
+    {
+      provide: APP_INITIALIZER,
+      multi: true,
+      useFactory: (deviceId: DeviceIdService) => () => deviceId.init(),
+      deps: [DeviceIdService],
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: CustomHTTPInterceptor,
+      multi: true,
+    },
+  ],
   bootstrap: [AppComponent],
 })
 export class AppModule {}

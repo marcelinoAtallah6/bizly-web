@@ -30,3 +30,10 @@ http://localhost:8080/service-three/get
 ## Feedback
 
 Please report bugs, concerns, suggestions by issues.
+
+
+Keystore steps :
+
+1- 
+
+keytool -genkeypair -alias my-server-key -keyalg RSA -keysize 2048 -storetype JKS -keystore keystore.jks -validity 3650

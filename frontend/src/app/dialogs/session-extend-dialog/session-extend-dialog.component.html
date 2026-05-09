@@ -1,0 +1,12 @@
+<h2 mat-dialog-title>Session expired</h2>
+
+<mat-dialog-content class="mat-typography">
+  <p>Your session has expired. Do you want to extend it and stay signed in?</p>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-stroked-button type="button" (click)="onDecline()">No, sign out</button>
+  <button mat-flat-button color="primary" type="button" (click)="onExtend()">
+    Yes, extend session
+  </button>
+</mat-dialog-actions>

@@ -1,7 +1,7 @@
 export interface NavGroupItem {
     id?: number;
     name?: string;
-    applications?: NavItem[];
+    menus?: NavItem[];
   }
 
 export interface NavItem {

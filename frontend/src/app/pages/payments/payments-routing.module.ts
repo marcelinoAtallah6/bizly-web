@@ -3,7 +3,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { PaymentsComponent } from './payments.component';
 
 const routes: Routes = [{
-  path: '',
+  path: 'payments',
   component: PaymentsComponent,
   data: { breadcrumb: 'Payments' },
   children: [

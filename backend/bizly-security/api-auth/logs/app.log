@@ -1,0 +1,21 @@
+2026-05-08 11:10:38 INFO  AuthorizationAuthenticationApplication - Starting AuthorizationAuthenticationApplication using Java 11.0.21 on LAPTOP-5DPCTAVK with PID 28476 (C:\Users\Lenovo\Desktop\Marcelino\project\app\Bizly-V1\backend\bizly-security\api-auth\target\classes started by Lenovo in C:\Users\Lenovo\Desktop\Marcelino\project\app\Bizly-V1\backend\bizly-security\api-auth)
+2026-05-08 11:10:38 INFO  AuthorizationAuthenticationApplication - No active profile set, falling back to 1 default profile: "default"
+2026-05-08 11:10:43 INFO  AuthorizationAuthenticationApplication - Started AuthorizationAuthenticationApplication in 5.301 seconds (JVM running for 6.366)
+2026-05-08 13:06:51 INFO  AuthorizationAuthenticationApplication - Starting AuthorizationAuthenticationApplication using Java 11.0.21 on LAPTOP-5DPCTAVK with PID 30340 (C:\Users\Lenovo\Desktop\Marcelino\project\app\Bizly-V1\backend\bizly-security\api-auth\target\classes started by Lenovo in C:\Users\Lenovo\Desktop\Marcelino\project\app\Bizly-V1\backend\bizly-security\api-auth)
+2026-05-08 13:06:51 INFO  AuthorizationAuthenticationApplication - No active profile set, falling back to 1 default profile: "default"
+2026-05-08 13:06:56 INFO  AuthorizationAuthenticationApplication - Started AuthorizationAuthenticationApplication in 5.807 seconds (JVM running for 6.891)
+2026-05-08 13:08:14 INFO  AuthorizationAuthenticationApplication - Starting AuthorizationAuthenticationApplication using Java 11.0.21 on LAPTOP-5DPCTAVK with PID 1832 (C:\Users\Lenovo\Desktop\Marcelino\project\app\Bizly-V1\backend\bizly-security\api-auth\target\classes started by Lenovo in C:\Users\Lenovo\Desktop\Marcelino\project\app\Bizly-V1\backend\bizly-security\api-auth)
+2026-05-08 13:08:14 INFO  AuthorizationAuthenticationApplication - No active profile set, falling back to 1 default profile: "default"
+2026-05-08 13:08:18 INFO  AuthorizationAuthenticationApplication - Started AuthorizationAuthenticationApplication in 5.224 seconds (JVM running for 6.187)
+2026-05-08 13:16:13 INFO  CustomUserDetailService - Attempting to load user: MarcelinoAt
+2026-05-08 13:19:31 INFO  CustomUserDetailService - Attempting to load user: MarcelinoAt
+2026-05-08 15:57:18 INFO  CustomUserDetailService - Attempting to load user: MarcelinoAt
+2026-05-08 17:33:53 INFO  AuthorizationAuthenticationApplication - Starting AuthorizationAuthenticationApplication using Java 11.0.21 on LAPTOP-5DPCTAVK with PID 23752 (C:\Users\Lenovo\Desktop\Marcelino\project\app\Bizly-V1\backend\bizly-security\api-auth\target\classes started by Lenovo in C:\Users\Lenovo\Desktop\Marcelino\project\app\Bizly-V1\backend\bizly-security\api-auth)
+2026-05-08 17:33:53 INFO  AuthorizationAuthenticationApplication - No active profile set, falling back to 1 default profile: "default"
+2026-05-08 17:34:00 INFO  AuthorizationAuthenticationApplication - Started AuthorizationAuthenticationApplication in 7.522 seconds (JVM running for 8.407)
+2026-05-08 17:34:15 INFO  AuthorizationAuthenticationApplication - Starting AuthorizationAuthenticationApplication using Java 11.0.21 on LAPTOP-5DPCTAVK with PID 8968 (C:\Users\Lenovo\Desktop\Marcelino\project\app\Bizly-V1\backend\bizly-security\api-auth\target\classes started by Lenovo in C:\Users\Lenovo\Desktop\Marcelino\project\app\Bizly-V1\backend\bizly-security\api-auth)
+2026-05-08 17:34:15 INFO  AuthorizationAuthenticationApplication - No active profile set, falling back to 1 default profile: "default"
+2026-05-08 17:34:19 INFO  AuthorizationAuthenticationApplication - Started AuthorizationAuthenticationApplication in 4.411 seconds (JVM running for 5.164)
+2026-05-08 17:34:22 INFO  CustomUserDetailService - Attempting to load user: MarcelinoAt
+2026-05-08 17:43:01 INFO  CustomUserDetailService - Attempting to load user: MarcelinoAt
+2026-05-08 17:45:10 INFO  CustomUserDetailService - Attempting to load user: MarcelinoAt

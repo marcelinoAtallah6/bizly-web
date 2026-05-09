@@ -6,18 +6,9 @@
           {{ cardTitle }}
         </mat-card-title>
         <custom-toolbar [toolbar]="toolbar"  *ngIf="switchOption"></custom-toolbar>
-
-        <!-- <custom-switch
-          *ngIf="switchOption"
-          [buttons]="layoutButtons"
-          [selectedValue]="currentLayout"
-          (selectionChange)="handleLayoutChange($event)"
-        >
-        </custom-switch> -->
       </div>
     </mat-card-header>
     <mat-card-content class="mat-mdc-card-content b-t-1">
-      <!-- Projected Content -->
       <ng-content></ng-content>
     </mat-card-content>
   </mat-card>

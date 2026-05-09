@@ -39,7 +39,7 @@ export class GlobalConstants {
       updateCustomer: (id: string) =>  `${GlobalConstants.API_BASE_URL}/kyc/updateCustomer/${id}`,
     },
     application:{
-      getAll: `${GlobalConstants.API_BASE_URL}/um/getAllApplications`,
+      getAll: `${GlobalConstants.API_BASE_URL}/um/menu/get`,
 
     }
   };

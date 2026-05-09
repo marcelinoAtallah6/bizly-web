@@ -1,0 +1,65 @@
+server:
+  port: 8080
+spring:
+  main:
+    web-application-type: reactive
+  application:
+    name: apigateway
+  cloud:
+    gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+            - http://localhost:4200
+            allowedMethods:
+            - POST
+            allowedHeaders: '*'
+            allowCredentials: true
+      default-filters:
+      - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
+      routes:
+      - id: auth
+        uri: lb://auth
+        predicates:
+        - Path=/auth/**
+        filters:
+        - AuthenticationPreFilter
+        
+      - id: um
+        uri: lb://um
+        predicates:
+        - Path=/um/**
+        filters:
+        - AuthenticationPreFilter
+        - StripPrefix=1
+  
+      - id: kyc
+        uri: lb://kyc
+        predicates:
+        - Path=/kyc/**
+        filters:
+        - AuthenticationPreFilter
+        - StripPrefix=1   
+        
+      - id: pm
+        uri: lb://pm
+        predicates:
+        - Path=/pm/**
+        filters:
+        - AuthenticationPreFilter
+        - StripPrefix=1   
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    preferIpAddress: true
+keyStore:
+  path: keystore.jks
+  password: password
+  alias: my-server-key
+ 

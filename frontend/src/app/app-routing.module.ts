@@ -2,16 +2,25 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { BlankComponent } from './layouts/blank/blank.component';
 import { FullComponent } from './layouts/full/full.component';
+import { AuthGuard } from './guards/auth.guard';
+import { GuestGuard } from './guards/guest.guard';
 
 const routes: Routes = [
   {
     path: '',
+    pathMatch: 'full',
+    redirectTo: 'authentication/login',
+  },
+  {
+    path: '',
     component: FullComponent,
+    canActivate: [AuthGuard],
+    canActivateChild: [AuthGuard],
     children: [
       {
         path: '',
-        redirectTo: '/dashboard',
         pathMatch: 'full',
+        redirectTo: 'dashboard',
       },
       {
         path: 'dashboard',
@@ -107,6 +116,8 @@ const routes: Routes = [
   {
     path: '',
     component: BlankComponent,
+    canActivate: [GuestGuard],
+    canActivateChild: [GuestGuard],
     children: [
       {
         path: 'authentication',

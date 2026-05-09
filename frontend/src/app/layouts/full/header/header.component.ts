@@ -8,8 +8,10 @@ import {
 } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
+import { finalize } from 'rxjs';
 import { NavItem } from '../sidebar/nav-item/nav-item';
 import { SharedService } from 'src/app/services/shared.service';
+import { AuthService } from 'src/app/services/auth.service';
 
 
 @Component({
@@ -25,14 +27,28 @@ export class HeaderComponent implements OnInit {
   @Output() toggleCollapsed = new EventEmitter<void>();
 
   showFiller = false;
+  isSigningOut = false;
 
   onMenuClick(menuSelected: any) {
     this.router.navigate([menuSelected]);
 
   }
   onSignOut() {
-    // Perform logout logic here (e.g., clear tokens, navigate to login page)
-    console.log("Signing out...");
+    if (this.isSigningOut) {
+      return;
+    }
+
+    this.isSigningOut = true;
+    this.authService
+      .logout()
+      .pipe(finalize(() => (this.isSigningOut = false)))
+      .subscribe({
+        next: () => this.router.navigate(['/authentication/login']),
+        error: () => {
+          this.authService.clearSession();
+          this.router.navigate(['/authentication/login']);
+        },
+      });
   }
   
   menuItems: NavItem[] = [];
@@ -41,7 +57,12 @@ export class HeaderComponent implements OnInit {
     { label: 'Gold 2 Page', url: '/authentication/login' },
   ];
 
-  constructor(public dialog: MatDialog, public router: Router, private sharedService: SharedService) { }
+  constructor(
+    public dialog: MatDialog,
+    public router: Router,
+    private sharedService: SharedService,
+    private authService: AuthService
+  ) {}
   ngOnInit(): void {
     // this.sharedService.variable$.subscribe((value: any) => {
     //   this.menuItems = value;
