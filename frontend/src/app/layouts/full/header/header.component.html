@@ -141,9 +141,10 @@
 <!-- Profile Button (Triggers the Menu) -->
 <button mat-icon-button [matMenuTriggerFor]="profileMenu" aria-label="Profile">
   <img
-    src="/assets/images/profile/user-1.jpg"
+    [src]="headerProf?.avatarUrl || '/assets/images/profile/user-1.jpg'"
     class="rounded-circle object-cover profile-img"
     width="40"
+    alt=""
   />
 </button>
 
@@ -151,13 +152,29 @@
 <mat-menu #profileMenu="matMenu" class="profile-menu mat-elevation-z4">
   <!-- User Info -->
   <div class="profile-header">
-    <img src="/assets/images/profile/user-1.jpg" class="profile-avatar" />
+    <img
+      [src]="headerProf?.avatarUrl || '/assets/images/profile/user-1.jpg'"
+      class="profile-avatar"
+      alt=""
+    />
     <div class="profile-info">
-      <div class="profile-name">John Doe</div>
-      <div class="profile-email">johndoe example.com</div>
+      <div class="profile-name">{{ headerProf?.displayName || 'User' }}</div>
+      <div class="profile-email">{{ headerProf?.subtitle || '' }}</div>
     </div>
   </div>
   <mat-divider></mat-divider>
+
+  <div class="p-x-16 p-y-8" *ngIf="roleChoices().length > 1">
+    <div class="mat-caption text-muted m-b-8">Active role ({{ activeRoleSummary() }})</div>
+    <button mat-menu-item (click)="switchRole(null)">
+      <span>All roles</span>
+    </button>
+    <button mat-menu-item *ngFor="let r of roleChoices()" (click)="switchRole(r)">
+      <span>{{ displayRoleLabel(r) }}</span>
+    </button>
+  </div>
+
+  <mat-divider *ngIf="roleChoices().length > 1"></mat-divider>
 
   <!-- Sign Out Button -->
   <button mat-menu-item (click)="onSignOut()">

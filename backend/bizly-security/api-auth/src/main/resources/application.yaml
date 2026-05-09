@@ -16,6 +16,17 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.Oracle12cDialect
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: marcelinoatallah6@gmail.com
+    password: bnaw msxy igfm iwpm
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 eureka:
   client:
@@ -45,3 +56,10 @@ management:
     export:
       prometheus:
         enabled: true
+
+app:
+  password-reset:
+    expiry-minutes: 15
+    reset-url: http://localhost:4200/authentication/forgot-password
+  security:
+    max-failed-login-attempts: 3

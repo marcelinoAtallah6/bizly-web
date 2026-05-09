@@ -12,7 +12,7 @@ import com.um.api.model.user.UserRoleId;
 import com.um.common.DatabaseConstants;
 
 @Entity
-@Table(name = DatabaseConstants.USER_ROLE_TABLE)
+@Table(name = DatabaseConstants.USER_ROLE_TABLE, schema = DatabaseConstants.SCHEMA)
 public class UserRole {
 
 	@EmbeddedId

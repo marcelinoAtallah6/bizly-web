@@ -26,7 +26,6 @@ import org.springframework.data.domain.Pageable;
 import com.kyc.api.dto.add.AddCustomerRequest;
 import com.kyc.api.dto.get.GetCustomerResponse;
 import com.kyc.api.dto.gets.GetsCustomersRequest;
-import com.kyc.api.dto.model.CustomerDetailRequest;
 import com.kyc.api.dto.update.UpdateCustomerRequest;
 import com.kyc.api.model.customer.KycCustomer;
 import com.kyc.api.repository.KycCustomerRepository;
@@ -69,11 +68,7 @@ public class CustomerServiceImplTest {
         request.setDob(LocalDate.of(1990, 1, 1));
         request.setEmail("john.doe@example.com");
         request.setMobileNumber("+1234567890");
-        CustomerDetailRequest detail = new CustomerDetailRequest();
-        detail.setFieldName("nationalId");
-        detail.setFieldValue("ABC123");
-        detail.setCustomerStatus("VALID");
-        request.setDetails(List.of(detail));
+        request.setCustomerStatus("ACTIVE");
 
         var addResponse = service.add(request);
         assertNotNull(addResponse);
@@ -92,6 +87,7 @@ public class CustomerServiceImplTest {
         request.setDob(LocalDate.of(1990, 1, 1));
         request.setEmail("john.doe@example.com");
         request.setMobileNumber("+1234567890");
+        request.setCustomerStatus("ACTIVE");
 
         var updateResponse = service.update(request);
         assertNotNull(updateResponse);

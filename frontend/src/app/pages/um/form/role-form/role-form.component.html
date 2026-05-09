@@ -1,0 +1,42 @@
+<div class="p-24">
+  <app-page-action-bar
+    [title]="mode === 'create' ? 'New role' : 'Edit role'"
+    [toolbar]="formToolbar"
+  ></app-page-action-bar>
+
+  <mat-card *ngIf="!loading">
+    <mat-card-content class="p-24">
+      <form [formGroup]="form" (ngSubmit)="submit()" class="role-form">
+        <div class="row">
+          <div class="col-md-6">
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Name</mat-label>
+              <input matInput formControlName="name" autocomplete="off" />
+              <mat-error *ngIf="form.get('name')?.hasError('required')">Required</mat-error>
+              <mat-error *ngIf="form.get('name')?.hasError('maxlength')">Max 100 characters</mat-error>
+            </mat-form-field>
+          </div>
+          <div class="col-md-6">
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Role type</mat-label>
+              <input matInput type="number" formControlName="roleType" min="0" step="1" />
+              <mat-hint>Integer required by the UM API (e.g. classification code)</mat-hint>
+              <mat-error *ngIf="form.get('roleType')?.hasError('required')">Required</mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <div class="m-t-24 d-flex gap-8">
+          <button mat-flat-button color="primary" type="submit" [disabled]="saving">
+            {{ mode === 'create' ? 'Create' : 'Save' }}
+          </button>
+          <button mat-stroked-button type="button" (click)="cancel()" [disabled]="saving">Cancel</button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <div *ngIf="loading" class="d-flex justify-content-center p-48">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+</div>

@@ -1,6 +1,7 @@
 package com.um.api.dto.user.get;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class GetUserResponse {
 
@@ -12,6 +13,10 @@ public class GetUserResponse {
 	private String mobileNumber;
 	private String status;
 	private LocalDateTime createdAt;
+	private List<Long> roleIds;
+
+	private String profileImageMimeType;
+	private String profileImageBase64;
 
 	public Long getId() {
 		return id;
@@ -75,5 +80,29 @@ public class GetUserResponse {
 
 	public void setCreatedAt(LocalDateTime createdAt) {
 		this.createdAt = createdAt;
+	}
+
+	public List<Long> getRoleIds() {
+		return roleIds;
+	}
+
+	public void setRoleIds(List<Long> roleIds) {
+		this.roleIds = roleIds;
+	}
+
+	public String getProfileImageMimeType() {
+		return profileImageMimeType;
+	}
+
+	public void setProfileImageMimeType(String profileImageMimeType) {
+		this.profileImageMimeType = profileImageMimeType;
+	}
+
+	public String getProfileImageBase64() {
+		return profileImageBase64;
+	}
+
+	public void setProfileImageBase64(String profileImageBase64) {
+		this.profileImageBase64 = profileImageBase64;
 	}
 }

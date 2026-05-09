@@ -3,19 +3,27 @@ import { CommonModule } from '@angular/common';
 
 import { KycRoutingModule } from './kyc-routing.module';
 import { CommonMaterialModule } from 'src/app/common/MaterialModule';
+import { SaleDetailDialogModule } from 'src/app/shared/sale-detail-dialog/sale-detail-dialog.module';
 import { UicomponentsModule } from '../ui-components/ui-components.module';
 import { KycComponent } from './kyc.component';
-import { CustomersComponent } from './customers/customers.component';
-import { CustomersdetailsComponent } from './customers/customersdetails/customersdetails.component';
-
+import { CustomerListComponent } from './list/customer-list/customer-list.component';
+import { CustomerFormComponent } from './form/customer-form/customer-form.component';
+import { CustomerDetailsComponent } from './details/customer-details/customer-details.component';
 
 @NgModule({
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
-  declarations: [KycComponent, CustomersComponent, CustomersdetailsComponent],
+  declarations: [
+    KycComponent,
+    CustomerListComponent,
+    CustomerFormComponent,
+    CustomerDetailsComponent,
+  ],
   imports: [
     KycRoutingModule,
     CommonMaterialModule,
-    UicomponentsModule
-  ]
+    UicomponentsModule,
+    SaleDetailDialogModule,
+    CommonModule,
+  ],
 })
-export class KycModule { }
+export class KycModule {}

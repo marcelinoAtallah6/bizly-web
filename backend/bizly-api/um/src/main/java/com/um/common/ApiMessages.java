@@ -20,5 +20,9 @@ public class ApiMessages {
 
 	// Password
 	public static final String PASSWORD_PROCESSING_FAILED = "Failed to process password";
+	public static final String PASSWORD_TOO_WEAK = "Password does not meet security requirements";
+
+	public static final String INVALID_PROFILE_IMAGE = "Invalid or unsupported profile image";
+	public static final String PROFILE_IMAGE_TOO_LARGE = "Profile image exceeds maximum size";
 }
 

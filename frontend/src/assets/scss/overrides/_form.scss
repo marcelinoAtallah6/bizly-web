@@ -186,11 +186,8 @@
 
   .mdc-dialog__title {
     color: var(--textPrimary) !important;
-
   }
 
-
-a
   mat-dialog-actions {
     margin-top: 16px !important;
   }
@@ -202,6 +199,20 @@ a
 
 .mat-mdc-dialog-container .mdc-dialog__content 
 {
+  color: var(--textPrimary) !important;
+}
+
+.mat-mdc-dialog-container .mat-mdc-dialog-surface {
+  background-color: var(--cardbg) !important;
+  color: var(--textPrimary) !important;
+}
+
+.mat-mdc-dialog-container .mat-mdc-dialog-title {
+  color: var(--textPrimary) !important;
+}
+
+.sale-detail-dialog-panel .mat-mdc-dialog-container .mat-mdc-dialog-surface {
+  background-color: var(--cardbg) !important;
   color: var(--textPrimary) !important;
 }
 

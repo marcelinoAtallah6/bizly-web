@@ -1,0 +1,14 @@
+<div
+  class="page-action-bar m-b-16 d-flex justify-content-between align-items-center"
+  [class.page-action-bar--wrap]="wrap"
+>
+  <div class="page-action-bar__start d-flex align-items-center flex-wrap gap-8">
+    <ng-content select="[slot=start]"></ng-content>
+    <h2 class="page-action-bar__title m-0" *ngIf="title">{{ title }}</h2>
+  </div>
+
+  <div class="page-action-bar__actions d-flex align-items-center toolbar-actions-gap">
+    <custom-toolbar *ngIf="toolbar?.length" [toolbar]="toolbar"></custom-toolbar>
+    <ng-content select="[slot=actions]"></ng-content>
+  </div>
+</div>

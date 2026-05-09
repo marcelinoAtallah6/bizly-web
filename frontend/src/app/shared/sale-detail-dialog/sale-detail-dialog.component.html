@@ -1,0 +1,30 @@
+<h2 mat-dialog-title>Sale #{{ data.id }}</h2>
+<mat-dialog-content class="sale-detail-body">
+  <p><strong>Customer ID:</strong> {{ customerIdText }}</p>
+  <p *ngIf="data.customerDisplayName"><strong>Customer:</strong> {{ data.customerDisplayName }}</p>
+  <p><strong>Total:</strong> {{ totalText }}</p>
+  <p *ngIf="data.status"><strong>Status:</strong> {{ data.status }}</p>
+  <p *ngIf="data.createdAt"><strong>Date:</strong> {{ data.createdAt }}</p>
+
+  <table class="sale-lines" *ngIf="data.lines?.length">
+    <thead>
+      <tr>
+        <th>Product</th>
+        <th>Qty</th>
+        <th>Unit</th>
+        <th>Line</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let line of data.lines">
+        <td>{{ line.productName || ('#' + line.productId) }}</td>
+        <td>{{ line.quantity }}</td>
+        <td>{{ line.unitPrice | number : '1.2-2' }}</td>
+        <td>{{ line.lineTotal != null ? (line.lineTotal | number : '1.2-2') : '—' }}</td>
+      </tr>
+    </tbody>
+  </table>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close type="button">Close</button>
+</mat-dialog-actions>

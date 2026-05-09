@@ -11,4 +11,9 @@ public class GetProductResponse {
 	private String name;
 	private Double price;
 
+	private Integer stockQuantity;
+
+	private String productImageMimeType;
+	private String productImageBase64;
+
 }

@@ -1,5 +1,6 @@
 package com.kyc.api.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,12 +19,9 @@ import com.kyc.api.dto.delete.DeleteCustomerResponse;
 import com.kyc.api.dto.get.GetCustomerRequest;
 import com.kyc.api.dto.get.GetCustomerResponse;
 import com.kyc.api.dto.gets.GetsCustomersRequest;
-import com.kyc.api.dto.model.CustomerDetailRequest;
-import com.kyc.api.dto.model.CustomerDetailResponse;
 import com.kyc.api.dto.update.UpdateCustomerRequest;
 import com.kyc.api.dto.update.UpdateCustomerResponse;
 import com.kyc.api.model.customer.KycCustomer;
-import com.kyc.api.model.customer.KycCustomerDetail;
 import com.kyc.api.repository.KycCustomerRepository;
 import com.kyc.common.ApiMessages;
 import com.kyc.common.PageResponse;
@@ -39,14 +37,9 @@ public class CustomerServiceImpl implements ICustomerService {
 	public AddCustomerResponse add(AddCustomerRequest request) {
 
 		KycCustomer customer = new KycCustomer();
-		customer.setFirstName(request.getFirstName());
-		customer.setLastName(request.getLastName());
+		mapRequestOntoEntity(request, customer);
 		customer.setFullName(request.getFirstName() + " " + request.getLastName());
-		customer.setDob(request.getDob());
-		customer.setEmail(request.getEmail());
-		customer.setMobileNumber(request.getMobileNumber());
 		customer.setCreatedAt(LocalDateTime.now());
-		customer.setDetails(toDetails(request.getDetails(), customer));
 
 		repository.save(customer);
 
@@ -61,22 +54,53 @@ public class CustomerServiceImpl implements ICustomerService {
 		KycCustomer customer = repository.findById(request.getId())
 				.orElseThrow(() -> new ServiceException(ApiMessages.CUSTOMER_NOT_FOUND, HttpStatus.NOT_FOUND));
 
-		customer.setFirstName(request.getFirstName());
-		customer.setLastName(request.getLastName());
+		mapRequestOntoEntity(request, customer);
 		customer.setFullName(request.getFirstName() + " " + request.getLastName());
-		customer.setDob(request.getDob());
-		customer.setEmail(request.getEmail());
-		customer.setMobileNumber(request.getMobileNumber());
-
-		if (request.getDetails() != null) {
-			customer.setDetails(toDetails(request.getDetails(), customer));
-		}
 
 		repository.save(customer);
 
 		UpdateCustomerResponse response = new UpdateCustomerResponse();
 		response.setId(customer.getId());
 		return response;
+	}
+
+	private void mapRequestOntoEntity(AddCustomerRequest request, KycCustomer customer) {
+		mapCommonFields(request.getFirstName(), request.getLastName(), request.getDob(), request.getEmail(),
+				request.getMobileNumber(), request.getAddressLine1(), request.getAddressLine2(), request.getCity(),
+				request.getStateProvince(), request.getPostalCode(), request.getCountry(), request.getCustomerStatus(),
+				customer);
+	}
+
+	private void mapRequestOntoEntity(UpdateCustomerRequest request, KycCustomer customer) {
+		mapCommonFields(request.getFirstName(), request.getLastName(), request.getDob(), request.getEmail(),
+				request.getMobileNumber(), request.getAddressLine1(), request.getAddressLine2(), request.getCity(),
+				request.getStateProvince(), request.getPostalCode(), request.getCountry(), request.getCustomerStatus(),
+				customer);
+	}
+
+	private void mapCommonFields(String firstName, String lastName, LocalDate dob, String email,
+			String mobileNumber, String addressLine1, String addressLine2, String city, String stateProvince,
+			String postalCode, String country, String customerStatus, KycCustomer customer) {
+		customer.setFirstName(firstName);
+		customer.setLastName(lastName);
+		customer.setDob(dob);
+		customer.setEmail(email);
+		customer.setMobileNumber(mobileNumber);
+		customer.setAddressLine1(trimToNull(addressLine1));
+		customer.setAddressLine2(trimToNull(addressLine2));
+		customer.setCity(trimToNull(city));
+		customer.setStateProvince(trimToNull(stateProvince));
+		customer.setPostalCode(trimToNull(postalCode));
+		customer.setCountry(trimToNull(country));
+		customer.setCustomerStatus(customerStatus);
+	}
+
+	private static String trimToNull(String s) {
+		if (s == null) {
+			return null;
+		}
+		String t = s.trim();
+		return t.isEmpty() ? null : t;
 	}
 
 	@Override
@@ -128,36 +152,14 @@ public class CustomerServiceImpl implements ICustomerService {
 		response.setDob(customer.getDob());
 		response.setEmail(customer.getEmail());
 		response.setMobileNumber(customer.getMobileNumber());
+		response.setAddressLine1(customer.getAddressLine1());
+		response.setAddressLine2(customer.getAddressLine2());
+		response.setCity(customer.getCity());
+		response.setStateProvince(customer.getStateProvince());
+		response.setPostalCode(customer.getPostalCode());
+		response.setCountry(customer.getCountry());
+		response.setCustomerStatus(customer.getCustomerStatus());
 		response.setCreatedAt(customer.getCreatedAt());
-
-		if (customer.getDetails() != null) {
-			response.setDetails(customer.getDetails().stream().map(detail -> {
-				CustomerDetailResponse detailResponse = new CustomerDetailResponse();
-				detailResponse.setId(detail.getId());
-				detailResponse.setFieldName(detail.getFieldName());
-				detailResponse.setFieldValue(detail.getFieldValue());
-				detailResponse.setCustomerStatus(detail.getCustomerStatus());
-				detailResponse.setCreatedAt(detail.getCreatedAt());
-				return detailResponse;
-			}).collect(Collectors.toList()));
-		}
-
 		return response;
-	}
-
-	private List<KycCustomerDetail> toDetails(List<CustomerDetailRequest> details, KycCustomer customer) {
-		if (details == null) {
-			return null;
-		}
-
-		return details.stream().map(request -> {
-			KycCustomerDetail detail = new KycCustomerDetail();
-			detail.setCustomer(customer);
-			detail.setFieldName(request.getFieldName());
-			detail.setFieldValue(request.getFieldValue());
-			detail.setCustomerStatus(request.getCustomerStatus());
-			detail.setCreatedAt(LocalDateTime.now());
-			return detail;
-		}).collect(Collectors.toList());
 	}
 }

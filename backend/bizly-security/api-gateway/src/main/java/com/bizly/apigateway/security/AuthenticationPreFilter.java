@@ -6,7 +6,9 @@ import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -28,6 +30,15 @@ import reactor.core.publisher.Mono;
 
 @Component
 public class AuthenticationPreFilter extends AbstractGatewayFilterFactory<AuthenticationPreFilter.Config> {
+
+	private static final List<String> PUBLIC_PATHS = List.of(
+		"/auth/login",
+		"/auth/refresh",
+		"/auth/logout",
+		"/auth/forgot-password",
+		"/auth/forgot-password/verify",
+		"/auth/forgot-password/reset"
+	);
 
 	@Value("${keyStore.path}")
 	private String keyStorePath;
@@ -62,10 +73,12 @@ public class AuthenticationPreFilter extends AbstractGatewayFilterFactory<Authen
 
 			String path = exchange.getRequest().getURI().getPath();
 
-			if (path.startsWith("/auth/login") || path.startsWith("/auth/refresh") || path.startsWith("/auth/logout")) {
+			boolean isPublic = PUBLIC_PATHS.stream().anyMatch(path::startsWith);
+
+			if (isPublic) {
 				return chain.filter(exchange);
 			}
-
+			
 			HttpHeaders headers = exchange.getRequest().getHeaders();
 			String token = headers.getFirst(HttpHeaders.AUTHORIZATION);
 			String deviceId = headers.getFirst("X-DEVICE-ID");
@@ -86,21 +99,21 @@ public class AuthenticationPreFilter extends AbstractGatewayFilterFactory<Authen
 				String tokenDeviceId = claims.get("deviceId", String.class);
 				Object roleObj = claims.get("role");
 
-				String role;
-
-				if (roleObj instanceof List<?>) {
-					role = ((List<?>) roleObj).get(0).toString();
-				} else {
-					role = roleObj.toString();
-				}
-
 				if (!tokenDeviceId.equals(deviceId)) {
 					return errorResponse(exchange, "Device mismatch", HttpStatus.FORBIDDEN);
 				}
 
-				ServerHttpRequest mutated = exchange.getRequest().mutate().header("X-User", username)
-						.header("X-Session-Id", sessionId).header("X-Role", ("ROLE_" + role).toUpperCase())
-						.header("X-Internal-Secret", "THANKSGOD_BLESSNATHALIEANDMYFAMILY_05082026").build();
+				List<String> authorities = springSecurityAuthoritiesFromJwtRoleClaim(roleObj);
+
+				ServerHttpRequest mutated = exchange.getRequest().mutate().headers(httpHeaders -> {
+					httpHeaders.set("X-User", username);
+					httpHeaders.set("X-Session-Id", sessionId);
+					httpHeaders.remove("X-Role");
+					for (String a : authorities) {
+						httpHeaders.add("X-Role", a);
+					}
+					httpHeaders.set("X-Internal-Secret", "THANKSGOD_BLESSNATHALIEANDMYFAMILY_05082026");
+				}).build();
 
 				return chain.filter(exchange.mutate().request(mutated).build());
 
@@ -108,6 +121,42 @@ public class AuthenticationPreFilter extends AbstractGatewayFilterFactory<Authen
 				return errorResponse(exchange, "Invalid token", HttpStatus.UNAUTHORIZED);
 			}
 		};
+	}
+
+	/**
+	 * JWT {@code role} claim is a list of DB role names (e.g. {@code USER}, {@code ADMIN}, or already
+	 * {@code ROLE_USER}). Each is normalized to a Spring Security authority and forwarded as its own
+	 * {@code X-Role} header so downstream filters can grant {@code hasRole('USER')} and {@code hasRole('ADMIN')}
+	 * when the user has multiple roles.
+	 */
+	private static List<String> springSecurityAuthoritiesFromJwtRoleClaim(Object roleObj) {
+		if (roleObj == null) {
+			return List.of("ROLE_USER");
+		}
+		if (roleObj instanceof List<?>) {
+			List<?> list = (List<?>) roleObj;
+			if (list.isEmpty()) {
+				return List.of("ROLE_USER");
+			}
+			List<String> out = new ArrayList<>();
+			for (Object o : list) {
+				out.add(normalizeAuthority(String.valueOf(o)));
+			}
+			return List.copyOf(out);
+		}
+		return List.of(normalizeAuthority(roleObj.toString()));
+	}
+
+	private static String normalizeAuthority(String raw) {
+		String trimmed = raw == null ? "" : raw.trim();
+		if (trimmed.isEmpty()) {
+			return "ROLE_USER";
+		}
+		String upper = trimmed.toUpperCase(Locale.ROOT);
+		if (upper.startsWith("ROLE_")) {
+			return upper;
+		}
+		return "ROLE_" + upper;
 	}
 
 	private Mono<Void> errorResponse(ServerWebExchange exchange, String msg, HttpStatus status) {

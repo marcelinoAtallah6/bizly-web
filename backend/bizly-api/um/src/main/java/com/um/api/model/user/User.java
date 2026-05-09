@@ -7,13 +7,14 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Lob;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import com.um.common.DatabaseConstants;
 
 @Entity
-@Table(name = DatabaseConstants.USER_TABLE)
+@Table(name = DatabaseConstants.USER_TABLE, schema = DatabaseConstants.SCHEMA)
 public class User {
 
 	@Id
@@ -21,28 +22,36 @@ public class User {
 	@SequenceGenerator(name = "user_seq", sequenceName = DatabaseConstants.USER_SEQ, allocationSize = 1)
 	private Long id;
 
-	@Column(nullable = false, unique = true)
+	@Column(name = "username", nullable = false, unique = true)
 	private String username;
 
-	@Column(nullable = false)
+	@Column(name = "first_name", nullable = false)
 	private String firstName;
 
-	@Column(nullable = false)
+	@Column(name = "last_name", nullable = false)
 	private String lastName;
 
-	@Column(nullable = false, unique = true)
+	@Column(name = "email", nullable = false, unique = true)
 	private String email;
 
-	@Column(nullable = false)
+	@Column(name = "mobile_number", nullable = false)
 	private String mobileNumber;
 
-	@Column(nullable = false)
+	@Column(name = "password", nullable = false)
 	private String password;
 
-	@Column(nullable = false)
+	@Column(name = "status", nullable = false)
 	private String status;
 
+	@Column(name = "created_at")
 	private LocalDateTime createdAt;
+
+	@Column(name = "profile_image_mime", length = 64)
+	private String profileImageMime;
+
+	@Lob
+	@Column(name = "profile_image_data")
+	private byte[] profileImageData;
 
 	public Long getId() {
 		return id;
@@ -114,5 +123,21 @@ public class User {
 
 	public void setCreatedAt(LocalDateTime createdAt) {
 		this.createdAt = createdAt;
+	}
+
+	public String getProfileImageMime() {
+		return profileImageMime;
+	}
+
+	public void setProfileImageMime(String profileImageMime) {
+		this.profileImageMime = profileImageMime;
+	}
+
+	public byte[] getProfileImageData() {
+		return profileImageData;
+	}
+
+	public void setProfileImageData(byte[] profileImageData) {
+		this.profileImageData = profileImageData;
 	}
 }

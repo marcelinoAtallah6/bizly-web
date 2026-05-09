@@ -5,13 +5,16 @@ import {
   Input,
   ViewEncapsulation,
   OnInit,
+  OnDestroy,
 } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { NavItem } from '../sidebar/nav-item/nav-item';
 import { SharedService } from 'src/app/services/shared.service';
 import { AuthService } from 'src/app/services/auth.service';
+import { NavbarProfileView, UserProfileService } from 'src/app/services/user-profile.service';
 
 
 @Component({
@@ -19,7 +22,7 @@ import { AuthService } from 'src/app/services/auth.service';
   templateUrl: './header.component.html',
   encapsulation: ViewEncapsulation.None,
 })
-export class HeaderComponent implements OnInit {
+export class HeaderComponent implements OnInit, OnDestroy {
   @Input() showToggle = true;
   @Input() toggleChecked = false;
   @Output() toggleMobileNav = new EventEmitter<void>();
@@ -28,11 +31,37 @@ export class HeaderComponent implements OnInit {
 
   showFiller = false;
   isSigningOut = false;
+  headerProf: NavbarProfileView | null = null;
+  private profileSub?: Subscription;
 
   onMenuClick(menuSelected: any) {
     this.router.navigate([menuSelected]);
 
   }
+  /** Roles from JWT used for session switching (multi-role accounts). */
+  roleChoices(): string[] {
+    return this.authService.getJwtRoleNames();
+  }
+
+  displayRoleLabel(code: string): string {
+    const u = code.toUpperCase();
+    return u.startsWith('ROLE_') ? u.slice(5) : u;
+  }
+
+  activeRoleSummary(): string {
+    const a = this.authService.getJwtActiveRole();
+    if (!a) {
+      return 'All roles';
+    }
+    return this.displayRoleLabel(a);
+  }
+
+  switchRole(role: string | null): void {
+    this.authService.setActiveRole(role).subscribe({
+      error: () => {},
+    });
+  }
+
   onSignOut() {
     if (this.isSigningOut) {
       return;
@@ -43,9 +72,13 @@ export class HeaderComponent implements OnInit {
       .logout()
       .pipe(finalize(() => (this.isSigningOut = false)))
       .subscribe({
-        next: () => this.router.navigate(['/authentication/login']),
+        next: () => {
+          this.userProfile.clear();
+          this.router.navigate(['/authentication/login']);
+        },
         error: () => {
           this.authService.clearSession();
+          this.userProfile.clear();
           this.router.navigate(['/authentication/login']);
         },
       });
@@ -61,9 +94,14 @@ export class HeaderComponent implements OnInit {
     public dialog: MatDialog,
     public router: Router,
     private sharedService: SharedService,
-    private authService: AuthService
+    private authService: AuthService,
+    private readonly userProfile: UserProfileService
   ) {}
   ngOnInit(): void {
+    this.userProfile.refresh();
+    this.profileSub = this.userProfile.profile$.subscribe((p) => {
+      this.headerProf = p;
+    });
     // this.sharedService.variable$.subscribe((value: any) => {
     //   this.menuItems = value;
     //   console.log("menuItem======",this.menuItems)
@@ -94,6 +132,10 @@ export class HeaderComponent implements OnInit {
       }
     ]
     ;
+  }
+
+  ngOnDestroy(): void {
+    this.profileSub?.unsubscribe();
   }
 
   

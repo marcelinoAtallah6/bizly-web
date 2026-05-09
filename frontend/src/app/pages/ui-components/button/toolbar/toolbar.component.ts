@@ -5,6 +5,9 @@ export interface ToolbarButton {
   hasSubmenu?: boolean;
   submenuItems?: SubmenuItem[];
   action?: () => void;
+  disabled?: boolean;
+  /** Material palette for icon buttons (e.g. primary add, warn delete). */
+  color?: 'primary' | 'accent' | 'warn';
 }
 
 export interface SubmenuItem {
@@ -51,7 +54,20 @@ export class ToolbarComponent {
   }
 
   ///filter end ///
-  constructor( ) { }
+  constructor() {}
+
+  /** Stable identity so *ngFor does not recreate buttons every CD when parent uses a getter for `toolbar`. */
+  trackToolbarBtn(_index: number, button: ToolbarButton): string {
+    return button.id;
+  }
+
+  invoke(button: ToolbarButton, event: Event): void {
+    if (button.disabled) {
+      return;
+    }
+    button.action?.();
+    event.stopPropagation();
+  }
 
   @Output() menuItemClicked = new EventEmitter<string>();
   @Output() submenuItemClicked = new EventEmitter<() => void>();

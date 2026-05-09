@@ -1,7 +1,10 @@
 package com.um.api.dto.user.update;
 
+import java.util.List;
+
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
@@ -36,6 +39,16 @@ public class UpdateUserRequest {
 	@NotBlank(message = ApiDefaultValdiation.STATUS)
 	@Size(max = 50)
 	private String status;
+
+	@NotEmpty(message = ApiDefaultValdiation.ROLES)
+	private List<Long> roleIds;
+
+	/** When true, removes stored profile image (ignores base64 fields). */
+	private Boolean clearProfileImage;
+
+	private String profileImageMimeType;
+
+	private String profileImageBase64;
 
 	public Long getId() {
 		return id;
@@ -91,5 +104,37 @@ public class UpdateUserRequest {
 
 	public void setStatus(String status) {
 		this.status = status;
+	}
+
+	public List<Long> getRoleIds() {
+		return roleIds;
+	}
+
+	public void setRoleIds(List<Long> roleIds) {
+		this.roleIds = roleIds;
+	}
+
+	public Boolean getClearProfileImage() {
+		return clearProfileImage;
+	}
+
+	public void setClearProfileImage(Boolean clearProfileImage) {
+		this.clearProfileImage = clearProfileImage;
+	}
+
+	public String getProfileImageMimeType() {
+		return profileImageMimeType;
+	}
+
+	public void setProfileImageMimeType(String profileImageMimeType) {
+		this.profileImageMimeType = profileImageMimeType;
+	}
+
+	public String getProfileImageBase64() {
+		return profileImageBase64;
+	}
+
+	public void setProfileImageBase64(String profileImageBase64) {
+		this.profileImageBase64 = profileImageBase64;
 	}
 }

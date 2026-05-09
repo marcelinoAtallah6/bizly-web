@@ -4,10 +4,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import javax.persistence.CascadeType;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Lob;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -27,11 +29,18 @@ public class Product {
 
 	private LocalDateTime createdAt;
 
-	@OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
-	private List<ProductItem> productItems;
+	@Column(name = "product_image_mime", length = 64)
+	private String productImageMime;
+
+	@Lob
+	@Column(name = "product_image_data")
+	private byte[] productImageData;
+
+	@Column(name = "stock_quantity")
+	private Integer stockQuantity;
 
 	@OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
-	private List<KycCustomerOrder> customerOrders;
+	private List<ProductItem> productItems;
 
 	public Long getId() {
 		return id;
@@ -73,12 +82,28 @@ public class Product {
 		this.productItems = productItems;
 	}
 
-	public List<KycCustomerOrder> getCustomerOrders() {
-		return customerOrders;
+	public String getProductImageMime() {
+		return productImageMime;
 	}
 
-	public void setCustomerOrders(List<KycCustomerOrder> customerOrders) {
-		this.customerOrders = customerOrders;
+	public void setProductImageMime(String productImageMime) {
+		this.productImageMime = productImageMime;
+	}
+
+	public byte[] getProductImageData() {
+		return productImageData;
+	}
+
+	public void setProductImageData(byte[] productImageData) {
+		this.productImageData = productImageData;
+	}
+
+	public Integer getStockQuantity() {
+		return stockQuantity;
+	}
+
+	public void setStockQuantity(Integer stockQuantity) {
+		this.stockQuantity = stockQuantity;
 	}
 
 }

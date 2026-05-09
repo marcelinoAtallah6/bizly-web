@@ -1,0 +1,37 @@
+.user-form mat-form-field {
+  margin-bottom: 8px;
+}
+
+.gap-8 {
+  gap: 8px;
+}
+
+.m-y-16 {
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+.f-s-16 {
+  font-size: 16px;
+}
+
+.profile-preview img,
+.profile-placeholder {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(var(--primary-rgb), 0.06);
+  font-size: 12px;
+  color: var(--labelText);
+}
+
+.m-t-8 {
+  margin-top: 8px;
+}

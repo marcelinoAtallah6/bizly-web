@@ -40,8 +40,8 @@ public class CustomUserDetailService implements UserDetailsService {
 	}
 
 	private List<SimpleGrantedAuthority> getUserAuthorities(Long userId) {
-
-		return userRoleRepository.findByIdUserId(userId).stream()
-				.map(ur -> new SimpleGrantedAuthority(ur.getRole().getName())).collect(Collectors.toList());
+		// Use join query so orphaned um_user_role rows (invalid role_id) never lazy-load missing RoleEntity.
+		return userRoleRepository.findRoleNamesByUserId(userId).stream().map(SimpleGrantedAuthority::new)
+				.collect(Collectors.toList());
 	}
 }

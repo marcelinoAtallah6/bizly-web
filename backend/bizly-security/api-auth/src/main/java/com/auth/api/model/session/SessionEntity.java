@@ -2,6 +2,7 @@ package com.auth.api.model.session;
 
 import java.util.Date;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -26,6 +27,9 @@ public class SessionEntity {
 	private String active;
 	private Date createdAt;
 	private Date expiresAt;
+
+	@Column(name = "active_role_name", length = 64)
+	private String activeRoleName;
 
 	public Long getId() {
 		return id;
@@ -97,6 +101,14 @@ public class SessionEntity {
 
 	public void setExpiresAt(Date expiresAt) {
 		this.expiresAt = expiresAt;
+	}
+
+	public String getActiveRoleName() {
+		return activeRoleName;
+	}
+
+	public void setActiveRoleName(String activeRoleName) {
+		this.activeRoleName = activeRoleName;
 	}
 
 }

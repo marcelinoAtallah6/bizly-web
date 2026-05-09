@@ -23,7 +23,7 @@ public class MenuController {
 	@Autowired
 	private IMenuService menuService;
 
-	@PostMapping({ "/get" })
+	@PostMapping({ "/gets" })
 	@PreAuthorize("hasRole('USER')")
 	public ResponseEntity<List<NavGroupItemResponse>> getMenus() {
 		log.info("[UM_MENU][GET_MENUS]");

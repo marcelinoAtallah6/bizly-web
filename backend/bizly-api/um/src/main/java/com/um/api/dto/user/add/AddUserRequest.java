@@ -42,6 +42,12 @@ public class AddUserRequest {
 	@Size(max = 50)
 	private String status;
 
+	/** Optional: e.g. image/jpeg — required if profileImageBase64 is set */
+	private String profileImageMimeType;
+
+	/** Optional raw Base64 or data URL */
+	private String profileImageBase64;
+
 	public String getUsername() {
 		return username;
 	}
@@ -104,5 +110,21 @@ public class AddUserRequest {
 
 	public void setStatus(String status) {
 		this.status = status;
+	}
+
+	public String getProfileImageMimeType() {
+		return profileImageMimeType;
+	}
+
+	public void setProfileImageMimeType(String profileImageMimeType) {
+		this.profileImageMimeType = profileImageMimeType;
+	}
+
+	public String getProfileImageBase64() {
+		return profileImageBase64;
+	}
+
+	public void setProfileImageBase64(String profileImageBase64) {
+		this.profileImageBase64 = profileImageBase64;
 	}
 }

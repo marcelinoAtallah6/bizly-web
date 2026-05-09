@@ -14,10 +14,12 @@ public class DatabaseConstants {
     public static final String USER_ROLE_TABLE = "um_user_role";
     public static final String APPLICATIONS_TABLE = "UM_APPLICATIONS";
     public static final String MENUS_TABLE = "UM_MENUS";
+    public static final String AUDIT_LOG_TABLE = "UM_AUDIT_LOG";
 
     // Sequences
     public static final String USER_SEQ = SCHEMA + ".USER_SEQ";
     public static final String ROLE_SEQ = SCHEMA + ".ROLE_SEQ";
     public static final String APPLICATIONS_SEQ = SCHEMA + ".UM_APPLICATIONS_SEQ";
     public static final String MENUS_SEQ = SCHEMA + ".UM_MENUS_SEQ";
+    public static final String AUDIT_LOG_SEQ = SCHEMA + ".S_UM_AUDIT_LOG";
 }

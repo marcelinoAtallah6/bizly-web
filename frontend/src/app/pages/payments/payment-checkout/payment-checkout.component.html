@@ -1,0 +1,110 @@
+<div *ngIf="loading" class="d-flex justify-content-center p-48">
+  <mat-spinner diameter="40"></mat-spinner>
+</div>
+
+<div class="payment-checkout-page" *ngIf="!loading">
+  <mat-card class="mat-mdc-card mdc-card cardWithShadow theme-card m-b-24">
+    <mat-card-header class="mat-mdc-card-header card-section-header">
+      <mat-card-title class="mat-mdc-card-title">Customer</mat-card-title>
+    </mat-card-header>
+    <mat-card-content class="mat-mdc-card-content b-t-1 p-24">
+      <form [formGroup]="checkoutForm">
+        <mat-form-field appearance="outline" class="w-100 max-w-480">
+          <mat-label>Select customer</mat-label>
+          <mat-select formControlName="customerId">
+            <mat-option *ngFor="let c of customers" [value]="c.id">{{ customerLabel(c) }}</mat-option>
+          </mat-select>
+          <mat-hint *ngIf="customers.length === 0">No customers loaded — check KYC list or API.</mat-hint>
+        </mat-form-field>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <div class="checkout-layout-inner">
+    <div class="cards-grid checkout-product-grid">
+      <mat-card *ngFor="let p of products; trackBy: trackByProductId" class="item-card">
+        <img
+          *ngIf="productImageUrl(p) as imgSrc"
+          mat-card-image
+          class="checkout-card-image"
+          [src]="imgSrc"
+          [alt]="p.name"
+        />
+        <div *ngIf="!productImageUrl(p)" class="checkout-card-image-placeholder">No image</div>
+
+        <mat-card-header class="checkout-card-header">
+          <mat-card-title class="mat-mdc-card-title">{{ p.name }}</mat-card-title>
+          <div class="category-badge">{{ unitPrice(p) | currency }}</div>
+        </mat-card-header>
+
+        <mat-card-content>
+          <p class="stock-line">{{ stockBadgeLabel(p) }}</p>
+          <div class="details-grid">
+            <div class="detail-item">
+              <span class="label">In cart</span>
+              <span class="value">{{ qty(p.id) }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="label">Line total</span>
+              <span class="value price">{{ lineTotal(p) | currency }}</span>
+            </div>
+          </div>
+        </mat-card-content>
+
+        <mat-card-actions class="checkout-card-actions">
+          <div class="qty-control-strip">
+            <button
+              mat-stroked-button
+              type="button"
+              class="qty-side-btn"
+              (click)="removeProduct(p.id)"
+              [disabled]="qty(p.id) < 1"
+              aria-label="Remove one"
+            >
+              <mat-icon>remove</mat-icon>
+            </button>
+            <span class="qty-big">{{ qty(p.id) }}</span>
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              class="qty-side-btn qty-add"
+              (click)="addProduct(p)"
+              [disabled]="!canAddMore(p)"
+              aria-label="Add one"
+            >
+              <mat-icon>add</mat-icon>
+            </button>
+          </div>
+        </mat-card-actions>
+      </mat-card>
+    </div>
+
+    <mat-card class="mat-mdc-card mdc-card cardWithShadow theme-card cart-summary">
+      <mat-card-header>
+        <mat-card-title>Order summary</mat-card-title>
+      </mat-card-header>
+      <mat-card-content class="b-t-1">
+        <p class="m-b-8 d-flex justify-content-between gap-8" *ngFor="let p of cartProducts()">
+          <span>{{ p.name }} × {{ qty(p.id) }}</span>
+          <span>{{ lineTotal(p) | currency }}</span>
+        </p>
+        <mat-divider class="m-y-12"></mat-divider>
+        <p class="m-0 f-w-600 d-flex justify-content-between">
+          <span>Total</span>
+          <span>{{ cartTotal() | currency }}</span>
+        </p>
+        <button
+          mat-flat-button
+          color="primary"
+          class="w-100 m-t-16"
+          type="button"
+          (click)="checkout()"
+          [disabled]="!canCompletePayment"
+        >
+          Complete payment
+        </button>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

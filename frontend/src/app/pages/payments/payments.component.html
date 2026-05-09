@@ -1,1 +1,13 @@
-<p>payments works!</p>
+<div class="payments-shell p-24">
+  <app-page-action-bar title="Payments"></app-page-action-bar>
+
+  <div class="m-b-24 pay-switch-wrap">
+    <custom-switch
+      [buttons]="payTabs"
+      [selectedValue]="payTab"
+      (selectionChange)="onPayTab($event)"
+    ></custom-switch>
+  </div>
+
+  <router-outlet></router-outlet>
+</div>

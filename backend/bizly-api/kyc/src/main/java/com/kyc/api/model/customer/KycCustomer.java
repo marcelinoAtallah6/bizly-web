@@ -2,15 +2,12 @@ package com.kyc.api.model.customer;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import com.kyc.common.DatabaseConstants;
@@ -34,10 +31,26 @@ public class KycCustomer {
 	@Column(name = "mobile_number")
 	private String mobileNumber;
 
-	private LocalDateTime createdAt;
+	@Column(name = "address_line1")
+	private String addressLine1;
 
-	@OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<KycCustomerDetail> details;
+	@Column(name = "address_line2")
+	private String addressLine2;
+
+	private String city;
+
+	@Column(name = "state_province")
+	private String stateProvince;
+
+	@Column(name = "postal_code")
+	private String postalCode;
+
+	private String country;
+
+	@Column(name = "customer_status")
+	private String customerStatus;
+
+	private LocalDateTime createdAt;
 
 	public Long getId() {
 		return id;
@@ -95,20 +108,68 @@ public class KycCustomer {
 		this.mobileNumber = mobileNumber;
 	}
 
+	public String getAddressLine1() {
+		return addressLine1;
+	}
+
+	public void setAddressLine1(String addressLine1) {
+		this.addressLine1 = addressLine1;
+	}
+
+	public String getAddressLine2() {
+		return addressLine2;
+	}
+
+	public void setAddressLine2(String addressLine2) {
+		this.addressLine2 = addressLine2;
+	}
+
+	public String getCity() {
+		return city;
+	}
+
+	public void setCity(String city) {
+		this.city = city;
+	}
+
+	public String getStateProvince() {
+		return stateProvince;
+	}
+
+	public void setStateProvince(String stateProvince) {
+		this.stateProvince = stateProvince;
+	}
+
+	public String getPostalCode() {
+		return postalCode;
+	}
+
+	public void setPostalCode(String postalCode) {
+		this.postalCode = postalCode;
+	}
+
+	public String getCountry() {
+		return country;
+	}
+
+	public void setCountry(String country) {
+		this.country = country;
+	}
+
+	public String getCustomerStatus() {
+		return customerStatus;
+	}
+
+	public void setCustomerStatus(String customerStatus) {
+		this.customerStatus = customerStatus;
+	}
+
 	public LocalDateTime getCreatedAt() {
 		return createdAt;
 	}
 
 	public void setCreatedAt(LocalDateTime createdAt) {
 		this.createdAt = createdAt;
-	}
-
-	public List<KycCustomerDetail> getDetails() {
-		return details;
-	}
-
-	public void setDetails(List<KycCustomerDetail> details) {
-		this.details = details;
 	}
 
 }

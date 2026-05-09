@@ -1,0 +1,27 @@
+:host.sale-detail-host {
+  display: block;
+}
+
+.sale-detail-body {
+  min-width: 280px;
+}
+
+.sale-lines {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+.sale-lines th,
+.sale-lines td {
+  border-bottom: 1px solid var(--borderColor, rgba(0, 0, 0, 0.12));
+  padding: 8px;
+  text-align: left;
+}
+
+.sale-lines th {
+  font-weight: 600;
+  color: var(--textPrimary);
+  opacity: 0.85;
+}

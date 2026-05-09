@@ -34,6 +34,7 @@ import { SwitchComponent } from './switch/switch.component';
 import { MainScreenComponent } from './Custom/main-screen/main-screen.component';
 import { DetailScreenComponent } from './Custom/detail-screen/detail-screen.component';
 import { ToolbarComponent } from './button/toolbar/toolbar.component';
+import { PageActionBarComponent } from './page-action-bar/page-action-bar.component';
 import { CardholderComponent } from './cardholder/cardholder.component';
 import { ImageUploadComponent } from './image-upload/image-upload.component';
 
@@ -54,6 +55,7 @@ const commonArray = [
   ImageUploadComponent,
   CardholderComponent,
   ToolbarComponent,
+  PageActionBarComponent,
   MainScreenComponent,
   DetailScreenComponent,
   SwitchComponent,

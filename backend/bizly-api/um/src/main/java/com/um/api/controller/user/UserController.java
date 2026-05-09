@@ -22,6 +22,7 @@ import com.um.api.dto.user.get.GetUserResponse;
 import com.um.api.dto.user.gets.GetsUsersRequest;
 import com.um.api.dto.user.update.UpdateUserRequest;
 import com.um.api.dto.user.update.UpdateUserResponse;
+import com.um.api.audit.Audited;
 import com.um.api.service.user.IUserService;
 import com.um.common.ApiMessages;
 import com.um.common.ApiResponse;
@@ -38,6 +39,7 @@ public class UserController {
 
 	@PostMapping("/add")
 	@PreAuthorize("hasRole('USER')")
+	@Audited(action = "UM_USER_ADD", resourceType = "USER")
 	public @ResponseBody ResponseEntity<ApiResponse<AddUserResponse>> add(@RequestBody @Valid AddUserRequest request) {
 
 		log.info("[UM_USER][ADD] username={}", request.getUsername());
@@ -46,6 +48,7 @@ public class UserController {
 
 	@PostMapping("/update")
 	@PreAuthorize("hasRole('USER')")
+	@Audited(action = "UM_USER_UPDATE", resourceType = "USER")
 	public @ResponseBody ResponseEntity<ApiResponse<UpdateUserResponse>> update(
 			@RequestBody @Valid UpdateUserRequest request) {
 
@@ -55,6 +58,7 @@ public class UserController {
 
 	@PostMapping("/delete")
 	@PreAuthorize("hasRole('USER')")
+	@Audited(action = "UM_USER_DELETE", resourceType = "USER")
 	public @ResponseBody ResponseEntity<ApiResponse<DeleteUserResponse>> delete(
 			@RequestBody @Valid DeleteUserRequest request) {
 

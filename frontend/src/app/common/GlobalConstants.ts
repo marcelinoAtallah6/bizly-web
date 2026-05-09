@@ -24,7 +24,11 @@ export class GlobalConstants {
     auth: {
       login: `${GlobalConstants.API_BASE_URL}/auth/login`,
       logout: `${GlobalConstants.API_BASE_URL}/auth/logout`,
-      refresh: `${GlobalConstants.API_BASE_URL}/auth/refresh`
+      refresh: `${GlobalConstants.API_BASE_URL}/auth/refresh`,
+      sessionActiveRole: `${GlobalConstants.API_BASE_URL}/auth/session/active-role`,
+      forgotPassword: `${GlobalConstants.API_BASE_URL}/auth/forgot-password`,
+      verifyForgotPasswordToken: `${GlobalConstants.API_BASE_URL}/auth/forgot-password/verify`,
+      resetForgotPassword: `${GlobalConstants.API_BASE_URL}/auth/forgot-password/reset`
     },
     // Add other endpoint categories as needed
     users: {
@@ -32,16 +36,51 @@ export class GlobalConstants {
       getById: (id: string) => `${GlobalConstants.API_BASE_URL}/users/${id}`,
       create: `${GlobalConstants.API_BASE_URL}/users`
     },
-    kyc:{
-      getAllCustomers: `${GlobalConstants.API_BASE_URL}/kyc/getAllCustomers`,
-      createCustomer: `${GlobalConstants.API_BASE_URL}/kyc/createCustomer`,
-      deleteCustomer: (id: string) =>  `${GlobalConstants.API_BASE_URL}/kyc/deleteCustomer/${id}`,
-      updateCustomer: (id: string) =>  `${GlobalConstants.API_BASE_URL}/kyc/updateCustomer/${id}`,
+    kyc: {
+      customer: {
+        add: `${GlobalConstants.API_BASE_URL}/kyc/customer/add`,
+        update: `${GlobalConstants.API_BASE_URL}/kyc/customer/update`,
+        delete: `${GlobalConstants.API_BASE_URL}/kyc/customer/delete`,
+        get: `${GlobalConstants.API_BASE_URL}/kyc/customer/get`,
+        gets: `${GlobalConstants.API_BASE_URL}/kyc/customer/gets`,
+      },
     },
-    application:{
-      getAll: `${GlobalConstants.API_BASE_URL}/um/menu/get`,
-
-    }
+    pm: {
+      product: {
+        add: `${GlobalConstants.API_BASE_URL}/pm/product/add`,
+        update: `${GlobalConstants.API_BASE_URL}/pm/product/update`,
+        delete: `${GlobalConstants.API_BASE_URL}/pm/product/delete`,
+        get: `${GlobalConstants.API_BASE_URL}/pm/product/get`,
+        gets: `${GlobalConstants.API_BASE_URL}/pm/product/gets`,
+      },
+      sale: {
+        checkout: `${GlobalConstants.API_BASE_URL}/pm/sale/checkout`,
+        get: `${GlobalConstants.API_BASE_URL}/pm/sale/get`,
+        gets: `${GlobalConstants.API_BASE_URL}/pm/sale/gets`,
+      },
+    },
+    um: {
+      user: {
+        add: `${GlobalConstants.API_BASE_URL}/um/user/add`,
+        update: `${GlobalConstants.API_BASE_URL}/um/user/update`,
+        delete: `${GlobalConstants.API_BASE_URL}/um/user/delete`,
+        get: `${GlobalConstants.API_BASE_URL}/um/user/get`,
+        gets: `${GlobalConstants.API_BASE_URL}/um/user/gets`,
+      },
+      role: {
+        add: `${GlobalConstants.API_BASE_URL}/um/role/add`,
+        update: `${GlobalConstants.API_BASE_URL}/um/role/update`,
+        delete: `${GlobalConstants.API_BASE_URL}/um/role/delete`,
+        get: `${GlobalConstants.API_BASE_URL}/um/role/get`,
+        gets: `${GlobalConstants.API_BASE_URL}/um/role/gets`,
+      },
+      audit: {
+        gets: `${GlobalConstants.API_BASE_URL}/um/audit/gets`,
+      },
+    },
+    application: {
+      getAll: `${GlobalConstants.API_BASE_URL}/um/menu/gets`,
+    },
   };
 
   // Helper method to create headers with authentication token

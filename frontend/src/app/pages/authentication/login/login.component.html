@@ -6,11 +6,11 @@
       <mat-card class="cardWithShadow boxed-auth">
         <mat-card-content class="p-32">
           <div class="text-center">
-            <a [routerLink]="['/dashboard']">
+            <a [routerLink]="['/authentication/login']">
               <img
                 src="./assets/images/logos/logo.svg"
                 class="align-middle m-2"
-                alt="logo"
+                alt="Bizly logo"
               />
             </a>
           </div>
@@ -55,6 +55,11 @@
             >
             <mat-form-field appearance="outline" class="w-100" color="primary">
               <input matInput formControlName="username" />
+              <mat-error
+                *ngIf="loginForm.controls.username.touched && loginForm.controls.username.hasError('required')"
+              >
+                Username is required.
+              </mat-error>
             </mat-form-field>
             <!-- password -->
             <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block"
@@ -62,12 +67,19 @@
             >
             <mat-form-field appearance="outline" class="w-100" color="primary">
               <input matInput type="password" formControlName="password" />
+              <mat-error
+                *ngIf="loginForm.controls.password.touched && loginForm.controls.password.hasError('required')"
+              >
+                Password is required.
+              </mat-error>
             </mat-form-field>
 
             <div class="d-flex align-items-center m-b-12">
-              <mat-checkbox color="primary">Remember this Device</mat-checkbox>
+              <mat-checkbox color="primary" formControlName="rememberDevice"
+                >Remember this Device</mat-checkbox
+              >
               <a
-                [routerLink]="['/']"
+                [routerLink]="['/authentication/forgot-password']"
                 class="text-primary f-w-600 text-decoration-none m-l-auto f-s-14"
                 >Forgot Password ?</a
               >
@@ -87,7 +99,7 @@
             <!-- input -->
           </form>
           <span class="d-block f-w-500 text-center m-t-24"
-            >New to TSP?
+            >New to Bizly?
             <a
               [routerLink]="['/authentication/register']"
               class="text-decoration-none text-primary f-w-500 f-s-14"

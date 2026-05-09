@@ -56,6 +56,10 @@ public class UmMenu {
 	@Column(name = "is_active")
 	private Boolean isActive;
 
+	/** Comma-separated role names; empty = inherit / show for any granted role. */
+	@Column(name = "allowed_roles", length = 512)
+	private String allowedRoles;
+
 	@JsonIgnore
 	@Column(name = "created_at")
 	private LocalDateTime createdAt;
@@ -127,6 +131,14 @@ public class UmMenu {
 
 	public void setIsActive(Boolean isActive) {
 		this.isActive = isActive;
+	}
+
+	public String getAllowedRoles() {
+		return allowedRoles;
+	}
+
+	public void setAllowedRoles(String allowedRoles) {
+		this.allowedRoles = allowedRoles;
 	}
 
 	public LocalDateTime getCreatedAt() {

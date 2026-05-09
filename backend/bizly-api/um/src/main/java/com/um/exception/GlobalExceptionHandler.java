@@ -1,5 +1,8 @@
 package com.um.exception;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -11,6 +14,8 @@ import com.um.common.ApiResponse;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+	private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
 	@ExceptionHandler(AccessDeniedException.class)
 	public ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(AccessDeniedException ex) {
@@ -34,12 +39,18 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<>(ApiResponse.error(customErrorMessage), ex.getStatus());
 	}
 
+	@ExceptionHandler(DataAccessException.class)
+	public ResponseEntity<ApiResponse<Void>> handleDataAccessException(DataAccessException ex) {
+		log.error("Database error", ex);
+		return new ResponseEntity<>(ApiResponse.error("A database error occurred. Please try again later."),
+				HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ApiResponse<Void>> handleGenericException(Exception ex) {
-		ex.printStackTrace();
+		log.error("Unexpected error", ex);
 
-		// Return 500 Internal Server Error status
-		return new ResponseEntity<>(ApiResponse.error("An unexpected error occurred: " + ex.getMessage()),
+		return new ResponseEntity<>(ApiResponse.error("An unexpected error occurred. Please try again later."),
 				HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 }

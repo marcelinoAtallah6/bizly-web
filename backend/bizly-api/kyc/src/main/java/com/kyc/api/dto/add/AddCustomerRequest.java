@@ -1,16 +1,13 @@
 package com.kyc.api.dto.add;
 
 import java.time.LocalDate;
-import java.util.List;
 
-import javax.validation.Valid;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
-import com.kyc.api.dto.model.CustomerDetailRequest;
 import com.kyc.common.ApiDefaultValdiation;
 
 public class AddCustomerRequest {
@@ -31,11 +28,30 @@ public class AddCustomerRequest {
 	private String email;
 
 	@NotBlank(message = ApiDefaultValdiation.MOBILE_NUMBER)
-	@Pattern(regexp = ApiDefaultValdiation.REGEX_MOBILE_NUMBER, message = ApiDefaultValdiation.MOBILE_NUMBER)
+	@Pattern(regexp = "^\\+?[0-9]{7,15}$", message = ApiDefaultValdiation.MOBILE_NUMBER)
 	private String mobileNumber;
 
-	@Valid
-	private List<CustomerDetailRequest> details;
+	@Size(max = 255)
+	private String addressLine1;
+
+	@Size(max = 255)
+	private String addressLine2;
+
+	@Size(max = 100)
+	private String city;
+
+	@Size(max = 100)
+	private String stateProvince;
+
+	@Size(max = 20)
+	private String postalCode;
+
+	@Size(max = 100)
+	private String country;
+
+	@NotBlank(message = ApiDefaultValdiation.CUSTOMER_STATUS)
+	@Size(max = 20)
+	private String customerStatus;
 
 	public String getFirstName() {
 		return firstName;
@@ -77,11 +93,59 @@ public class AddCustomerRequest {
 		this.mobileNumber = mobileNumber;
 	}
 
-	public List<CustomerDetailRequest> getDetails() {
-		return details;
+	public String getAddressLine1() {
+		return addressLine1;
 	}
 
-	public void setDetails(List<CustomerDetailRequest> details) {
-		this.details = details;
+	public void setAddressLine1(String addressLine1) {
+		this.addressLine1 = addressLine1;
+	}
+
+	public String getAddressLine2() {
+		return addressLine2;
+	}
+
+	public void setAddressLine2(String addressLine2) {
+		this.addressLine2 = addressLine2;
+	}
+
+	public String getCity() {
+		return city;
+	}
+
+	public void setCity(String city) {
+		this.city = city;
+	}
+
+	public String getStateProvince() {
+		return stateProvince;
+	}
+
+	public void setStateProvince(String stateProvince) {
+		this.stateProvince = stateProvince;
+	}
+
+	public String getPostalCode() {
+		return postalCode;
+	}
+
+	public void setPostalCode(String postalCode) {
+		this.postalCode = postalCode;
+	}
+
+	public String getCountry() {
+		return country;
+	}
+
+	public void setCountry(String country) {
+		this.country = country;
+	}
+
+	public String getCustomerStatus() {
+		return customerStatus;
+	}
+
+	public void setCustomerStatus(String customerStatus) {
+		this.customerStatus = customerStatus;
 	}
 }

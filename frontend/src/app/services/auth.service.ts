@@ -1,13 +1,15 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, from, map, switchMap, tap } from 'rxjs';
+import { Observable, Subject, from, map, switchMap, tap } from 'rxjs';
 import { GlobalConstants } from '../common/GlobalConstants';
 import { DeviceIdService } from './device-id.service';
 
 interface LoginPayload {
   token: string;
-  refreshToken: string;
+  refreshToken?: string | null;
   sessionId: string;
+  availableRoles?: string[];
+  activeRole?: string | null;
 }
 
 interface ApiResponse<T> {
@@ -20,6 +22,10 @@ interface ApiResponse<T> {
   providedIn: 'root',
 })
 export class AuthService {
+  private readonly roleRefreshSubject = new Subject<void>();
+  /** Emits after login refresh or active-role switch — reload menus when subscribed. */
+  readonly roleRefresh$ = this.roleRefreshSubject.asObservable();
+
   // Public certificate exported from backend JKS (alias: my-server-key).
   // The frontend encrypts the password before sending it to /auth/login.
   private readonly publicCertificatePem = `-----BEGIN CERTIFICATE-----
@@ -49,9 +55,18 @@ DdonpI93CG9kkKqwaKPQnsYX3PyFEH2aA3I7N/0=
     private readonly deviceIdService: DeviceIdService
   ) {}
 
-  login(username: string, password: string): Observable<ApiResponse<LoginPayload>> {
-    return from(this.encryptPassword(password)).pipe(
-      switchMap((encryptedPassword) => {
+  login(
+    username: string,
+    password: string,
+    rememberDevice: boolean
+  ): Observable<ApiResponse<LoginPayload>> {
+    return from(
+      Promise.all([
+        this.encryptPassword(password),
+        this.deviceIdService.getOrCreateDeviceId(rememberDevice),
+      ])
+    ).pipe(
+      switchMap(([encryptedPassword, deviceId]) => {
         const params = new HttpParams()
           .set('username', username)
           .set('password', encryptedPassword);
@@ -59,7 +74,7 @@ DdonpI93CG9kkKqwaKPQnsYX3PyFEH2aA3I7N/0=
         const headers = new HttpHeaders({
           'Content-Type': 'application/x-www-form-urlencoded',
           Accept: 'application/json',
-          'X-DEVICE-ID': this.deviceIdService.getDeviceId(),
+          'X-DEVICE-ID': deviceId,
         });
 
         return this.http.post<ApiResponse<LoginPayload>>(
@@ -70,9 +85,104 @@ DdonpI93CG9kkKqwaKPQnsYX3PyFEH2aA3I7N/0=
       }),
       tap((response) => {
         this.persistSession(response?.data);
+        this.roleRefreshSubject.next();
       })
     );
   }
+
+  /**
+   * Narrows effective permissions server-side via {@code um_user_session.active_role_name}.
+   * Refresh token is unchanged; omitted from API response — existing refresh stays valid.
+   */
+  setActiveRole(activeRoleName: string | null): Observable<ApiResponse<LoginPayload>> {
+    const sessionId = this.getSessionId();
+    if (!sessionId) {
+      throw new Error('Missing session');
+    }
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'X-DEVICE-ID': this.deviceIdService.getDeviceId(),
+    });
+
+    return this.http
+      .post<ApiResponse<LoginPayload>>(
+        GlobalConstants.API_ENDPOINTS.auth.sessionActiveRole,
+        { sessionId, activeRoleName: activeRoleName ?? '' },
+        { headers }
+      )
+      .pipe(
+        tap((response) => this.persistSession(response?.data)),
+        tap(() => this.roleRefreshSubject.next())
+      );
+  }
+
+  forgotPassword(username: string): Observable<ApiResponse<string>> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    });
+
+    return this.http.post<ApiResponse<string>>(
+      GlobalConstants.API_ENDPOINTS.auth.forgotPassword,
+      { username },
+      { headers }
+    );
+  }
+
+  verifyForgotPasswordToken(token: string): Observable<ApiResponse<string>> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    });
+
+    return this.http.post<ApiResponse<string>>(
+      GlobalConstants.API_ENDPOINTS.auth.verifyForgotPasswordToken,
+      { token },
+      { headers }
+    );
+  }
+  resetForgotPassword(
+    token: string,
+    newPassword: string,
+    confirmPassword: string
+  ): Observable<ApiResponse<string>> {
+    return from(this.encryptPassword(newPassword)).pipe(
+      switchMap((encryptedPassword) =>
+        from(this.encryptPassword(confirmPassword)).pipe(
+          switchMap((encryptedConfirmPassword) => {
+            const headers = new HttpHeaders({
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            });
+  
+            return this.http.post<ApiResponse<string>>(
+              GlobalConstants.API_ENDPOINTS.auth.resetForgotPassword,
+              {
+                token,
+                newPassword: encryptedPassword,
+                confirmPassword: encryptedConfirmPassword,
+              },
+              { headers }
+            );
+          })
+        )
+      )
+    );
+  }
+  // resetForgotPassword(token: string, newPassword: string): Observable<ApiResponse<string>> {
+  //   const headers = new HttpHeaders({
+  //     'Content-Type': 'application/json',
+  //     Accept: 'application/json',
+  //   });
+
+  //   return this.http.post<ApiResponse<string>>(
+  //     GlobalConstants.API_ENDPOINTS.auth.resetForgotPassword,
+  //     { token, newPassword },
+  //     { headers }
+  //   );
+  // }
 
   logout(): Observable<ApiResponse<string>> {
     const sessionId = this.getSessionId();
@@ -124,6 +234,34 @@ DdonpI93CG9kkKqwaKPQnsYX3PyFEH2aA3I7N/0=
     return !!this.getAccessToken();
   }
 
+  /** Decodes JWT access token payload (unverified) for UI; use `userId` for profile load. */
+  getAccessTokenClaims(): { userId: number; firstName?: string; lastName?: string } | null {
+    const t = this.getAccessToken();
+    if (!t) {
+      return null;
+    }
+    try {
+      const parts = t.split('.');
+      if (parts.length !== 3) {
+        return null;
+      }
+      const json = atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'));
+      const p = JSON.parse(json) as Record<string, unknown>;
+      const rawId = p['userId'];
+      const userId = typeof rawId === 'number' ? rawId : Number(rawId);
+      if (!Number.isFinite(userId)) {
+        return null;
+      }
+      return {
+        userId,
+        firstName: p['firstName'] != null ? String(p['firstName']) : undefined,
+        lastName: p['lastName'] != null ? String(p['lastName']) : undefined,
+      };
+    } catch {
+      return null;
+    }
+  }
+
   getAccessToken(): string | null {
     return localStorage.getItem('jwtAccessToken');
   }
@@ -140,15 +278,79 @@ DdonpI93CG9kkKqwaKPQnsYX3PyFEH2aA3I7N/0=
     localStorage.removeItem('jwtAccessToken');
     localStorage.removeItem('jwtRefreshToken');
     localStorage.removeItem('jwtSessionId');
+    localStorage.removeItem('bizlyAvailableRoles');
+    localStorage.removeItem('bizlyActiveRole');
+  }
+
+  /** Role codes from JWT {@code role} claim (all assignments). */
+  getJwtRoleNames(): string[] {
+    const p = this.decodeAccessPayload();
+    if (!p) {
+      return [];
+    }
+    const r = p['role'];
+    if (Array.isArray(r)) {
+      return r.map((x) => String(x));
+    }
+    if (r != null && r !== '') {
+      return [String(r)];
+    }
+    return [];
+  }
+
+  /** Session-selected role from JWT {@code activeRole} claim (mirrors DB session). */
+  getJwtActiveRole(): string | null {
+    const p = this.decodeAccessPayload();
+    if (!p) {
+      return null;
+    }
+    const a = p['activeRole'];
+    if (a == null || a === '') {
+      return null;
+    }
+    return String(a);
+  }
+
+  private decodeAccessPayload(): Record<string, unknown> | null {
+    const t = this.getAccessToken();
+    if (!t) {
+      return null;
+    }
+    try {
+      const parts = t.split('.');
+      if (parts.length !== 3) {
+        return null;
+      }
+      const json = atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'));
+      return JSON.parse(json) as Record<string, unknown>;
+    } catch {
+      return null;
+    }
   }
 
   private persistSession(data?: LoginPayload): void {
     if (!data) {
       return;
     }
-    localStorage.setItem('jwtAccessToken', data.token);
-    localStorage.setItem('jwtRefreshToken', data.refreshToken);
-    localStorage.setItem('jwtSessionId', data.sessionId);
+    if (data.token) {
+      localStorage.setItem('jwtAccessToken', data.token);
+    }
+    if (data.refreshToken != null && data.refreshToken !== '') {
+      localStorage.setItem('jwtRefreshToken', data.refreshToken);
+    }
+    if (data.sessionId) {
+      localStorage.setItem('jwtSessionId', data.sessionId);
+    }
+    if (data.availableRoles != null) {
+      localStorage.setItem('bizlyAvailableRoles', JSON.stringify(data.availableRoles));
+    }
+    if (data.activeRole !== undefined) {
+      if (data.activeRole == null || data.activeRole === '') {
+        localStorage.removeItem('bizlyActiveRole');
+      } else {
+        localStorage.setItem('bizlyActiveRole', data.activeRole);
+      }
+    }
   }
   
 

@@ -1,0 +1,66 @@
+<div class="p-24">
+  <app-page-action-bar title="Customer" [toolbar]="detailToolbar" [wrap]="true"></app-page-action-bar>
+
+  <div class="m-b-16 detail-tab-switch">
+    <custom-switch
+      [buttons]="detailTabs"
+      [selectedValue]="activeTab"
+      (selectionChange)="setDetailTab($event)"
+    ></custom-switch>
+  </div>
+
+  <mat-card *ngIf="!loading && customer && activeTab === 'profile'">
+    <mat-card-content class="p-24">
+      <dl class="detail-grid">
+        <dt>ID</dt>
+        <dd>{{ customer.id }}</dd>
+        <dt>Name</dt>
+        <dd>{{ displayName(customer) }}</dd>
+        <dt>Email</dt>
+        <dd>{{ customer.email }}</dd>
+        <dt>Mobile</dt>
+        <dd>{{ customer.mobileNumber }}</dd>
+        <dt>Date of birth</dt>
+        <dd>{{ customer.dob }}</dd>
+        <dt>Status</dt>
+        <dd>{{ customer.customerStatus ?? '—' }}</dd>
+        <dt>Address line 1</dt>
+        <dd>{{ customer.addressLine1 ?? '—' }}</dd>
+        <dt>Address line 2</dt>
+        <dd>{{ customer.addressLine2 ?? '—' }}</dd>
+        <dt>City</dt>
+        <dd>{{ customer.city ?? '—' }}</dd>
+        <dt>State / province</dt>
+        <dd>{{ customer.stateProvince ?? '—' }}</dd>
+        <dt>Postal code</dt>
+        <dd>{{ customer.postalCode ?? '—' }}</dd>
+        <dt>Country</dt>
+        <dd>{{ customer.country ?? '—' }}</dd>
+        <dt>Created</dt>
+        <dd>{{ customer.createdAt ?? '—' }}</dd>
+      </dl>
+    </mat-card-content>
+  </mat-card>
+
+  <div *ngIf="!loading && activeTab === 'purchases'" class="purchases-panel">
+    <p class="text-muted f-s-13 m-b-12 m-t-0">
+      Product purchases recorded from Payments checkout for this customer.
+    </p>
+    <ag-grid-angular
+      class="ag-theme-quartz"
+      style="width: 100%; height: min(62vh, 560px)"
+      [rowData]="saleRows"
+      [columnDefs]="saleColumnDefs"
+      [defaultColDef]="saleDefaultColDef"
+      [context]="saleGridContext"
+      [animateRows]="true"
+      (gridReady)="onSaleGridReady($event)"
+      (rowDoubleClicked)="onSaleRowDoubleClicked($event)"
+    ></ag-grid-angular>
+    <p *ngIf="!saleRows.length" class="text-muted f-s-13 m-t-12 m-b-0">No purchases yet.</p>
+  </div>
+
+  <div *ngIf="loading" class="d-flex justify-content-center p-48">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+</div>

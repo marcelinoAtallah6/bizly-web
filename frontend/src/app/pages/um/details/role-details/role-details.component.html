@@ -1,0 +1,22 @@
+<div class="p-24">
+  <app-page-action-bar title="Role" [toolbar]="detailToolbar" [wrap]="true"></app-page-action-bar>
+
+  <mat-card *ngIf="!loading && role">
+    <mat-card-content class="p-24">
+      <dl class="detail-grid">
+        <dt>ID</dt>
+        <dd>{{ role.id }}</dd>
+        <dt>Name</dt>
+        <dd>{{ role.name }}</dd>
+        <dt>Role type</dt>
+        <dd>{{ role.roleType ?? '—' }}</dd>
+        <dt>Created</dt>
+        <dd>{{ role.createdAt ?? '—' }}</dd>
+      </dl>
+    </mat-card-content>
+  </mat-card>
+
+  <div *ngIf="loading" class="d-flex justify-content-center p-48">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+</div>

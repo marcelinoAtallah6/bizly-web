@@ -13,7 +13,7 @@ import javax.persistence.Table;
 import com.um.common.DatabaseConstants;
 
 @Entity
-@Table(name = DatabaseConstants.ROLE_TABLE)
+@Table(name = DatabaseConstants.ROLE_TABLE, schema = DatabaseConstants.SCHEMA)
 public class Role {
 
 	@Id

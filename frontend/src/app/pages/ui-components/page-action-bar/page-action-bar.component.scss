@@ -1,0 +1,38 @@
+.page-action-bar {
+  width: 100%;
+
+  &--wrap {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  &__title {
+    color: var(--textPrimary);
+  }
+
+  &__start {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  &__actions {
+    flex: 0 0 auto;
+    pointer-events: auto;
+    position: relative;
+    z-index: 10;
+  }
+
+  .toolbar-actions-gap {
+    gap: 8px;
+  }
+}
+
+:host ::ng-deep custom-toolbar .email-toolbar {
+  min-height: 40px;
+  padding: 0;
+  background: transparent;
+  pointer-events: auto;
+  position: relative;
+  z-index: 2;
+}
+

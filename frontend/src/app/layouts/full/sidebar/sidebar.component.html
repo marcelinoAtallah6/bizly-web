@@ -12,10 +12,14 @@
 </mat-nav-list>
   <div class="profile-box">
     <div class="profile-box-content bg-light-accent ">
-      <img src="/assets/images/profile/user-1.jpg" alt="Profile Picture">
+      <img
+        class="sidebar-profile-img"
+        [src]="sidebarProf?.avatarUrl || '/assets/images/profile/user-1.jpg'"
+        alt="Profile"
+      />
       <div class="profile-info">
-        <h5>Marcelino Atallah</h5>
-        <span>software</span>
+        <h5>{{ sidebarProf?.displayName || 'User' }}</h5>
+        <span>{{ sidebarProf?.subtitle || '' }}</span>
       </div>
       <div class="profile-actions">
         <a class="mat-icon-button" (click)="onSignOut()">

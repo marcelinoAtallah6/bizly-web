@@ -18,32 +18,45 @@ export class DeviceIdService {
    * Run from APP_INITIALIZER so the first HTTP call already has a persisted id.
    */
   init(): Promise<void> {
-    if (typeof localStorage === 'undefined') {
-      return Promise.resolve();
-    }
-    const existing = localStorage.getItem(DeviceIdService.STORAGE_KEY);
-    if (existing) {
-      return Promise.resolve();
-    }
-    return this.createAndPersistDeviceId();
+    return Promise.resolve();
   }
 
   getDeviceId(): string {
-    if (typeof localStorage === 'undefined') {
+    if (typeof localStorage === 'undefined' || typeof sessionStorage === 'undefined') {
       return this.fallbackEphemeralId();
     }
     const stored = localStorage.getItem(DeviceIdService.STORAGE_KEY);
     if (stored) {
       return stored;
     }
+    const sessionStored = sessionStorage.getItem(DeviceIdService.STORAGE_KEY);
+    if (sessionStored) {
+      return sessionStored;
+    }
     const created = this.buildIdSync();
     localStorage.setItem(DeviceIdService.STORAGE_KEY, created);
     return created;
   }
 
-  private async createAndPersistDeviceId(): Promise<void> {
-    const id = await this.buildIdWithClientHints();
-    localStorage.setItem(DeviceIdService.STORAGE_KEY, id);
+  async getOrCreateDeviceId(rememberDevice: boolean): Promise<string> {
+    if (typeof localStorage === 'undefined' || typeof sessionStorage === 'undefined') {
+      return this.fallbackEphemeralId();
+    }
+
+    const local = localStorage.getItem(DeviceIdService.STORAGE_KEY);
+    const session = sessionStorage.getItem(DeviceIdService.STORAGE_KEY);
+    const existing = local ?? session;
+    const id = existing ?? (await this.buildIdWithClientHints());
+
+    if (rememberDevice) {
+      localStorage.setItem(DeviceIdService.STORAGE_KEY, id);
+      sessionStorage.removeItem(DeviceIdService.STORAGE_KEY);
+    } else {
+      sessionStorage.setItem(DeviceIdService.STORAGE_KEY, id);
+      localStorage.removeItem(DeviceIdService.STORAGE_KEY);
+    }
+
+    return id;
   }
 
   private async buildIdWithClientHints(): Promise<string> {

@@ -1,0 +1,22 @@
+<div *ngIf="loading" class="d-flex justify-content-center p-48">
+  <mat-spinner diameter="40"></mat-spinner>
+</div>
+
+<div class="p-24 payment-history-wrap" *ngIf="!loading">
+  <app-page-action-bar title="History" [toolbar]="pageToolbar"></app-page-action-bar>
+  <p class="text-muted f-s-13 m-b-12 m-t-0">
+    Double-click a row or use Details. Customer name is stored when the sale completes.
+  </p>
+  <ag-grid-angular
+    class="ag-theme-quartz"
+    style="width: 100%; height: min(72vh, 680px)"
+    [rowData]="rowData"
+    [columnDefs]="columnDefs"
+    [defaultColDef]="defaultColDef"
+    [context]="gridContext"
+    [animateRows]="true"
+    (gridReady)="onGridReady($event)"
+    (rowDoubleClicked)="onRowDoubleClicked($event)"
+  ></ag-grid-angular>
+  <p *ngIf="!rowData.length" class="text-muted f-s-13 m-t-12 m-b-0">No sales yet.</p>
+</div>

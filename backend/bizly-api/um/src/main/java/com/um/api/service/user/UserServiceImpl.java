@@ -1,6 +1,7 @@
 package com.um.api.service.user;
 
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.um.api.dto.user.add.AddUserRequest;
 import com.um.api.dto.user.add.AddUserResponse;
@@ -31,6 +33,7 @@ import com.um.api.repository.user.UserRepository;
 import com.um.common.ApiMessages;
 import com.um.common.PageResponse;
 import com.um.common.PasswordUtil;
+import com.um.common.ProfileImageUtil;
 import com.um.exception.ServiceException;
 
 @Service
@@ -50,6 +53,8 @@ public class UserServiceImpl implements IUserService {
 
 	private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
+	private static final String PASSWORD_REGEX = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&]).{8,}$";
+
 	@Override
 	public AddUserResponse add(AddUserRequest request) {
 		User user = new User();
@@ -61,14 +66,18 @@ public class UserServiceImpl implements IUserService {
 		user.setStatus(request.getStatus());
 		user.setCreatedAt(LocalDateTime.now());
 
-		// Decrypt and encode password
+		String decryptedPassword;
 		try {
-			String decryptedPassword = passwordUtil.decryptPassword(request.getPassword());
-			String encodedPassword = passwordEncoder.encode(decryptedPassword);
-			user.setPassword(encodedPassword);
+			decryptedPassword = passwordUtil.decryptPassword(request.getPassword());
 		} catch (Exception e) {
 			throw new ServiceException(ApiMessages.PASSWORD_PROCESSING_FAILED, HttpStatus.BAD_REQUEST);
 		}
+		if (!decryptedPassword.matches(PASSWORD_REGEX)) {
+			throw new ServiceException(ApiMessages.PASSWORD_TOO_WEAK, HttpStatus.BAD_REQUEST);
+		}
+		user.setPassword(passwordEncoder.encode(decryptedPassword));
+
+		applyOptionalProfileOnCreate(user, request.getProfileImageMimeType(), request.getProfileImageBase64());
 
 		repository.save(user);
 
@@ -91,6 +100,7 @@ public class UserServiceImpl implements IUserService {
 	}
 
 	@Override
+	@Transactional
 	public UpdateUserResponse update(UpdateUserRequest request) {
 		User user = repository.findById(request.getId())
 				.orElseThrow(() -> new ServiceException(ApiMessages.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
@@ -102,7 +112,22 @@ public class UserServiceImpl implements IUserService {
 		user.setMobileNumber(request.getMobileNumber());
 		user.setStatus(request.getStatus());
 
+		applyProfileOnUpdate(user, request);
+
 		repository.save(user);
+
+		userRoleRepository.deleteById_UserId(request.getId());
+		for (Long roleId : request.getRoleIds()) {
+			Role role = roleRepository.findById(roleId)
+					.orElseThrow(() -> new ServiceException(ApiMessages.ROLE_NOT_FOUND, HttpStatus.BAD_REQUEST));
+			UserRole userRole = new UserRole();
+			UserRoleId userRoleId = new UserRoleId();
+			userRoleId.setUserId(user.getId());
+			userRoleId.setRoleId(roleId);
+			userRole.setId(userRoleId);
+			userRole.setRole(role);
+			userRoleRepository.save(userRole);
+		}
 
 		UpdateUserResponse response = new UpdateUserResponse();
 		response.setId(user.getId());
@@ -127,7 +152,7 @@ public class UserServiceImpl implements IUserService {
 		User user = repository.findById(request.getId())
 				.orElseThrow(() -> new ServiceException(ApiMessages.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
 
-		return mapToResponse(user);
+		return mapToResponse(user, true);
 	}
 
 	@Override
@@ -135,7 +160,8 @@ public class UserServiceImpl implements IUserService {
 		Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
 		Page<User> page = repository.findAll(pageable);
 
-		List<GetUserResponse> items = page.getContent().stream().map(this::mapToResponse).collect(Collectors.toList());
+		List<GetUserResponse> items = page.getContent().stream().map(u -> mapToResponse(u, false))
+				.collect(Collectors.toList());
 
 		PageResponse<GetUserResponse> response = new PageResponse<>();
 		response.setItems(items);
@@ -146,7 +172,7 @@ public class UserServiceImpl implements IUserService {
 		return response;
 	}
 
-	private GetUserResponse mapToResponse(User user) {
+	private GetUserResponse mapToResponse(User user, boolean includeProfileImage) {
 		GetUserResponse response = new GetUserResponse();
 		response.setId(user.getId());
 		response.setUsername(user.getUsername());
@@ -156,6 +182,34 @@ public class UserServiceImpl implements IUserService {
 		response.setMobileNumber(user.getMobileNumber());
 		response.setStatus(user.getStatus());
 		response.setCreatedAt(user.getCreatedAt());
+		response.setRoleIds(userRoleRepository.findById_UserId(user.getId()).stream()
+				.map(ur -> ur.getId().getRoleId()).collect(Collectors.toList()));
+		if (includeProfileImage && user.getProfileImageData() != null && user.getProfileImageData().length > 0) {
+			response.setProfileImageMimeType(user.getProfileImageMime());
+			response.setProfileImageBase64(Base64.getEncoder().encodeToString(user.getProfileImageData()));
+		}
 		return response;
+	}
+
+	private static void applyOptionalProfileOnCreate(User user, String mimeType, String base64) {
+		if (base64 == null || base64.isBlank()) {
+			return;
+		}
+		ProfileImageUtil.validateMime(mimeType);
+		user.setProfileImageMime(mimeType.trim());
+		user.setProfileImageData(ProfileImageUtil.decodeBase64Image(base64));
+	}
+
+	private static void applyProfileOnUpdate(User user, UpdateUserRequest request) {
+		if (Boolean.TRUE.equals(request.getClearProfileImage())) {
+			user.setProfileImageMime(null);
+			user.setProfileImageData(null);
+			return;
+		}
+		if (request.getProfileImageBase64() != null && !request.getProfileImageBase64().isBlank()) {
+			ProfileImageUtil.validateMime(request.getProfileImageMimeType());
+			user.setProfileImageMime(request.getProfileImageMimeType().trim());
+			user.setProfileImageData(ProfileImageUtil.decodeBase64Image(request.getProfileImageBase64()));
+		}
 	}
 }

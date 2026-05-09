@@ -1,28 +1,36 @@
-
 // toolbar.component.scss
 .email-toolbar {
-    background-color: transparent;
-    height: auto;
-    min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  background-color: transparent;
+  min-height: 40px;
+}
+
+.email-toolbar .button-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+:host ::ng-deep {
+  .mat-mdc-icon-button.mat-mdc-button-base:hover:not(:disabled) {
+    background-color: rgba(var(--primary-rgb), 0.1);
   }
-  
-  ::ng-deep {
-    .mat-icon-button {
-      &:hover {
-        background-color: rgba(0, 0, 0, 0.04);
-      }
-    }
-  
-    .mat-menu-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      
-      .mat-icon {
-        margin-right: 8px;
-      }
+
+  .mat-mdc-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--textPrimary);
+
+    .mat-icon {
+      margin-right: 8px;
+      color: var(--textPrimary);
     }
   }
+}
 
 
 //   .view-toolbar {

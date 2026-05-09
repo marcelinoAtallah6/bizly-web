@@ -1,0 +1,25 @@
+<div class="p-24">
+  <app-page-action-bar title="Product" [toolbar]="detailToolbar" [wrap]="true"></app-page-action-bar>
+
+  <mat-card *ngIf="!loading && product">
+    <mat-card-content class="p-24">
+      <div class="m-b-24" *ngIf="productImageUrl">
+        <img [src]="productImageUrl" alt="" class="product-detail-image mat-elevation-z2" />
+      </div>
+      <dl class="detail-grid">
+        <dt>ID</dt>
+        <dd>{{ product.id }}</dd>
+        <dt>Name</dt>
+        <dd>{{ product.name }}</dd>
+        <dt>Price</dt>
+        <dd>{{ product.price | number : '1.2-2' }}</dd>
+        <dt>Stock</dt>
+        <dd>{{ product.stockQuantity != null ? product.stockQuantity : 'Unlimited' }}</dd>
+      </dl>
+    </mat-card-content>
+  </mat-card>
+
+  <div *ngIf="loading" class="d-flex justify-content-center p-48">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+</div>

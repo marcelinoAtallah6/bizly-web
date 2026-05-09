@@ -20,4 +20,12 @@ public class UpdateProductRequest {
 
 	@NotNull(message = ApiDefaultValdiation.PRICE)
 	private Double price;
+
+	private Boolean clearProductImage;
+
+	private String productImageMimeType;
+
+	private String productImageBase64;
+
+	private Integer stockQuantity;
 }

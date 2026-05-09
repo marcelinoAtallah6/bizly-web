@@ -48,6 +48,10 @@ public class UmApplication {
 	@Column(name = "is_active")
 	private Boolean isActive;
 
+	/** Comma-separated role names (with or without ROLE_ prefix). Empty = visible to all roles. */
+	@Column(name = "allowed_roles", length = 512)
+	private String allowedRoles;
+
 	@JsonManagedReference
 	@OneToMany(mappedBy = "application")
 	private List<UmMenu> menus;
@@ -100,5 +104,13 @@ public class UmApplication {
 
 	public void setIsActive(Boolean isActive) {
 		this.isActive = isActive;
+	}
+
+	public String getAllowedRoles() {
+		return allowedRoles;
+	}
+
+	public void setAllowedRoles(String allowedRoles) {
+		this.allowedRoles = allowedRoles;
 	}
 }

@@ -1,57 +1,35 @@
-<!-- // toolbar.component.html -->
-<mat-toolbar class="email-toolbar">
+<!-- Plain div: nested mat-toolbar can swallow pointer events / layout oddly inside flex headers -->
+<div class="email-toolbar" role="toolbar">
   <div class="button-group">
-
-     <!-- filter part  -->
-
-     <!-- <button mat-button [matMenuTriggerFor]="sortMenu" class="sort-button">
-        <mat-icon>filter_list</mat-icon>
-        <span class="button-text"></span>
-        <mat-icon>arrow_drop_down</mat-icon>
-      </button>
-
-      <mat-menu #sortMenu="matMenu">
-        <button
-          mat-menu-item
-          *ngFor="let option of sortOptions"
-          (click)="onSortChange(option.value)"
-          [class.selected]="selectedSort === option.value"
-        >
-          <mat-icon>{{ option.icon }}</mat-icon>
-          <span>{{ option.label }}</span>
-          <mat-icon *ngIf="selectedSort === option.value" class="check-icon"
-            >check</mat-icon
-          >
-        </button>
-      </mat-menu> -->
-
-      <!-- end filter  -->
-       
-    <!-- Regular buttons -->
-    <ng-container *ngFor="let button of toolbar">
+    <ng-container *ngFor="let button of toolbar; trackBy: trackToolbarBtn">
       <ng-container *ngIf="!button.hasSubmenu">
         <button
           mat-icon-button
+          type="button"
           [matTooltip]="button.tooltip"
-          (click)="button.action && button.action()"
+          [disabled]="button.disabled"
+          [color]="button.color"
+          (click)="invoke(button, $event)"
         >
           <mat-icon>{{ button.icon }}</mat-icon>
         </button>
-       
       </ng-container>
 
-      <!-- Buttons with submenus -->
       <ng-container *ngIf="button.hasSubmenu">
         <button
           mat-icon-button
+          type="button"
           [matTooltip]="button.tooltip"
-          [matMenuTriggerFor]="menu"
+          [disabled]="button.disabled"
+          [color]="button.color"
+          [matMenuTriggerFor]="subMenu"
         >
           <mat-icon>{{ button.icon }}</mat-icon>
         </button>
-        <mat-menu #menu="matMenu">
+        <mat-menu #subMenu="matMenu">
           <button
             mat-menu-item
+            type="button"
             *ngFor="let item of button.submenuItems"
             (click)="item.action()"
           >
@@ -62,4 +40,4 @@
       </ng-container>
     </ng-container>
   </div>
-</mat-toolbar>
+</div>

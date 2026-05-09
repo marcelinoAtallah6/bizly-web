@@ -1,0 +1,79 @@
+<div class="p-24">
+  <app-page-action-bar
+    [title]="mode === 'create' ? 'New product' : 'Edit product'"
+    [toolbar]="formToolbar"
+  ></app-page-action-bar>
+
+  <mat-card *ngIf="!loading">
+    <mat-card-content class="p-24">
+      <form [formGroup]="form" (ngSubmit)="submit()" class="product-form">
+        <div class="row">
+          <div class="col-md-6">
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Name</mat-label>
+              <input matInput formControlName="name" autocomplete="off" />
+              <mat-error *ngIf="form.get('name')?.hasError('required')">Required</mat-error>
+            </mat-form-field>
+          </div>
+          <div class="col-md-6">
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Price</mat-label>
+              <input matInput type="number" step="0.01" formControlName="price" />
+              <mat-error *ngIf="form.get('price')?.hasError('required')">Required</mat-error>
+              <mat-error *ngIf="form.get('price')?.hasError('min')">Must be &gt;= 0</mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <mat-divider class="m-y-16"></mat-divider>
+        <h3 class="m-0 m-b-16 f-s-16">Stock &amp; availability</h3>
+
+        <div class="row">
+          <div class="col-md-6">
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Stock quantity</mat-label>
+              <input matInput type="number" min="0" step="1" formControlName="stockQuantity" />
+              <mat-hint>Leave empty for unlimited stock</mat-hint>
+              <mat-error *ngIf="form.get('stockQuantity')?.hasError('min')">Must be &gt;= 0</mat-error>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <mat-divider class="m-y-16"></mat-divider>
+        <h3 class="m-0 m-b-16 f-s-16">Product image</h3>
+
+        <div class="product-image-row">
+          <div class="d-flex align-items-start flex-wrap gap-8">
+            <div class="product-thumb mat-elevation-z1" *ngIf="productPreviewUrl">
+              <img [src]="productPreviewUrl" alt="Product preview" />
+            </div>
+            <div *ngIf="!productPreviewUrl" class="product-thumb-placeholder">No image</div>
+            <input #productFileInput type="file" accept="image/*" hidden (change)="onProductFileSelected($event)" />
+            <button mat-stroked-button type="button" (click)="productFileInput.click()">Choose image</button>
+            <button
+              mat-stroked-button
+              type="button"
+              color="warn"
+              (click)="clearProductPhoto()"
+              *ngIf="productPreviewUrl || mode === 'edit'"
+            >
+              Remove
+            </button>
+          </div>
+          <p class="text-muted f-s-12 m-t-4 m-b-0">Shown on checkout cards when provided.</p>
+        </div>
+
+        <div class="m-t-24 d-flex gap-8">
+          <button mat-flat-button color="primary" type="submit" [disabled]="saving">
+            {{ mode === 'create' ? 'Create' : 'Save' }}
+          </button>
+          <button mat-stroked-button type="button" (click)="cancel()" [disabled]="saving">Cancel</button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <div *ngIf="loading" class="d-flex justify-content-center p-48">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+</div>

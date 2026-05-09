@@ -1,0 +1,16 @@
+<div class="p-24">
+  <app-page-action-bar title="Roles" [toolbar]="listToolbar"></app-page-action-bar>
+
+  <ag-grid-angular
+    class="ag-theme-quartz"
+    style="width: 100%; height: min(70vh, 640px)"
+    [rowData]="rowData"
+    [columnDefs]="columnDefs"
+    [defaultColDef]="defaultColDef"
+    [animateRows]="true"
+    (gridReady)="onGridReady($event)"
+    (rowDoubleClicked)="onRowDoubleClicked($event)"
+  ></ag-grid-angular>
+
+  <p class="text-muted f-s-12 m-t-8 m-b-0">Double-click a row to open details.</p>
+</div>

@@ -190,3 +190,135 @@ body {
   background-color: var(--background) !important;
   color: var(--textPrimary) !important;
 }
+
+/* Quartz — map AG theme variables to app tokens (any body theme: light, dark, dark-blue, …) */
+.ag-theme-quartz {
+  --ag-background-color: var(--background);
+  --ag-foreground-color: var(--textPrimary);
+  --ag-border-color: var(--borderColor);
+  --ag-header-background-color: var(--toolbar);
+  --ag-header-foreground-color: var(--textPrimary);
+  --ag-odd-row-background-color: var(--background);
+  --ag-row-hover-color: rgba(var(--primary-rgb), 0.08);
+  --ag-selected-row-background-color: rgba(var(--primary-rgb), 0.14);
+  --ag-menu-background-color: var(--cardbg);
+  --ag-menu-border-color: var(--borderColor);
+  --ag-panel-background-color: var(--cardbg);
+  --ag-subheader-background-color: var(--toolbar);
+  --ag-input-background-color: var(--background);
+  --ag-input-border-color: var(--borderformColor);
+  --ag-input-focus-border-color: var(--primary);
+  --ag-popup-shadow: var(--cardshadow);
+  --ag-modal-overlay-background-color: rgba(0, 0, 0, 0.45);
+  --ag-tooltip-background-color: var(--cardbg);
+  --ag-tooltip-foreground-color: var(--textPrimary);
+  --ag-secondary-foreground-color: var(--textPrimary);
+  --ag-disabled-foreground-color: var(--labelText);
+  --ag-chip-background-color: var(--toolbar);
+}
+
+.ag-theme-quartz .ag-root-wrapper,
+.ag-theme-quartz .ag-body-viewport {
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important;
+}
+
+.ag-theme-quartz .ag-header,
+.ag-theme-quartz .ag-header-cell {
+  background-color: var(--toolbar) !important;
+  color: var(--textPrimary) !important;
+}
+
+.ag-theme-quartz .ag-row {
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important;
+}
+
+.ag-theme-quartz .ag-row-odd {
+  background-color: rgba(var(--primary-rgb), 0.04) !important;
+}
+
+.ag-theme-quartz .ag-paging-panel {
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important;
+}
+
+/* Popups (column menu, filters, submenus) render under body — inherit same tokens */
+body .ag-popup,
+body .ag-menu,
+body .ag-select-list,
+body .ag-filter-menu,
+body .ag-column-menu,
+body .ag-tabs-body,
+body .ag-tabs-header {
+  --ag-background-color: var(--cardbg);
+  --ag-foreground-color: var(--textPrimary);
+  --ag-header-foreground-color: var(--textPrimary);
+  --ag-menu-background-color: var(--cardbg);
+  --ag-menu-border-color: var(--borderColor);
+  --ag-panel-background-color: var(--cardbg);
+  --ag-subheader-background-color: var(--toolbar);
+  --ag-input-background-color: var(--background);
+  --ag-input-border-color: var(--borderformColor);
+  --ag-input-focus-border-color: var(--primary);
+  --ag-secondary-foreground-color: var(--textPrimary);
+  color: var(--textPrimary) !important;
+  background-color: var(--cardbg) !important;
+}
+
+body .ag-popup .ag-menu-option,
+body .ag-popup .ag-menu-option-part,
+body .ag-popup .ag-select-list-item,
+body .ag-popup .ag-filter-toolpanel-group-title {
+  color: var(--textPrimary) !important;
+}
+
+body .ag-popup .ag-filter-toolpanel-header,
+body .ag-popup .ag-tabs-header {
+  background-color: var(--toolbar) !important;
+  color: var(--textPrimary) !important;
+}
+
+body .ag-popup .ag-filter-body-wrapper,
+body .ag-popup .ag-filter-filter {
+  background-color: var(--cardbg) !important;
+  color: var(--textPrimary) !important;
+}
+
+body .ag-popup .ag-icon,
+body .ag-popup .ag-header-cell-menu-button .ag-icon {
+  color: var(--textPrimary) !important;
+  background-color: transparent !important;
+}
+
+.ag-theme-quartz .ag-icon {
+  background-color: transparent !important;
+  color: var(--textPrimary) !important;
+}
+
+/* Icon-only row action (sale detail, etc.) */
+.ag-grid-icon-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  margin: 0 auto;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--primary);
+  cursor: pointer;
+  vertical-align: middle;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: rgba(var(--primary-rgb), 0.12);
+  }
+
+  .material-icons {
+    font-size: 22px;
+    line-height: 1;
+  }
+}

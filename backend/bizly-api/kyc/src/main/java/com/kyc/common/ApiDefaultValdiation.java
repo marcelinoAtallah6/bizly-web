@@ -16,8 +16,6 @@ public class ApiDefaultValdiation {
 	public static final String MOBILE_NUMBER = "Valid mobile number is required";
 	public static final String STATUS = "Status is required";
 	public static final String USERNAME = "Username is required";
-	public static final String FIELD_NAME = "Field name is required";
-	public static final String FIELD_VALUE = "Field value is required";
 	public static final String CUSTOMER_STATUS = "Customer status is required";
 	public static final String PAGE_NUMBER = "Page number must be zero or greater";
 	public static final String PAGE_SIZE = "Page size must be at least 1";

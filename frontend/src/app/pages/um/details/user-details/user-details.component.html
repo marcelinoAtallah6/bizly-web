@@ -1,0 +1,33 @@
+<div class="p-24">
+  <app-page-action-bar title="User" [toolbar]="detailToolbar" [wrap]="true"></app-page-action-bar>
+
+  <mat-card *ngIf="!loading && user">
+    <mat-card-content class="p-24">
+      <div class="m-b-24 d-flex align-items-center gap-16" *ngIf="avatarUrl">
+        <img [src]="avatarUrl" alt="" class="user-detail-avatar mat-elevation-z2" />
+      </div>
+      <dl class="detail-grid">
+        <dt>ID</dt>
+        <dd>{{ user.id }}</dd>
+        <dt>Username</dt>
+        <dd>{{ user.username }}</dd>
+        <dt>Name</dt>
+        <dd>{{ displayName(user) }}</dd>
+        <dt>Email</dt>
+        <dd>{{ user.email }}</dd>
+        <dt>Mobile</dt>
+        <dd>{{ user.mobileNumber }}</dd>
+        <dt>Status</dt>
+        <dd>{{ user.status }}</dd>
+        <dt>Roles</dt>
+        <dd>{{ roleLabels.length ? roleLabels.join(', ') : '—' }}</dd>
+        <dt>Created</dt>
+        <dd>{{ user.createdAt ?? '—' }}</dd>
+      </dl>
+    </mat-card-content>
+  </mat-card>
+
+  <div *ngIf="loading" class="d-flex justify-content-center p-48">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+</div>

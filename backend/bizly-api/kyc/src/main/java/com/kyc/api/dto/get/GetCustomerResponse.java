@@ -2,9 +2,6 @@ package com.kyc.api.dto.get;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-
-import com.kyc.api.dto.model.CustomerDetailResponse;
 
 public class GetCustomerResponse {
 
@@ -15,8 +12,14 @@ public class GetCustomerResponse {
 	private LocalDate dob;
 	private String email;
 	private String mobileNumber;
+	private String addressLine1;
+	private String addressLine2;
+	private String city;
+	private String stateProvince;
+	private String postalCode;
+	private String country;
+	private String customerStatus;
 	private LocalDateTime createdAt;
-	private List<CustomerDetailResponse> details;
 
 	public Long getId() {
 		return id;
@@ -74,19 +77,67 @@ public class GetCustomerResponse {
 		this.mobileNumber = mobileNumber;
 	}
 
+	public String getAddressLine1() {
+		return addressLine1;
+	}
+
+	public void setAddressLine1(String addressLine1) {
+		this.addressLine1 = addressLine1;
+	}
+
+	public String getAddressLine2() {
+		return addressLine2;
+	}
+
+	public void setAddressLine2(String addressLine2) {
+		this.addressLine2 = addressLine2;
+	}
+
+	public String getCity() {
+		return city;
+	}
+
+	public void setCity(String city) {
+		this.city = city;
+	}
+
+	public String getStateProvince() {
+		return stateProvince;
+	}
+
+	public void setStateProvince(String stateProvince) {
+		this.stateProvince = stateProvince;
+	}
+
+	public String getPostalCode() {
+		return postalCode;
+	}
+
+	public void setPostalCode(String postalCode) {
+		this.postalCode = postalCode;
+	}
+
+	public String getCountry() {
+		return country;
+	}
+
+	public void setCountry(String country) {
+		this.country = country;
+	}
+
+	public String getCustomerStatus() {
+		return customerStatus;
+	}
+
+	public void setCustomerStatus(String customerStatus) {
+		this.customerStatus = customerStatus;
+	}
+
 	public LocalDateTime getCreatedAt() {
 		return createdAt;
 	}
 
 	public void setCreatedAt(LocalDateTime createdAt) {
 		this.createdAt = createdAt;
-	}
-
-	public List<CustomerDetailResponse> getDetails() {
-		return details;
-	}
-
-	public void setDetails(List<CustomerDetailResponse> details) {
-		this.details = details;
 	}
 }

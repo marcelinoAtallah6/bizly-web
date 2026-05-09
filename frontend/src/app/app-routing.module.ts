@@ -38,10 +38,23 @@ const routes: Routes = [
       },
       {
         path: 'store',
+        redirectTo: 'pm/products',
+        pathMatch: 'full',
+      },
+      {
+        path: 'pm',
         loadChildren: () =>
-          import('./pages/storemgmt/storemgmt.module').then(
-            (m) => m.StoremgmtModule
-          ),
+          import('./pages/pm/pm.module').then((m) => m.PmModule),
+      },
+      {
+        path: 'users',
+        redirectTo: '/um/user',
+        pathMatch: 'full',
+      },
+      {
+        path: 'um',
+        loadChildren: () =>
+          import('./pages/um/um.module').then((m) => m.UmModule),
       },
       {
         path: 'apt',
@@ -93,7 +106,7 @@ const routes: Routes = [
           ),
       },
       {
-        path: 'um',
+        path: 'um-builder',
         loadChildren: () =>
           import('./pages/setup-application/usermanagement/usermanagement.module').then(
             (m) => m.UsermanagementModule

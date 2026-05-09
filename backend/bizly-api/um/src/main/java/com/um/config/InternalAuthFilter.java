@@ -1,6 +1,9 @@
 package com.um.config;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.List;
 
 import javax.servlet.FilterChain;
@@ -58,24 +61,60 @@ public class InternalAuthFilter extends OncePerRequestFilter {
 			return;
 		}
 		
-        String username = request.getHeader("X-User");
-        String role = request.getHeader("X-Role");
+		String username = request.getHeader("X-User");
+		List<GrantedAuthority> authorities = resolveAuthoritiesWithSession(session,
+				authoritiesFromGatewayRoleHeaders(request));
 
-        if (username != null && role != null) {
-
-            List<GrantedAuthority> authorities =
-                    List.of(new SimpleGrantedAuthority(role));
-
-            UsernamePasswordAuthenticationToken auth =
-                    new UsernamePasswordAuthenticationToken(
-                            username,
-                            null,
-                            authorities
-                    );
-
-            SecurityContextHolder.getContext().setAuthentication(auth);
-        }
+		if (username != null && !authorities.isEmpty()) {
+			UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(username, null,
+					authorities);
+			SecurityContextHolder.getContext().setAuthentication(auth);
+		}
 
 		filterChain.doFilter(request, response);
+	}
+
+	/**
+	 * Gateway sends one {@code X-Role} header per role when the JWT lists multiple roles. Also supports a
+	 * single header value like {@code ROLE_USER,ROLE_ADMIN} for compatibility.
+	 */
+	private static List<GrantedAuthority> authoritiesFromGatewayRoleHeaders(HttpServletRequest request) {
+		Enumeration<String> headerValues = request.getHeaders("X-Role");
+		List<GrantedAuthority> authorities = new ArrayList<>();
+		while (headerValues.hasMoreElements()) {
+			String chunk = headerValues.nextElement();
+			if (chunk == null || chunk.isBlank()) {
+				continue;
+			}
+			for (String part : chunk.split(",")) {
+				String p = part.trim();
+				if (!p.isEmpty()) {
+					authorities.add(new SimpleGrantedAuthority(p));
+				}
+			}
+		}
+		return authorities;
+	}
+
+	/**
+	 * When {@link SessionEntity#getActiveRoleName()} is set (auth service), narrow JWT-derived authorities to that
+	 * role only for authorization checks and menu filtering.
+	 */
+	private static List<GrantedAuthority> resolveAuthoritiesWithSession(SessionEntity session,
+			List<GrantedAuthority> jwtAuthorities) {
+		if (jwtAuthorities.isEmpty()) {
+			return jwtAuthorities;
+		}
+		String active = session.getActiveRoleName();
+		if (active == null || active.isBlank()) {
+			return jwtAuthorities;
+		}
+		String trimmed = active.trim();
+		for (GrantedAuthority a : jwtAuthorities) {
+			if (a.getAuthority().equalsIgnoreCase(trimmed)) {
+				return Collections.singletonList(new SimpleGrantedAuthority(a.getAuthority()));
+			}
+		}
+		return jwtAuthorities;
 	}
 }

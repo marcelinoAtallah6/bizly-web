@@ -1,0 +1,30 @@
+.detail-grid {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 8px 16px;
+  margin: 0;
+}
+
+.detail-grid dt {
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.detail-grid dd {
+  margin: 0;
+}
+
+.gap-8 {
+  gap: 8px;
+}
+
+.user-detail-avatar {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.gap-16 {
+  gap: 16px;
+}
