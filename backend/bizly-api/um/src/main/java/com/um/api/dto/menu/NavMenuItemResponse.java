@@ -15,6 +15,12 @@ public class NavMenuItemResponse {
 	private String route;
 	private List<NavMenuItemResponse> menus;
 
+	/** Present when role-based menu matrix is configured for the signed-in role. */
+	private Boolean allowView;
+	private Boolean allowAdd;
+	private Boolean allowEdit;
+	private Boolean allowDelete;
+
 	public Long getId() {
 		return id;
 	}
@@ -69,5 +75,37 @@ public class NavMenuItemResponse {
 
 	public void setMenus(List<NavMenuItemResponse> menus) {
 		this.menus = menus;
+	}
+
+	public Boolean getAllowView() {
+		return allowView;
+	}
+
+	public void setAllowView(Boolean allowView) {
+		this.allowView = allowView;
+	}
+
+	public Boolean getAllowAdd() {
+		return allowAdd;
+	}
+
+	public void setAllowAdd(Boolean allowAdd) {
+		this.allowAdd = allowAdd;
+	}
+
+	public Boolean getAllowEdit() {
+		return allowEdit;
+	}
+
+	public void setAllowEdit(Boolean allowEdit) {
+		this.allowEdit = allowEdit;
+	}
+
+	public Boolean getAllowDelete() {
+		return allowDelete;
+	}
+
+	public void setAllowDelete(Boolean allowDelete) {
+		this.allowDelete = allowDelete;
 	}
 }

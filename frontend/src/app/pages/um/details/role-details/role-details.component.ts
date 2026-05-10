@@ -1,9 +1,12 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
-import { finalize } from 'rxjs';
+import { finalize, Subscription } from 'rxjs';
+import { distinctUntilChanged, filter, map } from 'rxjs/operators';
+import { UM_SCREEN_ROUTES } from 'src/app/common/GlobalConstants';
 import { GetRoleResponse } from 'src/app/core/models/um.models';
 import { ToolbarButton } from 'src/app/pages/ui-components/button/toolbar/toolbar.component';
+import { MenuPermissionService } from 'src/app/services/menu-permission.service';
 import { SimpleConfirmDialogComponent } from 'src/app/shared/dialogs/simple-confirm-dialog.component';
 import { UmRoleService } from '../../services/um-role.service';
 
@@ -12,47 +15,60 @@ import { UmRoleService } from '../../services/um-role.service';
   templateUrl: './role-details.component.html',
   styleUrl: './role-details.component.scss',
 })
-export class RoleDetailsComponent implements OnInit {
+export class RoleDetailsComponent implements OnInit, OnDestroy {
   role: GetRoleResponse | null = null;
   loading = false;
   deleting = false;
 
+  private routeSub?: Subscription;
+
   get detailToolbar(): ToolbarButton[] {
-    return [
+    const buttons: ToolbarButton[] = [
       { id: 'back', icon: 'arrow_back', tooltip: 'Back to list', action: () => this.back() },
-      {
+    ];
+    if (this.menuPerm.can(UM_SCREEN_ROUTES.roles, 'delete')) {
+      buttons.push({
         id: 'delete',
         icon: 'delete_outline',
         tooltip: 'Delete role',
         action: () => this.delete(),
         disabled: !this.role || this.deleting,
         color: 'warn',
-      },
-      {
+      });
+    }
+    if (this.menuPerm.can(UM_SCREEN_ROUTES.roles, 'edit')) {
+      buttons.push({
         id: 'edit',
         icon: 'edit',
         tooltip: 'Edit role',
         action: () => this.edit(),
         disabled: !this.role,
         color: 'primary',
-      },
-    ];
+      });
+    }
+    return buttons;
   }
 
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly umRoleService: UmRoleService,
-    private readonly dialog: MatDialog
+    private readonly dialog: MatDialog,
+    private readonly menuPerm: MenuPermissionService
   ) {}
 
   ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    if (!Number.isFinite(id)) {
-      this.router.navigate(['/um', 'role']);
-      return;
-    }
-    this.load(id);
+    this.routeSub = this.route.paramMap
+      .pipe(
+        map((p) => Number(p.get('id'))),
+        filter((id) => Number.isFinite(id)),
+        distinctUntilChanged()
+      )
+      .subscribe((id) => this.load(id));
+  }
+
+  ngOnDestroy(): void {
+    this.routeSub?.unsubscribe();
   }
 
   load(id: number): void {

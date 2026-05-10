@@ -6,7 +6,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -23,6 +22,8 @@ import com.um.api.dto.user.gets.GetsUsersRequest;
 import com.um.api.dto.user.update.UpdateUserRequest;
 import com.um.api.dto.user.update.UpdateUserResponse;
 import com.um.api.audit.Audited;
+import com.um.api.service.security.MenuPermissionAction;
+import com.um.api.service.security.RequireMenuPermission;
 import com.um.api.service.user.IUserService;
 import com.um.common.ApiMessages;
 import com.um.common.ApiResponse;
@@ -38,7 +39,7 @@ public class UserController {
 	private IUserService service;
 
 	@PostMapping("/add")
-	@PreAuthorize("hasRole('USER')")
+	@RequireMenuPermission(menuRoute = "/um/user", action = MenuPermissionAction.ADD)
 	@Audited(action = "UM_USER_ADD", resourceType = "USER")
 	public @ResponseBody ResponseEntity<ApiResponse<AddUserResponse>> add(@RequestBody @Valid AddUserRequest request) {
 
@@ -47,7 +48,7 @@ public class UserController {
 	}
 
 	@PostMapping("/update")
-	@PreAuthorize("hasRole('USER')")
+	@RequireMenuPermission(menuRoute = "/um/user", action = MenuPermissionAction.EDIT)
 	@Audited(action = "UM_USER_UPDATE", resourceType = "USER")
 	public @ResponseBody ResponseEntity<ApiResponse<UpdateUserResponse>> update(
 			@RequestBody @Valid UpdateUserRequest request) {
@@ -57,7 +58,7 @@ public class UserController {
 	}
 
 	@PostMapping("/delete")
-	@PreAuthorize("hasRole('USER')")
+	@RequireMenuPermission(menuRoute = "/um/user", action = MenuPermissionAction.DELETE)
 	@Audited(action = "UM_USER_DELETE", resourceType = "USER")
 	public @ResponseBody ResponseEntity<ApiResponse<DeleteUserResponse>> delete(
 			@RequestBody @Valid DeleteUserRequest request) {
@@ -67,7 +68,7 @@ public class UserController {
 	}
 
 	@PostMapping("/get")
-	@PreAuthorize("hasRole('USER')")
+	@RequireMenuPermission(menuRoute = "/um/user", action = MenuPermissionAction.VIEW)
 	public @ResponseBody ResponseEntity<ApiResponse<GetUserResponse>> get(@RequestBody @Valid GetUserRequest request) {
 
 		log.info("[UM_USER][GET] id={}", request.getId());
@@ -75,7 +76,7 @@ public class UserController {
 	}
 
 	@PostMapping("/gets")
-	@PreAuthorize("hasRole('USER')")
+	@RequireMenuPermission(menuRoute = "/um/user", action = MenuPermissionAction.VIEW)
 	public @ResponseBody ResponseEntity<ApiResponse<PageResponse<GetUserResponse>>> gets(
 			@RequestBody @Valid GetsUsersRequest request) {
 

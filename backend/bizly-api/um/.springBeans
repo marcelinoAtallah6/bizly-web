@@ -7,7 +7,7 @@
 	</configSuffixes>
 	<enableImports><![CDATA[false]]></enableImports>
 	<configs>
-		<config>java:com.pm.UmApplication</config>
+		<config>java:com.dashboard.UmApplication</config>
 	</configs>
 	<autoconfigs>
 	</autoconfigs>

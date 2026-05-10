@@ -59,20 +59,21 @@ public class RoleMenuPermissionServiceImpl implements IRoleMenuPermissionService
 				if (!Boolean.TRUE.equals(root.getIsActive())) {
 					continue;
 				}
-				walkMenus(root, app, "", rows, byMenu);
+				walkMenus(root, app, "", null, rows, byMenu);
 			}
 		}
 
 		return rows;
 	}
 
-	private void walkMenus(UmMenu menu, UmApplication app, String pathPrefix, List<RoleMenuPermissionRowResponse> rows,
-			Map<Long, RoleMenuPermission> byMenu) {
+	private void walkMenus(UmMenu menu, UmApplication app, String pathPrefix, Long parentMenuId,
+			List<RoleMenuPermissionRowResponse> rows, Map<Long, RoleMenuPermission> byMenu) {
 
 		String path = pathPrefix.isEmpty() ? menu.getName() : pathPrefix + " / " + menu.getName();
 
 		RoleMenuPermissionRowResponse row = new RoleMenuPermissionRowResponse();
 		row.setMenuId(menu.getId());
+		row.setParentMenuId(parentMenuId);
 		row.setApplicationId(app.getId());
 		row.setApplicationName(app.getName());
 		row.setMenuPath(path);
@@ -81,10 +82,12 @@ public class RoleMenuPermissionServiceImpl implements IRoleMenuPermissionService
 		RoleMenuPermission p = byMenu.get(menu.getId());
 		if (p != null) {
 			row.setAllowView(p.isAllowView());
+			row.setAllowAdd(p.isAllowAdd());
 			row.setAllowEdit(p.isAllowEdit());
 			row.setAllowDelete(p.isAllowDelete());
 		} else {
 			row.setAllowView(false);
+			row.setAllowAdd(false);
 			row.setAllowEdit(false);
 			row.setAllowDelete(false);
 		}
@@ -95,7 +98,7 @@ public class RoleMenuPermissionServiceImpl implements IRoleMenuPermissionService
 				if (!Boolean.TRUE.equals(child.getIsActive())) {
 					continue;
 				}
-				walkMenus(child, app, path, rows, byMenu);
+				walkMenus(child, app, path, menu.getId(), rows, byMenu);
 			}
 		}
 	}
@@ -114,7 +117,7 @@ public class RoleMenuPermissionServiceImpl implements IRoleMenuPermissionService
 			return;
 		}
 		for (RoleMenuPermissionEntryDto e : request.getPermissions()) {
-			if (!e.isAllowView() && !e.isAllowEdit() && !e.isAllowDelete()) {
+			if (!e.isAllowView() && !e.isAllowAdd() && !e.isAllowEdit() && !e.isAllowDelete()) {
 				continue;
 			}
 			RoleMenuPermissionId id = new RoleMenuPermissionId();
@@ -124,6 +127,7 @@ public class RoleMenuPermissionServiceImpl implements IRoleMenuPermissionService
 			RoleMenuPermission row = new RoleMenuPermission();
 			row.setId(id);
 			row.setAllowView(e.isAllowView());
+			row.setAllowAdd(e.isAllowAdd());
 			row.setAllowEdit(e.isAllowEdit());
 			row.setAllowDelete(e.isAllowDelete());
 			toSave.add(row);

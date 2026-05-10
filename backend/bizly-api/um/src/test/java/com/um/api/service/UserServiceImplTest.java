@@ -105,6 +105,7 @@ public class UserServiceImplTest {
 		request.setEmail("john.doe@example.com");
 		request.setMobileNumber("+1234567890");
 		request.setStatus("ACTIVE");
+		request.setRoleIds(List.of(1L));
 
 		var updateResponse = service.update(request);
 		assertNotNull(updateResponse);

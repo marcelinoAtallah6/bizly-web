@@ -1,1 +1,150 @@
-<p>querybuilder works!</p>
+<div class="qb-page">
+  <div class="qb-page__intro p-24 p-b-0">
+    <h2 class="m-b-8">Query Builder</h2>
+    <p class="text-muted m-b-0 f-s-14">
+      Only <code>SELECT</code> queries are allowed. Validate and test before saving. Saved queries can be used in the
+      Dashboard Builder.
+    </p>
+  </div>
+
+  <div class="qb-shell__content">
+    <div class="qb-layout p-24">
+      <!-- Left: create / edit -->
+      <mat-card class="qb-panel qb-panel--editor">
+        <mat-card-header class="qb-panel__header">
+          <div>
+            <mat-card-title>{{ editingId ? 'Edit query' : 'New query' }}</mat-card-title>
+            <mat-card-subtitle class="m-t-4">Define a reusable SELECT for widgets and dashboards</mat-card-subtitle>
+          </div>
+        </mat-card-header>
+        <mat-card-content class="qb-panel__body">
+          <div class="qb-fields">
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Name</mat-label>
+              <input matInput [(ngModel)]="name" placeholder="e.g. Total customers" autocomplete="off" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Description</mat-label>
+              <input matInput [(ngModel)]="description" autocomplete="off" />
+            </mat-form-field>
+          </div>
+
+          <div class="qb-sql-block">
+            <span class="qb-section-label">SQL editor</span>
+            <div #monacoCreateContainer class="monaco-host"></div>
+          </div>
+
+          <div class="qb-actions">
+            <button
+              mat-stroked-button
+              type="button"
+              color="primary"
+              (click)="validate()"
+              [disabled]="isSqlEmpty()"
+            >
+              Validate syntax
+            </button>
+            <button
+              mat-flat-button
+              color="primary"
+              type="button"
+              (click)="runTest()"
+              [disabled]="testing || isSqlEmpty()"
+            >
+              <mat-spinner *ngIf="testing" diameter="18" class="m-r-8"></mat-spinner>
+              Run test
+            </button>
+            <button
+              mat-flat-button
+              type="button"
+              class="qb-btn-save"
+              (click)="save()"
+              [disabled]="saving || !name.trim() || isSqlEmpty()"
+            >
+              Save
+            </button>
+            <span class="qb-actions__spacer"></span>
+            <button mat-button type="button" (click)="newQuery()">Clear</button>
+          </div>
+
+          <div *ngIf="testRows.length" class="qb-preview">
+            <div class="qb-preview__head">
+              <span class="qb-section-label">Query result (preview)</span>
+            </div>
+            <ag-grid-angular
+              class="ag-theme-quartz w-100 qb-preview-grid"
+              style="width: 100%; height: min(42vh, 420px)"
+              [rowData]="testRows"
+              [columnDefs]="testGridColumnDefs"
+              [defaultColDef]="defaultGridColDef"
+              [pagination]="true"
+              [paginationPageSize]="25"
+              [animateRows]="true"
+              [context]="{ host: this }"
+            ></ag-grid-angular>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Right: saved queries (server-side paging + search) -->
+      <mat-card class="qb-panel qb-panel--list">
+        <mat-card-header class="qb-panel__header">
+          <div class="w-100">
+            <mat-card-title>Saved queries</mat-card-title>
+            <mat-card-subtitle class="m-t-4">Search and browse pages; edit fills the form on the left</mat-card-subtitle>
+          </div>
+        </mat-card-header>
+        <mat-card-content class="qb-panel__body qb-panel__body--list">
+          <div *ngIf="loading" class="qb-list-loading">
+            <mat-spinner diameter="32"></mat-spinner>
+          </div>
+
+          <ng-container *ngIf="!loading">
+            <mat-form-field appearance="outline" class="w-100 m-b-12">
+              <mat-label>Search by name</mat-label>
+              <input
+                matInput
+                [(ngModel)]="queryNameSearch"
+                (input)="scheduleSearchReload()"
+                placeholder="Server-side filter…"
+                autocomplete="off"
+              />
+              <mat-icon matSuffix>search</mat-icon>
+            </mat-form-field>
+
+            <div *ngIf="queries.length" class="qb-list-grid-wrap">
+              <ag-grid-angular
+                class="ag-theme-quartz w-100 qb-list-grid"
+                style="width: 100%; height: 100%"
+                [rowData]="queries"
+                [columnDefs]="queryGridColumnDefs"
+                [defaultColDef]="savedListColDef"
+                [pagination]="false"
+                [animateRows]="true"
+                [context]="{ host: this }"
+              ></ag-grid-angular>
+            </div>
+
+            <mat-paginator
+              *ngIf="queryTotalCount > 0"
+              class="qb-list-paginator"
+              [length]="queryTotalCount"
+              [pageIndex]="queryPageNumber"
+              [pageSize]="queryPageSize"
+              [pageSizeOptions]="[10, 15, 25, 50]"
+              [showFirstLastButtons]="true"
+              (page)="onQueryPage($event)"
+            ></mat-paginator>
+
+            <p *ngIf="!queries.length && !queryNameSearch.trim()" class="text-muted m-t-8 qb-empty">
+              No saved queries yet.
+            </p>
+            <p *ngIf="!queries.length && queryNameSearch.trim()" class="text-muted m-t-8 qb-empty">
+              No queries match “{{ queryNameSearch }}”.
+            </p>
+          </ng-container>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

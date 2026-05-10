@@ -3,11 +3,13 @@ package com.um.api.dto.role.permission;
 public class RoleMenuPermissionRowResponse {
 
 	private Long menuId;
+	private Long parentMenuId;
 	private Long applicationId;
 	private String applicationName;
 	private String menuPath;
 	private String route;
 	private boolean allowView;
+	private boolean allowAdd;
 	private boolean allowEdit;
 	private boolean allowDelete;
 
@@ -17,6 +19,14 @@ public class RoleMenuPermissionRowResponse {
 
 	public void setMenuId(Long menuId) {
 		this.menuId = menuId;
+	}
+
+	public Long getParentMenuId() {
+		return parentMenuId;
+	}
+
+	public void setParentMenuId(Long parentMenuId) {
+		this.parentMenuId = parentMenuId;
 	}
 
 	public Long getApplicationId() {
@@ -57,6 +67,14 @@ public class RoleMenuPermissionRowResponse {
 
 	public void setAllowView(boolean allowView) {
 		this.allowView = allowView;
+	}
+
+	public boolean isAllowAdd() {
+		return allowAdd;
+	}
+
+	public void setAllowAdd(boolean allowAdd) {
+		this.allowAdd = allowAdd;
 	}
 
 	public boolean isAllowEdit() {

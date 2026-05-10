@@ -2,8 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ColDef, GridReadyEvent, RowDoubleClickedEvent } from 'ag-grid-community';
 import { finalize } from 'rxjs';
+import { UM_SCREEN_ROUTES } from 'src/app/common/GlobalConstants';
 import { GetRoleResponse } from 'src/app/core/models/um.models';
 import { ToolbarButton } from 'src/app/pages/ui-components/button/toolbar/toolbar.component';
+import { MenuPermissionService } from 'src/app/services/menu-permission.service';
 import { UmRoleService } from '../../services/um-role.service';
 
 @Component({
@@ -29,14 +31,24 @@ export class RoleListComponent implements OnInit {
 
   constructor(
     private readonly umRoleService: UmRoleService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly menuPerm: MenuPermissionService
   ) {}
 
   get listToolbar(): ToolbarButton[] {
-    return [
+    const out: ToolbarButton[] = [
       { id: 'refresh', icon: 'refresh', tooltip: 'Refresh', action: () => this.load(), disabled: this.loading },
-      { id: 'add', icon: 'badge', tooltip: 'New role', action: () => this.goNew(), color: 'primary' },
     ];
+    if (this.menuPerm.can(UM_SCREEN_ROUTES.roles, 'add')) {
+      out.push({
+        id: 'add',
+        icon: 'badge',
+        tooltip: 'New role',
+        action: () => this.goNew(),
+        color: 'primary',
+      });
+    }
+    return out;
   }
 
   ngOnInit(): void {

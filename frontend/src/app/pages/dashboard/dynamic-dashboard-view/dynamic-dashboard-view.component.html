@@ -1,0 +1,251 @@
+<div class="dash-runtime-root" [class.dash-preview-embed]="previewMode">
+  <div *ngIf="loadingDetail && !previewMode" class="state-loading">
+    <mat-spinner diameter="44"></mat-spinner>
+    <span class="mat-caption m-t-8 dash-muted">Loading dashboard…</span>
+  </div>
+
+  <div *ngIf="!loadingDetail && !effectiveDetail && !previewMode" class="empty-hint">
+    <mat-icon class="empty-icon">dashboard_customize</mat-icon>
+    <p class="m-t-8 m-b-0">Pick a dashboard from the toolbar at the top of this page to load your widgets.</p>
+  </div>
+
+  <div *ngIf="effectiveDetail && !loadingDetail">
+    <div *ngIf="previewMode && !(effectiveDetail.widgets?.length)" class="empty-hint builder-preview-empty">
+      <mat-icon class="empty-icon">widgets</mat-icon>
+      <p class="m-t-8 m-b-0">Drag widget types from the palette to see them in this live preview.</p>
+    </div>
+
+    <!-- Runtime: keep full-page loading. Builder preview: always keep drop list in DOM (CDK needs the target). -->
+    <div *ngIf="widgetsLoading && !previewMode" class="state-loading widgets-loading">
+      <mat-spinner diameter="44"></mat-spinner>
+      <span class="mat-caption m-t-8 dash-muted">Fetching charts &amp; tables…</span>
+    </div>
+
+    <div
+      *ngIf="previewMode || !widgetsLoading"
+      class="dash-body fade-widgets-in"
+      [class.dash-body--preview-loading]="previewMode && widgetsLoading"
+    >
+      <div *ngIf="previewMode && widgetsLoading" class="builder-preview-loading-ribbon">
+        <mat-spinner diameter="22"></mat-spinner>
+        <span class="mat-caption dash-muted">Updating data…</span>
+      </div>
+      <div class="quick-actions m-b-24" *ngIf="quickActions.length && !previewMode">
+        <a
+          mat-stroked-button
+          color="primary"
+          class="m-r-8 m-b-8 qa-btn"
+          *ngFor="let a of quickActions"
+          [routerLink]="a.route"
+        >
+          {{ a.label }}
+        </a>
+      </div>
+
+      <ng-template #dashWidgetRows>
+        <ng-container *ngFor="let w of layoutWidgets(); trackBy: trackWidgetById">
+          <div
+            class="dash-grid-item-wrap"
+            [class.dash-grid-item-wrap--selected]="previewMode && previewSelectedWidgetId === w.id"
+            [style.grid-column]="gridColumnStyle(w)"
+            [style.grid-row]="gridRowStyle(w)"
+            cdkDrag
+            [cdkDragDisabled]="!(previewMode && previewDragReorder)"
+            (cdkDragStarted)="onOverviewDragStart()"
+            (cdkDragEnded)="onOverviewDragEnd()"
+            (click)="previewMode ? onPreviewTileClick(w.id, $event) : null"
+          >
+            <!-- Floating builder toolbar -->
+            <div
+              class="builder-widget-float-bar"
+              *ngIf="previewMode && previewSelectedWidgetId === w.id"
+              (click)="$event.stopPropagation()"
+            >
+              <button
+                mat-icon-button
+                type="button"
+                matTooltip="Edit widget"
+                (click)="emitFloatingAction('edit', w.id)"
+              >
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                matTooltip="Drag to reorder"
+                class="preview-drag-handle"
+                cdkDragHandle
+                *ngIf="previewDragReorder"
+              >
+                <mat-icon>drag_indicator</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                matTooltip="Reorder mode"
+                [color]="previewDragReorder ? 'primary' : undefined"
+                (click)="emitFloatingAction('toggleReorder', w.id)"
+              >
+                <mat-icon>swap_vert</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                matTooltip="Resize mode"
+                [color]="previewResizeMode ? 'primary' : undefined"
+                (click)="emitFloatingAction('toggleResize', w.id)"
+              >
+                <mat-icon>crop_free</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                matTooltip="Duplicate"
+                (click)="emitFloatingAction('duplicate', w.id)"
+              >
+                <mat-icon>content_copy</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                type="button"
+                color="warn"
+                matTooltip="Delete"
+                (click)="emitFloatingAction('delete', w.id)"
+              >
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </div>
+
+            <!-- SE resize handle -->
+            <div
+              class="builder-resize-overlay"
+              *ngIf="previewMode && previewResizeMode && previewSelectedWidgetId === w.id"
+              (click)="$event.stopPropagation()"
+            >
+              <div
+                class="resize-handle resize-handle--se"
+                (pointerdown)="onResizePointerDown(w, $event)"
+              ></div>
+            </div>
+
+            <!-- QUICK_ACTION -->
+            <div *ngIf="kind(w) === 'QUICK_ACTION'" class="widget-cell widget-rise dash-grid-inner">
+              <mat-card class="mat-mdc-card mdc-card cardWithShadow h-100">
+                <mat-card-content class="p-16">
+                  <h4 class="f-w-600 m-0 mat-subtitle-1">{{ w.title }}</h4>
+                  <div class="m-t-8 d-flex flex-wrap gap-8" *ngIf="quickLinksFor(w).length">
+                    <a
+                      mat-stroked-button
+                      color="primary"
+                      class="qa-btn"
+                      *ngFor="let a of quickLinksFor(w)"
+                      [routerLink]="a.route"
+                    >
+                      {{ a.label }}
+                    </a>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            </div>
+
+            <!-- KPI -->
+            <div *ngIf="kind(w) === 'KPI'" class="widget-cell widget-rise dash-grid-inner">
+              <mat-card
+                class="mat-mdc-card mdc-card shadow-none text-center h-100 cardWithShadow"
+                [ngClass]="kpiBgClass(w)"
+              >
+                <mat-card-content class="mat-mdc-card-content p-32">
+                  <img
+                    alt=""
+                    width="40"
+                    class="rounded-circle"
+                    src="/assets/images/svgs/icon-user-male.svg"
+                  />
+                  <h4
+                    class="f-w-600 m-t-8 mat-subtitle-2"
+                    [ngClass]="'text-' + kpiTone(w)"
+                  >
+                    {{ w.title }}
+                  </h4>
+                  <h6 class="f-w-600 m-t-4 m-t-8 mat-subtitle-1" [ngClass]="'text-' + kpiTone(w)">
+                    {{ kpiValue(w.id) }}
+                  </h6>
+                </mat-card-content>
+              </mat-card>
+            </div>
+
+            <!-- Charts / tables -->
+            <mat-card
+              *ngIf="kind(w) !== 'KPI' && kind(w) !== 'QUICK_ACTION'"
+              class="widget-card cardWithShadow widget-rise dash-grid-inner"
+            >
+              <div class="dash-widget-toolbar">
+                <h3 class="dash-widget-heading">{{ w.title }}</h3>
+                <span class="dash-widget-type" *ngIf="kindLabel(w)">{{ kindLabel(w) }}</span>
+              </div>
+              <mat-card-content class="dash-widget-card-content">
+                <div class="chart-host" *ngIf="showChart(w) && apexFor(w.id) as ch">
+                  <apx-chart
+                    class="apex-dash"
+                    [series]="$any(ch)['series']"
+                    [chart]="$any(ch)['chart']"
+                    [dataLabels]="$any(ch)['dataLabels']"
+                    [labels]="$any(ch)['labels']"
+                    [colors]="$any(ch)['colors']"
+                    [xaxis]="$any(ch)['xaxis']"
+                    [yaxis]="$any(ch)['yaxis']"
+                    [grid]="$any(ch)['grid']"
+                    [stroke]="$any(ch)['stroke']"
+                    [legend]="$any(ch)['legend']"
+                    [tooltip]="$any(ch)['tooltip']"
+                    [plotOptions]="$any(ch)['plotOptions']"
+                    [fill]="$any(ch)['fill']"
+                    [markers]="$any(ch)['markers']"
+                  ></apx-chart>
+                </div>
+
+                <div *ngIf="showGrid(w)" class="grid-host dash-table-in-card">
+                  <div class="widget-mat-table-wrap">
+                    <table mat-table [dataSource]="rowsFor(w.id)" class="widget-mat-table dash-widget-mat-table">
+                      <ng-container *ngFor="let col of tableColumns(w.id)" [matColumnDef]="col">
+                        <th mat-header-cell *matHeaderCellDef>{{ col }}</th>
+                        <td mat-cell *matCellDef="let row">{{ row[col] }}</td>
+                      </ng-container>
+                      <tr mat-header-row *matHeaderRowDef="tableColumns(w.id); sticky: true"></tr>
+                      <tr mat-row *matRowDef="let row; columns: tableColumns(w.id)"></tr>
+                    </table>
+                  </div>
+                </div>
+
+                <p
+                  *ngIf="!showChart(w) && !showGrid(w)"
+                  class="dash-muted empty-widget-msg"
+                >
+                  No data for this widget.
+                </p>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </ng-container>
+      </ng-template>
+
+      <ng-container *ngIf="!previewMode || !previewDropListInParent; else externalDropGrid">
+        <div
+          class="dash-grid"
+          cdkDropList
+          [attr.id]="previewMode && !previewDropListInParent ? 'overview-list' : null"
+          [cdkDropListData]="previewDropListData"
+          [cdkDropListDisabled]="!previewMode"
+          (cdkDropListDropped)="emitGridDrop($event)"
+        >
+          <ng-container *ngTemplateOutlet="dashWidgetRows"></ng-container>
+        </div>
+      </ng-container>
+      <ng-template #externalDropGrid>
+        <div class="dash-grid">
+          <ng-container *ngTemplateOutlet="dashWidgetRows"></ng-container>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</div>

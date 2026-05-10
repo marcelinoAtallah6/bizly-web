@@ -18,4 +18,6 @@ public class ApiMessages {
 	public static final String CUSTOMER_DELETED = "Customer deleted successfully";
 	public static final String CUSTOMER_NOT_FOUND = "Customer not found";
 
+	public static final String MENU_PERMISSION_DENIED = "You do not have permission for this action";
+
 }

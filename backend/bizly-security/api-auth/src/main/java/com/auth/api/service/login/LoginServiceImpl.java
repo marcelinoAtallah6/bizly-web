@@ -6,11 +6,17 @@ import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -39,9 +45,15 @@ import com.auth.api.controllers.dto.forgot.VerifyResetTokenRequest;
 import com.auth.api.controllers.dto.refresh.RefreshRequest;
 import com.auth.api.controllers.dto.session.ActiveRoleRequest;
 import com.auth.api.model.login.LoginResponse;
+import com.auth.api.model.menu.UmMenuRouteEntity;
+import com.auth.api.model.permission.RoleMenuPermissionEntity;
 import com.auth.api.model.session.SessionEntity;
+import com.auth.api.model.user.RoleEntity;
 import com.auth.api.model.user.UserEntity;
+import com.auth.api.repository.menu.UmMenuRouteRepository;
+import com.auth.api.repository.permission.RoleMenuPermissionRepository;
 import com.auth.api.repository.session.SessionRepository;
+import com.auth.api.repository.user.RoleRepository;
 import com.auth.api.repository.user.UserRepository;
 import com.auth.api.repository.user.UserRoleRepository;
 import com.auth.common.ApiMessages;
@@ -87,6 +99,15 @@ public class LoginServiceImpl implements ILoginService {
 
 	@Autowired
 	private UserRoleRepository userRoleRepository;
+
+	@Autowired
+	private RoleRepository roleRepository;
+
+	@Autowired
+	private RoleMenuPermissionRepository roleMenuPermissionRepository;
+
+	@Autowired
+	private UmMenuRouteRepository umMenuRouteRepository;
 
 	@Autowired
 	JwtEncoder jwtEncoder;
@@ -180,7 +201,7 @@ public class LoginServiceImpl implements ILoginService {
 		Instant expiry = now.plus(accessTokenMinutes, ChronoUnit.MINUTES);
 
 		String accessToken = generateAccessToken(user, authentication, now, expiry, ipAddress, deviceId,
-				refreshedSession.getSessionId(), roles, refreshedSession.getActiveRoleName());
+				refreshedSession.getSessionId(), roles, refreshedSession);
 
 		return buildLoginResponse(accessToken, refreshToken, refreshedSession.getSessionId(), roles,
 				refreshedSession.getActiveRoleName());
@@ -220,7 +241,7 @@ public class LoginServiceImpl implements ILoginService {
 		Instant expiry = now.plus(accessTokenMinutes, ChronoUnit.MINUTES);
 
 		String newAccessToken = generateAccessToken(user, auth, now, expiry, ip, deviceId, session.getSessionId(),
-				roles, session.getActiveRoleName());
+				roles, session);
 
 		// rotate refresh token
 		String newRefresh = UUID.randomUUID().toString();
@@ -278,7 +299,7 @@ public class LoginServiceImpl implements ILoginService {
 		Instant expiry = now.plus(accessTokenMinutes, ChronoUnit.MINUTES);
 
 		String accessToken = generateAccessToken(user, auth, now, expiry, ip, deviceId, session.getSessionId(), roles,
-				session.getActiveRoleName());
+				session);
 
 		return buildLoginResponse(accessToken, null, session.getSessionId(), roles, session.getActiveRoleName());
 	}
@@ -476,7 +497,9 @@ public class LoginServiceImpl implements ILoginService {
 	}
 
 	private String generateAccessToken(UserEntity user, Authentication authentication, Instant now, Instant expiry,
-			String ip, String deviceId, String sessionId, List<String> roles, String activeRoleName) {
+			String ip, String deviceId, String sessionId, List<String> roles, SessionEntity session) {
+
+		String activeRoleName = session != null ? session.getActiveRoleName() : null;
 
 		// JwtClaimsSet rejects null claim values ("value cannot be null").
 		JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.builder().issuer("Bizly").issuedAt(now).expiresAt(expiry)
@@ -487,8 +510,72 @@ public class LoginServiceImpl implements ILoginService {
 		if (activeRoleName != null && !activeRoleName.isBlank()) {
 			claimsBuilder.claim("activeRole", activeRoleName);
 		}
+		appendPermissionClaims(claimsBuilder, resolveEffectiveRoleIdForClaims(session, roles));
 		JwtClaimsSet claims = claimsBuilder.build();
 
 		return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+	}
+
+	private Optional<Long> resolveEffectiveRoleIdForClaims(SessionEntity session, List<String> roles) {
+		if (session != null && session.getActiveRoleName() != null && !session.getActiveRoleName().isBlank()) {
+			String name = stripRolePrefixForDb(session.getActiveRoleName());
+			return roleRepository.findByNameIgnoreCase(name).map(RoleEntity::getId);
+		}
+		if (roles == null || roles.isEmpty()) {
+			return Optional.empty();
+		}
+		String first = stripRolePrefixForDb(roles.get(0));
+		return roleRepository.findByNameIgnoreCase(first).map(RoleEntity::getId);
+	}
+
+	private static String stripRolePrefixForDb(String authority) {
+		if (authority == null) {
+			return "";
+		}
+		String t = authority.trim();
+		if (t.length() > 5 && t.regionMatches(true, 0, "ROLE_", 0, 5)) {
+			return t.substring(5);
+		}
+		return t;
+	}
+
+	private void appendPermissionClaims(JwtClaimsSet.Builder claimsBuilder, Optional<Long> roleIdOpt) {
+		if (roleIdOpt.isEmpty()) {
+			claimsBuilder.claim("permMatrix", false);
+			claimsBuilder.claim("perms", Collections.emptyList());
+			return;
+		}
+		Long rid = roleIdOpt.get();
+		long rowCount = roleMenuPermissionRepository.countByIdRoleId(rid);
+		boolean matrix = rowCount > 0;
+		claimsBuilder.claim("permMatrix", matrix);
+		if (!matrix) {
+			claimsBuilder.claim("perms", Collections.emptyList());
+			return;
+		}
+		List<RoleMenuPermissionEntity> rows = roleMenuPermissionRepository.findByIdRoleId(rid);
+		Map<Long, String> routesByMenuId = new HashMap<>();
+		if (!rows.isEmpty()) {
+			List<Long> mids = rows.stream().map(r -> r.getId().getMenuId()).collect(Collectors.toList());
+			for (UmMenuRouteEntity m : umMenuRouteRepository.findAllById(mids)) {
+				routesByMenuId.put(m.getId(), m.getRoute() != null ? m.getRoute() : "");
+			}
+		}
+		List<Map<String, Object>> perms = new ArrayList<>();
+		for (RoleMenuPermissionEntity p : rows) {
+			Map<String, Object> m = new LinkedHashMap<>();
+			long menuId = p.getId().getMenuId();
+			m.put("m", menuId);
+			String route = routesByMenuId.get(menuId);
+			if (route != null && !route.isEmpty()) {
+				m.put("r", route);
+			}
+			m.put("v", p.isAllowView());
+			m.put("a", p.isAllowAdd());
+			m.put("e", p.isAllowEdit());
+			m.put("d", p.isAllowDelete());
+			perms.add(m);
+		}
+		claimsBuilder.claim("perms", perms);
 	}
 }

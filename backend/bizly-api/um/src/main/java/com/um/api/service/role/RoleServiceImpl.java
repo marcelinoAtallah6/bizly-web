@@ -21,6 +21,7 @@ import com.um.api.dto.role.gets.GetsRolesRequest;
 import com.um.api.dto.role.update.UpdateRoleRequest;
 import com.um.api.dto.role.update.UpdateRoleResponse;
 import com.um.api.model.role.Role;
+import com.um.api.repository.role.RoleMenuPermissionRepository;
 import com.um.api.repository.role.RoleRepository;
 import com.um.common.ApiMessages;
 import com.um.common.PageResponse;
@@ -31,6 +32,9 @@ public class RoleServiceImpl implements IRoleService {
 
 	@Autowired
 	private RoleRepository repository;
+
+	@Autowired
+	private RoleMenuPermissionRepository roleMenuPermissionRepository;
 
 	@Override
 	public AddRoleResponse add(AddRoleRequest request) {
@@ -67,6 +71,7 @@ public class RoleServiceImpl implements IRoleService {
 			throw new ServiceException(ApiMessages.ROLE_NOT_FOUND, HttpStatus.NOT_FOUND);
 		}
 
+		roleMenuPermissionRepository.deleteByIdRoleId(request.getId());
 		repository.deleteById(request.getId());
 
 		DeleteRoleResponse response = new DeleteRoleResponse();

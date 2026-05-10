@@ -6,6 +6,7 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import com.um.common.ApiDefaultValdiation;
@@ -47,6 +48,9 @@ public class AddUserRequest {
 
 	/** Optional raw Base64 or data URL */
 	private String profileImageBase64;
+
+	/** Optional — used by notification birthday workflow */
+	private LocalDate dateOfBirth;
 
 	public String getUsername() {
 		return username;
@@ -126,5 +130,13 @@ public class AddUserRequest {
 
 	public void setProfileImageBase64(String profileImageBase64) {
 		this.profileImageBase64 = profileImageBase64;
+	}
+
+	public LocalDate getDateOfBirth() {
+		return dateOfBirth;
+	}
+
+	public void setDateOfBirth(LocalDate dateOfBirth) {
+		this.dateOfBirth = dateOfBirth;
 	}
 }

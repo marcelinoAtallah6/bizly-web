@@ -16,7 +16,6 @@ import { SharedService } from 'src/app/services/shared.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { NavbarProfileView, UserProfileService } from 'src/app/services/user-profile.service';
 
-
 @Component({
   selector: 'app-header',
   templateUrl: './header.component.html',
@@ -32,13 +31,12 @@ export class HeaderComponent implements OnInit, OnDestroy {
   showFiller = false;
   isSigningOut = false;
   headerProf: NavbarProfileView | null = null;
-  private profileSub?: Subscription;
+  private subs = new Subscription();
 
   onMenuClick(menuSelected: any) {
     this.router.navigate([menuSelected]);
-
   }
-  /** Roles from JWT used for session switching (multi-role accounts). */
+
   roleChoices(): string[] {
     return this.authService.getJwtRoleNames();
   }
@@ -83,8 +81,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
         },
       });
   }
-  
+
   menuItems: NavItem[] = [];
+
   quickLinks = [
     { label: 'Gold Page', url: '/theme-pages/pricing' },
     { label: 'Gold 2 Page', url: '/authentication/login' },
@@ -97,46 +96,43 @@ export class HeaderComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private readonly userProfile: UserProfileService
   ) {}
+
   ngOnInit(): void {
     this.userProfile.refresh();
-    this.profileSub = this.userProfile.profile$.subscribe((p) => {
-      this.headerProf = p;
-    });
-    // this.sharedService.variable$.subscribe((value: any) => {
-    //   this.menuItems = value;
-    //   console.log("menuItem======",this.menuItems)
-    // });
+    this.subs.add(
+      this.userProfile.profile$.subscribe((p) => {
+        this.headerProf = p;
+      })
+    );
+
     this.menuItems = [
       {
-        "name": "Settings",
-        "icon": "/assets/images/svgs/icon-user-male.svg",
-        "route": "/dashboard",
-        "isActive": true
+        name: 'Settings',
+        icon: '/assets/images/svgs/icon-user-male.svg',
+        route: '/dashboard',
+        isActive: true,
       },
       {
-        "name": "Settings",
-        "icon": "/assets/images/svgs/icon-user-male.svg",
-        "isActive": true,
-        "menus": [
+        name: 'Settings',
+        icon: '/assets/images/svgs/icon-user-male.svg',
+        isActive: true,
+        menus: [
           {
-            "name": "General",
-            "icon": "/assets/images/svgs/icon-user-male.svg",
-            "route": "/settings/general"
+            name: 'General',
+            icon: '/assets/images/svgs/icon-user-male.svg',
+            route: '/settings/general',
           },
           {
-            "name": "Users",
-            "icon": "/assets/images/svgs/icon-user-male.svg",
-            "isActive": true,
-          }
-        ]
-      }
-    ]
-    ;
+            name: 'Users',
+            icon: '/assets/images/svgs/icon-user-male.svg',
+            isActive: true,
+          },
+        ],
+      },
+    ];
   }
 
   ngOnDestroy(): void {
-    this.profileSub?.unsubscribe();
+    this.subs.unsubscribe();
   }
-
-  
 }

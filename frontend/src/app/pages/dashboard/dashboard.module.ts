@@ -2,15 +2,17 @@ import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { AppDashboardComponent } from './dashboard.component';
 import { CommonMaterialModule } from '../../common/MaterialModule';
+import { UicomponentsModule } from '../ui-components/ui-components.module';
+import { DashboardWidgetsModule } from './dashboard-widgets.module';
 import { Dashboardroute } from './dashboard.routing.module';
 
 @NgModule({
   declarations: [AppDashboardComponent],
   imports: [
     RouterModule.forChild(Dashboardroute),
-    // UicomponentsModule,
-    // ExtraModule,
-    CommonMaterialModule
+    CommonMaterialModule,
+    UicomponentsModule,
+    DashboardWidgetsModule,
   ],
   exports:[
     // UicomponentsModule,

@@ -1,0 +1,240 @@
+:host {
+  display: block;
+  color: var(--textPrimary);
+}
+
+.qb-page {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 64px);
+}
+
+.qb-page__intro {
+  .text-muted {
+    color: var(--labelText) !important;
+    opacity: 0.82;
+  }
+
+  code {
+    font-size: 0.92em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.12);
+    border: 1px solid rgba(var(--primary-rgb), 0.22);
+  }
+}
+
+.qb-shell__content {
+  display: flex;
+  flex-direction: column;
+  min-height: min(78vh, 880px);
+}
+
+.qb-layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: stretch;
+  box-sizing: border-box;
+}
+
+@media (max-width: 1100px) {
+  .qb-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.qb-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100%;
+  border-radius: 12px;
+  box-shadow: var(--cardshadow);
+  background-color: var(--cardbg);
+  color: var(--textPrimary);
+}
+
+.qb-panel__header {
+  padding-bottom: 4px;
+
+  mat-card-title,
+  mat-card-subtitle {
+    color: var(--textPrimary);
+  }
+}
+
+.qb-panel__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 8px !important;
+  min-height: 0;
+}
+
+.qb-panel__body--list {
+  flex: 1;
+  min-height: min(62vh, 640px);
+}
+
+.qb-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.qb-section-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--labelText);
+  margin-bottom: 8px;
+}
+
+.qb-sql-block {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.monaco-host {
+  min-height: 280px;
+  height: min(36vh, 360px);
+  width: 100%;
+  border: 1px solid var(--borderColor);
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: var(--background);
+}
+
+.qb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  padding-top: 4px;
+}
+
+.qb-actions__spacer {
+  flex: 1;
+  min-width: 8px;
+}
+
+.qb-btn-save {
+  background-color: #2e7d32 !important;
+  color: #fff !important;
+}
+
+.qb-btn-save:disabled {
+  opacity: 0.45 !important;
+  filter: grayscale(0.25);
+}
+
+.qb-preview {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--borderColor);
+}
+
+.qb-preview__head {
+  margin-bottom: 10px;
+}
+
+.qb-list-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 48px 16px;
+  color: var(--textPrimary);
+}
+
+.qb-list-grid-wrap {
+  flex: 1;
+  min-height: min(52vh, 560px);
+  border: 1px solid var(--borderColor);
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: var(--background);
+}
+
+.qb-list-paginator {
+  margin-top: 8px;
+  color: var(--textPrimary);
+
+  ::ng-deep .mat-mdc-paginator-container {
+    background: transparent;
+    color: var(--textPrimary);
+  }
+
+  ::ng-deep .mat-mdc-select-value,
+  ::ng-deep .mat-mdc-paginator-range-label {
+    color: var(--textPrimary);
+  }
+}
+
+.qb-empty {
+  padding: 12px 4px;
+  color: var(--textPrimary);
+}
+
+/* AG grids inside this page — reinforce theme tokens (inherits global ag-theme-quartz mapping) */
+.qb-preview-grid.ag-theme-quartz,
+.qb-list-grid.ag-theme-quartz {
+  --ag-background-color: var(--background);
+  --ag-foreground-color: var(--textPrimary);
+}
+
+/* Saved queries — icon actions */
+::ng-deep .qb-grid-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  height: 100%;
+}
+
+::ng-deep .qb-grid-actions__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  color: var(--textPrimary);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    transform 0.12s ease;
+}
+
+::ng-deep .qb-grid-actions__btn:hover {
+  background: rgba(var(--primary-rgb), 0.12);
+  color: var(--primary);
+}
+
+::ng-deep .qb-grid-actions__btn--delete:hover {
+  background: rgba(211, 47, 47, 0.14);
+  color: #ef5350;
+}
+
+::ng-deep .qb-grid-actions__btn:active {
+  transform: scale(0.96);
+}
+
+::ng-deep .qb-grid-actions__icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.gap-8 {
+  gap: 8px;
+}

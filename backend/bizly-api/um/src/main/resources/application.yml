@@ -25,6 +25,7 @@ eureka:
 security:
   internal:
     secret: THANKSGOD_BLESSNATHALIEANDMYFAMILY_05082026
+
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG

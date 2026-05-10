@@ -15,6 +15,9 @@ public class RoleMenuPermission {
 	@Column(name = "allow_view", nullable = false)
 	private boolean allowView;
 
+	@Column(name = "allow_add", nullable = false)
+	private boolean allowAdd;
+
 	@Column(name = "allow_edit", nullable = false)
 	private boolean allowEdit;
 
@@ -35,6 +38,14 @@ public class RoleMenuPermission {
 
 	public void setAllowView(boolean allowView) {
 		this.allowView = allowView;
+	}
+
+	public boolean isAllowAdd() {
+		return allowAdd;
+	}
+
+	public void setAllowAdd(boolean allowAdd) {
+		this.allowAdd = allowAdd;
 	}
 
 	public boolean isAllowEdit() {

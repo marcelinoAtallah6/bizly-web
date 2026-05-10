@@ -4,14 +4,13 @@ import { ExtraRoutes } from './extra.routing';
 import { AppIconsComponent } from './icons/icons.component';
 import { AppSamplePageComponent } from './sample-page/sample-page.component';
 import { CommonMaterialModule } from 'src/app/common/MaterialModule';
-import { UicomponentsModule } from '../ui-components/ui-components.module';
 
 @NgModule({
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 
   imports: [
     RouterModule.forChild(ExtraRoutes),
-    CommonMaterialModule,UicomponentsModule
+    CommonMaterialModule,
 
   ],
   exports:[],

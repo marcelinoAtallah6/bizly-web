@@ -8,6 +8,7 @@ public class RoleMenuPermissionEntryDto {
 	private Long menuId;
 
 	private boolean allowView;
+	private boolean allowAdd;
 	private boolean allowEdit;
 	private boolean allowDelete;
 
@@ -25,6 +26,14 @@ public class RoleMenuPermissionEntryDto {
 
 	public void setAllowView(boolean allowView) {
 		this.allowView = allowView;
+	}
+
+	public boolean isAllowAdd() {
+		return allowAdd;
+	}
+
+	public void setAllowAdd(boolean allowAdd) {
+		this.allowAdd = allowAdd;
 	}
 
 	public boolean isAllowEdit() {

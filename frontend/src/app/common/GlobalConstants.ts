@@ -73,6 +73,8 @@ export class GlobalConstants {
         delete: `${GlobalConstants.API_BASE_URL}/um/role/delete`,
         get: `${GlobalConstants.API_BASE_URL}/um/role/get`,
         gets: `${GlobalConstants.API_BASE_URL}/um/role/gets`,
+        menuPermissionsGet: `${GlobalConstants.API_BASE_URL}/um/role/menu-permissions/get`,
+        menuPermissionsSave: `${GlobalConstants.API_BASE_URL}/um/role/menu-permissions/save`,
       },
       audit: {
         gets: `${GlobalConstants.API_BASE_URL}/um/audit/gets`,
@@ -80,6 +82,27 @@ export class GlobalConstants {
     },
     application: {
       getAll: `${GlobalConstants.API_BASE_URL}/um/menu/gets`,
+    },
+    settings: {
+      queryDef: {
+        gets: `${GlobalConstants.API_BASE_URL}/settings/query-def/gets`,
+        get: `${GlobalConstants.API_BASE_URL}/settings/query-def/get`,
+        save: `${GlobalConstants.API_BASE_URL}/settings/query-def/save`,
+        delete: `${GlobalConstants.API_BASE_URL}/settings/query-def/delete`,
+        validate: `${GlobalConstants.API_BASE_URL}/settings/query-def/validate`,
+        executeTest: `${GlobalConstants.API_BASE_URL}/settings/query-def/execute-test`,
+      },
+      dashboardAdmin: {
+        definitions: `${GlobalConstants.API_BASE_URL}/settings/dashboard-admin/definitions`,
+        save: `${GlobalConstants.API_BASE_URL}/settings/dashboard-admin/save`,
+        delete: `${GlobalConstants.API_BASE_URL}/settings/dashboard-admin/delete`,
+      },
+      dashboardRuntime: {
+        forUser: `${GlobalConstants.API_BASE_URL}/settings/dashboard-runtime/for-user`,
+        load: `${GlobalConstants.API_BASE_URL}/settings/dashboard-runtime/load`,
+        widgetData: `${GlobalConstants.API_BASE_URL}/settings/dashboard-runtime/widget-data`,
+        navPref: `${GlobalConstants.API_BASE_URL}/settings/dashboard-runtime/nav-pref`,
+      },
     },
   };
 
@@ -97,3 +120,12 @@ export class GlobalConstants {
     return httpHeaders;
   }
 }
+
+/** Angular routes aligned with UM_MENUS.route for JWT menu permission matrix. */
+export const UM_SCREEN_ROUTES = {
+  users: '/um/user',
+  roles: '/um/role',
+  audit: '/um/audit',
+  customers: '/kyc/customers',
+  products: '/pm/products',
+} as const;

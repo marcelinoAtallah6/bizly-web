@@ -57,6 +57,8 @@ public class AuditAspect {
 				row.setNewValues(stringify(args[0]));
 				if ("id".equals(names[0]) && args[0] != null) {
 					row.setResourceId(String.valueOf(args[0]));
+				} else {
+					tryResourceIdFromGetter(args[0], row);
 				}
 			}
 
@@ -88,5 +90,24 @@ public class AuditAspect {
 
 	private static String emptyToNull(String s) {
 		return s == null || s.isBlank() ? null : s;
+	}
+
+	/** Sets resource id from common request getters ({@code getId}, {@code getDashboardId}, …). */
+	private static void tryResourceIdFromGetter(Object firstArg, UmAuditLog row) {
+		if (firstArg == null) {
+			return;
+		}
+		String[] getters = { "getId", "getDashboardId", "getRoleId", "getWidgetId" };
+		for (String getter : getters) {
+			try {
+				Object id = firstArg.getClass().getMethod(getter).invoke(firstArg);
+				if (id != null) {
+					row.setResourceId(String.valueOf(id));
+					return;
+				}
+			} catch (ReflectiveOperationException ignored) {
+				// try next
+			}
+		}
 	}
 }

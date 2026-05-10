@@ -1,0 +1,362 @@
+:host {
+  display: block;
+}
+
+/* Muted copy tracks active theme (light / dark / dark-blue) */
+.dash-muted {
+  color: var(--textPrimary);
+  opacity: 0.72;
+}
+
+.dash-runtime-root {
+  min-width: 0;
+}
+
+.state-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  color: var(--textPrimary);
+  opacity: 0.78;
+}
+
+.widgets-loading {
+  padding: 24px 16px 32px;
+}
+
+.empty-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--textPrimary);
+  opacity: 0.72;
+
+  .empty-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    opacity: 0.45;
+    color: var(--textPrimary);
+  }
+}
+
+.dash-body {
+  min-width: 0;
+}
+
+.dash-body--preview-loading {
+  position: relative;
+  opacity: 0.92;
+}
+
+.builder-preview-loading-ribbon {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.fade-widgets-in {
+  animation: dash-fade-in 0.4s ease-out both;
+}
+
+@keyframes dash-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 20px;
+  align-items: stretch;
+}
+
+/* Builder: each widget cell wrapper (drag root, selection, float bar) */
+.dash-grid-item-wrap {
+  position: relative;
+  min-width: 0;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+}
+
+.dash-grid-item-wrap--selected {
+  box-shadow: 0 0 0 2px rgba(var(--primary-rgb, 13, 110, 253), 0.55);
+  z-index: 2;
+}
+
+.dash-grid-inner {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.builder-widget-float-bar {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 8px;
+  border-radius: 10px;
+  background: var(--cardbg, #fff);
+  border: 1px solid var(--borderColor, rgba(0, 0, 0, 0.12));
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.builder-resize-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.resize-handle.resize-handle--se {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: rgba(var(--primary-rgb, 13, 110, 253), 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  cursor: nwse-resize;
+  pointer-events: auto;
+}
+
+.widget-cell {
+  min-width: 0;
+}
+
+/* Higher specificity so layout wins over Material defaults */
+.widget-card.mat-mdc-card {
+  min-height: 140px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition:
+    box-shadow 0.25s ease,
+    transform 0.2s ease;
+
+  &:hover {
+    box-shadow: var(--cardshadow) !important;
+  }
+}
+
+.dash-widget-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 24px 12px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--borderColor);
+}
+
+.dash-widget-heading {
+  margin: 0 !important;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.dash-widget-type {
+  flex-shrink: 0;
+  max-width: min(42%, 200px);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.72;
+  color: var(--textPrimary);
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--borderColor);
+  background: rgba(var(--primary-rgb), 0.08);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dash-widget-card-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.widget-sub {
+  opacity: 0.75;
+  color: var(--textPrimary);
+}
+
+.chart-host {
+  min-height: 300px;
+  width: 100%;
+  position: relative;
+
+  .apex-dash {
+    display: block;
+    width: 100%;
+    min-height: 280px;
+  }
+}
+
+.grid-host {
+  min-height: 200px;
+  width: 100%;
+}
+
+/* Table sits in the card — no inner bordered box; aligns with global card horizontal padding (24px) */
+.grid-host.dash-table-in-card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  margin: 0 -24px;
+}
+
+.grid-host.dash-table-in-card .widget-mat-table-wrap {
+  flex: 1;
+  min-height: 0;
+}
+
+.widget-mat-table-wrap {
+  max-height: min(360px, 55vh);
+  overflow: auto;
+  background-color: transparent;
+}
+
+.widget-mat-table {
+  width: 100%;
+}
+
+/* --- Material table: inherit theme foreground/background (fixes black text on dark modes) --- */
+:host ::ng-deep .dash-widget-mat-table.mat-mdc-table {
+  background-color: var(--cardbg) !important;
+  color: var(--textPrimary) !important;
+}
+
+:host ::ng-deep .dash-widget-mat-table thead .mat-mdc-header-row,
+:host ::ng-deep .dash-widget-mat-table .mat-mdc-header-row {
+  background-color: var(--toolbar) !important;
+}
+
+:host ::ng-deep .dash-widget-mat-table .mat-mdc-header-cell {
+  color: var(--textPrimary) !important;
+  border-bottom: 1px solid var(--borderColor) !important;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+
+:host ::ng-deep .dash-widget-mat-table .mat-mdc-cell {
+  color: var(--textPrimary) !important;
+  border-bottom: 1px solid var(--borderColor) !important;
+}
+
+:host ::ng-deep .dash-widget-mat-table .mat-mdc-row:hover .mat-mdc-cell {
+  background-color: var(--hoverBgColor) !important;
+}
+
+:host ::ng-deep .dash-widget-mat-table .mat-mdc-footer-cell {
+  color: var(--textPrimary) !important;
+  border-top: 1px solid var(--borderColor) !important;
+}
+
+/* Subtle zebra — uses primary tint so it shifts with theme */
+:host ::ng-deep .dash-widget-mat-table .mat-mdc-row:nth-child(even) .mat-mdc-cell {
+  background-color: rgba(var(--primary-rgb), 0.06) !important;
+}
+
+:host ::ng-deep .dash-widget-mat-table .mat-mdc-row:nth-child(even):hover .mat-mdc-cell {
+  background-color: var(--hoverBgColor) !important;
+}
+
+.quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.qa-btn {
+  border-radius: 999px !important;
+}
+
+.widget-rise {
+  animation: widget-rise 0.45s ease both;
+}
+
+@keyframes widget-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.empty-widget-msg {
+  padding: 24px 8px;
+  text-align: center;
+}
+
+/* Embedded builder preview — slightly tighter chrome */
+.dash-preview-embed {
+  .dash-body {
+    overflow: visible;
+  }
+
+  .widgets-loading {
+    padding: 16px;
+  }
+
+  .chart-host {
+    min-height: 200px;
+
+    .apex-dash {
+      min-height: 180px;
+    }
+  }
+
+  .dash-grid {
+    gap: 12px;
+  }
+
+  .fade-widgets-in {
+    animation: none;
+  }
+
+  .widget-rise {
+    animation: none;
+  }
+}
+
+.builder-preview-empty {
+  padding: 20px 16px;
+}

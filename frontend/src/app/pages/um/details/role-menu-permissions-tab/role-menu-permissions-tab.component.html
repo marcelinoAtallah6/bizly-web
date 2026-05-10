@@ -1,0 +1,97 @@
+<div class="perm-tab">
+  <app-page-action-bar title="Screens & menus" [toolbar]="permToolbar" [wrap]="true"></app-page-action-bar>
+
+  <p class="text-muted f-s-13 m-b-16">
+    Permissions follow the menu tree: changing a parent applies the same flags to all descendants until you change a child.
+    <strong>View</strong> controls sidebar visibility; <strong>Add</strong> / <strong>Edit</strong> / <strong>Delete</strong> are enforced on APIs.
+  </p>
+
+  <div *ngIf="loading" class="d-flex justify-content-center p-24">
+    <mat-spinner diameter="36"></mat-spinner>
+  </div>
+
+  <div class="perm-filters" *ngIf="!loading && rows.length">
+    <mat-form-field appearance="outline" class="perm-filter-field">
+      <mat-label>Role</mat-label>
+      <mat-select [value]="roleId" (selectionChange)="onRoleSelected($event.value)">
+        <mat-option *ngFor="let r of roles" [value]="r.id">{{ r.name }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="perm-filter-field perm-filter-grow">
+      <mat-label>Filter menus</mat-label>
+      <input matInput [(ngModel)]="menuFilter" placeholder="Menu path, route, or application" />
+      <button
+        mat-icon-button
+        matSuffix
+        type="button"
+        *ngIf="menuFilter"
+        (click)="clearMenuFilter()"
+        matTooltip="Clear"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </mat-form-field>
+  </div>
+
+  <div class="tree-panel" *ngIf="!loading && rows.length">
+    <div class="perm-tree-header">
+      <span class="col-menu">Menu</span>
+      <span class="col-flag">View</span>
+      <span class="col-flag">Add</span>
+      <span class="col-flag">Edit</span>
+      <span class="col-flag">Del</span>
+    </div>
+    <div class="tree-scroll" *ngIf="displayTree.length">
+      <ul class="perm-tree">
+        <ng-container *ngTemplateOutlet="nodeTpl; context: { $implicit: displayTree }"></ng-container>
+      </ul>
+    </div>
+  </div>
+
+  <ng-template #nodeTpl let-nodes>
+    <li *ngFor="let node of nodes" class="perm-tree-node">
+      <div class="perm-tree-row">
+        <div class="perm-tree-meta">
+          <div class="perm-tree-path">{{ node.row.menuPath }}</div>
+          <div class="perm-tree-sub muted">
+            <span *ngIf="node.row.applicationName">{{ node.row.applicationName }}</span>
+            <span *ngIf="node.row.route" class="perm-tree-route">{{ node.row.route }}</span>
+          </div>
+        </div>
+        <mat-checkbox
+          class="col-flag"
+          [checked]="node.row.allowView"
+          (change)="setFlag(node.row, 'allowView', $event.checked)"
+        ></mat-checkbox>
+        <mat-checkbox
+          class="col-flag"
+          [checked]="node.row.allowAdd"
+          [disabled]="!node.row.allowView"
+          (change)="setFlag(node.row, 'allowAdd', $event.checked)"
+        ></mat-checkbox>
+        <mat-checkbox
+          class="col-flag"
+          [checked]="node.row.allowEdit"
+          [disabled]="!node.row.allowView"
+          (change)="setFlag(node.row, 'allowEdit', $event.checked)"
+        ></mat-checkbox>
+        <mat-checkbox
+          class="col-flag"
+          [checked]="node.row.allowDelete"
+          [disabled]="!node.row.allowView"
+          (change)="setFlag(node.row, 'allowDelete', $event.checked)"
+        ></mat-checkbox>
+      </div>
+      <ul *ngIf="node.children?.length" class="perm-tree-children">
+        <ng-container *ngTemplateOutlet="nodeTpl; context: { $implicit: node.children }"></ng-container>
+      </ul>
+    </li>
+  </ng-template>
+
+  <p *ngIf="!loading && rows.length && !displayTree.length" class="text-muted m-t-16">
+    No menus match your filter.
+  </p>
+
+  <p *ngIf="!loading && !rows.length" class="text-muted m-t-16">No menu definitions found.</p>
+</div>

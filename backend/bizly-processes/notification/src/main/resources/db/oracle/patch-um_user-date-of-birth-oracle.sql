@@ -1,0 +1,7 @@
+-- Optional: date of birth on application users (UM.UM_USER) for birthday workflow.
+BEGIN
+  EXECUTE IMMEDIATE 'ALTER TABLE UM.UM_USER ADD (DATE_OF_BIRTH DATE)';
+EXCEPTION WHEN OTHERS THEN
+  IF SQLCODE != -01430 THEN RAISE; END IF;
+END;
+/

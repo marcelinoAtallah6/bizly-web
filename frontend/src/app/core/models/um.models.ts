@@ -151,3 +151,38 @@ export interface AuditLogRowResponse {
 
 /** com.um.common.PageResponse<AuditLogRowResponse> */
 export type GetsAuditLogsResponse = PageResponse<AuditLogRowResponse>;
+
+/** com.um.api.dto.role.permission.GetRoleMenuPermissionsRequest */
+export interface GetRoleMenuPermissionsRequest {
+  roleId: number;
+}
+
+/** com.um.api.dto.role.permission.RoleMenuPermissionRowResponse */
+export interface RoleMenuPermissionRowResponse {
+  menuId: number;
+  /** Null / omitted for top-level menus under an application. */
+  parentMenuId?: number | null;
+  applicationId?: number;
+  applicationName?: string;
+  menuPath?: string;
+  route?: string;
+  allowView: boolean;
+  allowAdd: boolean;
+  allowEdit: boolean;
+  allowDelete: boolean;
+}
+
+/** com.um.api.dto.role.permission.RoleMenuPermissionEntryDto */
+export interface RoleMenuPermissionEntryDto {
+  menuId: number;
+  allowView: boolean;
+  allowAdd: boolean;
+  allowEdit: boolean;
+  allowDelete: boolean;
+}
+
+/** com.um.api.dto.role.permission.SaveRoleMenuPermissionsRequest */
+export interface SaveRoleMenuPermissionsRequest {
+  roleId: number;
+  permissions: RoleMenuPermissionEntryDto[];
+}

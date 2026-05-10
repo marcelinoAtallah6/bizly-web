@@ -8,16 +8,18 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.um.api.audit.Audited;
 import com.um.api.dto.role.permission.GetRoleMenuPermissionsRequest;
 import com.um.api.dto.role.permission.RoleMenuPermissionRowResponse;
 import com.um.api.dto.role.permission.SaveRoleMenuPermissionsRequest;
 import com.um.api.service.role.IRoleMenuPermissionService;
+import com.um.api.service.security.MenuPermissionAction;
+import com.um.api.service.security.RequireMenuPermission;
 import com.um.common.ApiMessages;
 import com.um.common.ApiResponse;
 
@@ -31,7 +33,7 @@ public class RoleMenuPermissionController {
 	private IRoleMenuPermissionService permissionService;
 
 	@PostMapping("/get")
-	@PreAuthorize("hasRole('USER')")
+	@RequireMenuPermission(menuRoute = "/um/role", action = MenuPermissionAction.VIEW)
 	public ResponseEntity<ApiResponse<List<RoleMenuPermissionRowResponse>>> get(
 			@RequestBody @Valid GetRoleMenuPermissionsRequest request) {
 
@@ -40,7 +42,8 @@ public class RoleMenuPermissionController {
 	}
 
 	@PostMapping("/save")
-	@PreAuthorize("hasRole('USER')")
+	@Audited(action = "UM_ROLE_MENU_PERM_SAVE", resourceType = "ROLE_MENU_PERM")
+	@RequireMenuPermission(menuRoute = "/um/role", action = MenuPermissionAction.EDIT)
 	public ResponseEntity<ApiResponse<Void>> save(@RequestBody @Valid SaveRoleMenuPermissionsRequest request) {
 
 		log.info("[UM_ROLE_MENU_PERM][SAVE] roleId={}", request.getRoleId());

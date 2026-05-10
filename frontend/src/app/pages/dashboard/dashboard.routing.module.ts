@@ -5,6 +5,6 @@ export const Dashboardroute: Routes = [
   {
     path: '',
     component: AppDashboardComponent,
-    data: { breadcrumb: 'Dashbnoard' },
+    data: { breadcrumb: 'Home' },
   },
 ];

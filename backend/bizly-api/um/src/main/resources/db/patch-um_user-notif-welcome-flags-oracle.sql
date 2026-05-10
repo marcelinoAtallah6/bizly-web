@@ -1,0 +1,17 @@
+-- Welcome notification drive columns on UM.UM_USER:
+-- NOTIF_WELCOME_FLAG: 0 = welcome email not completed, 1 = completed after successful send.
+-- NOTIF_WELCOME_STATUS: 0 = not successful (pending or failed), 1 = last send succeeded.
+
+BEGIN
+  EXECUTE IMMEDIATE q'[ALTER TABLE UM.UM_USER ADD (NOTIF_WELCOME_FLAG NUMBER(1) DEFAULT 0 NOT NULL)]';
+EXCEPTION WHEN OTHERS THEN
+  IF SQLCODE != -01430 THEN RAISE; END IF;
+END;
+/
+
+BEGIN
+  EXECUTE IMMEDIATE q'[ALTER TABLE UM.UM_USER ADD (NOTIF_WELCOME_STATUS NUMBER(1) DEFAULT 0 NOT NULL)]';
+EXCEPTION WHEN OTHERS THEN
+  IF SQLCODE != -01430 THEN RAISE; END IF;
+END;
+/

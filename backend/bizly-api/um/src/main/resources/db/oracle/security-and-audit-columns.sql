@@ -31,6 +31,27 @@ CREATE TABLE um.um_audit_log (
 
 COMMENT ON TABLE um.um_audit_log IS 'Append-only audit entries from @Audited controllers';
 
+-- Role × menu permissions (View / Add / Edit / Delete). If a role has at least one row, navigation uses strict filtering.
+CREATE TABLE UM.UM_ROLE_MENU_PERM (
+  role_id NUMBER(19) NOT NULL,
+  menu_id NUMBER(19) NOT NULL,
+  allow_view NUMBER(1) DEFAULT 0 NOT NULL,
+  allow_add NUMBER(1) DEFAULT 0 NOT NULL,
+  allow_edit NUMBER(1) DEFAULT 0 NOT NULL,
+  allow_delete NUMBER(1) DEFAULT 0 NOT NULL,
+  CONSTRAINT pk_um_role_menu_perm PRIMARY KEY (role_id, menu_id)
+);
+
+-- Existing installs: add Add permission column (ignore ORA-01430 if already applied).
+-- ALTER TABLE UM.UM_ROLE_MENU_PERM ADD allow_add NUMBER(1);
+-- UPDATE UM.UM_ROLE_MENU_PERM SET allow_add = 0 WHERE allow_add IS NULL;
+-- ALTER TABLE UM.UM_ROLE_MENU_PERM MODIFY allow_add NUMBER(1) DEFAULT 0 NOT NULL;
+
+ALTER TABLE UM.UM_ROLE_MENU_PERM ADD CONSTRAINT fk_um_rmp_role FOREIGN KEY (role_id) REFERENCES UM.um_role(id);
+ALTER TABLE UM.UM_ROLE_MENU_PERM ADD CONSTRAINT fk_um_rmp_menu FOREIGN KEY (menu_id) REFERENCES UM.UM_MENUS(id);
+
+COMMENT ON TABLE UM.UM_ROLE_MENU_PERM IS 'Per-role menu access; drives sidebar when configured';
+
 create or replace TRIGGER um.um_audit_log_id
 BEFORE INSERT ON um.um_audit_log
 FOR EACH ROW

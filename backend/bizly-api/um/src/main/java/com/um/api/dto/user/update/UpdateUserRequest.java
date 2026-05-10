@@ -1,5 +1,6 @@
 package com.um.api.dto.user.update;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import javax.validation.constraints.Email;
@@ -49,6 +50,8 @@ public class UpdateUserRequest {
 	private String profileImageMimeType;
 
 	private String profileImageBase64;
+
+	private LocalDate dateOfBirth;
 
 	public Long getId() {
 		return id;
@@ -136,5 +139,13 @@ public class UpdateUserRequest {
 
 	public void setProfileImageBase64(String profileImageBase64) {
 		this.profileImageBase64 = profileImageBase64;
+	}
+
+	public LocalDate getDateOfBirth() {
+		return dateOfBirth;
+	}
+
+	public void setDateOfBirth(LocalDate dateOfBirth) {
+		this.dateOfBirth = dateOfBirth;
 	}
 }

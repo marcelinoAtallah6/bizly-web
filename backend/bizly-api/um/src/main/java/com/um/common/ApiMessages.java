@@ -24,5 +24,7 @@ public class ApiMessages {
 
 	public static final String INVALID_PROFILE_IMAGE = "Invalid or unsupported profile image";
 	public static final String PROFILE_IMAGE_TOO_LARGE = "Profile image exceeds maximum size";
+
+	public static final String MENU_PERMISSION_DENIED = "You do not have permission for this action";
 }
 

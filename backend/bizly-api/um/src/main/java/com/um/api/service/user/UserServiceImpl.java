@@ -65,6 +65,9 @@ public class UserServiceImpl implements IUserService {
 		user.setMobileNumber(request.getMobileNumber());
 		user.setStatus(request.getStatus());
 		user.setCreatedAt(LocalDateTime.now());
+		user.setDateOfBirth(request.getDateOfBirth());
+		user.setNotifWelcomeFlag(0);
+		user.setNotifWelcomeStatus(0);
 
 		String decryptedPassword;
 		try {
@@ -182,6 +185,7 @@ public class UserServiceImpl implements IUserService {
 		response.setMobileNumber(user.getMobileNumber());
 		response.setStatus(user.getStatus());
 		response.setCreatedAt(user.getCreatedAt());
+		response.setDateOfBirth(user.getDateOfBirth());
 		response.setRoleIds(userRoleRepository.findById_UserId(user.getId()).stream()
 				.map(ur -> ur.getId().getRoleId()).collect(Collectors.toList()));
 		if (includeProfileImage && user.getProfileImageData() != null && user.getProfileImageData().length > 0) {

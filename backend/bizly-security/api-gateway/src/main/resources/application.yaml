@@ -48,7 +48,15 @@ spring:
         - Path=/pm/**
         filters:
         - AuthenticationPreFilter
-        - StripPrefix=1   
+        - StripPrefix=1
+
+      - id: settings
+        uri: lb://settings
+        predicates:
+        - Path=/settings/**
+        filters:
+        - AuthenticationPreFilter
+        - StripPrefix=1
 
 eureka:
   client:

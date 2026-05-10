@@ -164,17 +164,22 @@
   </div>
   <mat-divider></mat-divider>
 
-  <div class="p-x-16 p-y-8" *ngIf="roleChoices().length > 1">
+  <div class="p-x-16 p-y-8">
     <div class="mat-caption text-muted m-b-8">Active role ({{ activeRoleSummary() }})</div>
-    <button mat-menu-item (click)="switchRole(null)">
-      <span>All roles</span>
-    </button>
-    <button mat-menu-item *ngFor="let r of roleChoices()" (click)="switchRole(r)">
-      <span>{{ displayRoleLabel(r) }}</span>
-    </button>
+    <div class="mat-body-2 text-muted m-b-8" *ngIf="roleChoices().length <= 1">
+      {{ roleChoices().length === 1 ? 'One role assigned' : 'No role profile' }}
+    </div>
+    <ng-container *ngIf="roleChoices().length > 1">
+      <button mat-menu-item (click)="switchRole(null)">
+        <span>All roles (union)</span>
+      </button>
+      <button mat-menu-item *ngFor="let r of roleChoices()" (click)="switchRole(r)">
+        <span>{{ displayRoleLabel(r) }}</span>
+      </button>
+    </ng-container>
   </div>
 
-  <mat-divider *ngIf="roleChoices().length > 1"></mat-divider>
+  <mat-divider></mat-divider>
 
   <!-- Sign Out Button -->
   <button mat-menu-item (click)="onSignOut()">

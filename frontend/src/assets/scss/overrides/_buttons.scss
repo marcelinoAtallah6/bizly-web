@@ -29,6 +29,19 @@
   --mdc-text-button-label-text-color : var(--textPrimary) !important;
 }
 
+/* Stroked / outlined primary — not covered by filled-button overrides above */
+.mat-mdc-outlined-button.mat-primary {
+  --mdc-outlined-button-label-text-color: var(--primary) !important;
+  --mdc-outlined-button-outline-color: var(--primary) !important;
+}
+
+/* Discrete sliders (e.g. Dashboard Builder) follow `--primary` / `--primary-rgb` */
+.mat-mdc-slider.mat-primary {
+  --mdc-slider-handle-color: var(--primary) !important;
+  --mdc-slider-active-track-color: var(--primary) !important;
+  --mdc-slider-inactive-track-color: rgba(var(--primary-rgb), 0.32) !important;
+}
+
 .mdc-button {
   border-radius: var(--border-radius);
 }

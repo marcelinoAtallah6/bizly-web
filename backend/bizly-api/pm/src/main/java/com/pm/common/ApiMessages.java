@@ -21,4 +21,6 @@ public class ApiMessages {
 	public static final String CHECKOUT_INVALID = "Checkout request is invalid";
 	public static final String INSUFFICIENT_STOCK = "Insufficient stock for one or more products";
 
+	public static final String MENU_PERMISSION_DENIED = "You do not have permission for this action";
+
 }

@@ -1,5 +1,6 @@
 package com.um.api.model.user;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import javax.persistence.Column;
@@ -45,6 +46,17 @@ public class User {
 
 	@Column(name = "created_at")
 	private LocalDateTime createdAt;
+
+	@Column(name = "date_of_birth")
+	private LocalDate dateOfBirth;
+
+	/** 0 = welcome workflow pending; 1 = welcome email completed successfully. */
+	@Column(name = "notif_welcome_flag")
+	private Integer notifWelcomeFlag = 0;
+
+	/** 0 = not successful (never sent or last attempt failed); 1 = last send succeeded. */
+	@Column(name = "notif_welcome_status")
+	private Integer notifWelcomeStatus = 0;
 
 	@Column(name = "profile_image_mime", length = 64)
 	private String profileImageMime;
@@ -123,6 +135,30 @@ public class User {
 
 	public void setCreatedAt(LocalDateTime createdAt) {
 		this.createdAt = createdAt;
+	}
+
+	public LocalDate getDateOfBirth() {
+		return dateOfBirth;
+	}
+
+	public void setDateOfBirth(LocalDate dateOfBirth) {
+		this.dateOfBirth = dateOfBirth;
+	}
+
+	public Integer getNotifWelcomeFlag() {
+		return notifWelcomeFlag;
+	}
+
+	public void setNotifWelcomeFlag(Integer notifWelcomeFlag) {
+		this.notifWelcomeFlag = notifWelcomeFlag;
+	}
+
+	public Integer getNotifWelcomeStatus() {
+		return notifWelcomeStatus;
+	}
+
+	public void setNotifWelcomeStatus(Integer notifWelcomeStatus) {
+		this.notifWelcomeStatus = notifWelcomeStatus;
 	}
 
 	public String getProfileImageMime() {

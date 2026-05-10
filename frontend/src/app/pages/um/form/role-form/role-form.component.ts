@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { UM_SCREEN_ROUTES } from 'src/app/common/GlobalConstants';
+import { MenuPermissionService } from 'src/app/services/menu-permission.service';
 import { UmRoleService } from '../../services/um-role.service';
 import { ToolbarButton } from 'src/app/pages/ui-components/button/toolbar/toolbar.component';
 import { finalize } from 'rxjs';
@@ -25,13 +27,23 @@ export class RoleFormComponent implements OnInit {
     private readonly fb: FormBuilder,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
-    private readonly umRoleService: UmRoleService
+    private readonly umRoleService: UmRoleService,
+    private readonly menuPerm: MenuPermissionService
   ) {}
 
   ngOnInit(): void {
     this.mode = (this.route.snapshot.data['mode'] as 'create' | 'edit') ?? 'create';
     const idParam = this.route.snapshot.paramMap.get('id');
     this.roleId = idParam ? Number(idParam) : null;
+
+    if (this.mode === 'create' && !this.menuPerm.can(UM_SCREEN_ROUTES.roles, 'add')) {
+      this.router.navigate(['/um', 'role']);
+      return;
+    }
+    if (this.mode === 'edit' && !this.menuPerm.can(UM_SCREEN_ROUTES.roles, 'edit')) {
+      this.router.navigate(['/um', 'role']);
+      return;
+    }
 
     this.form = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(100)]],

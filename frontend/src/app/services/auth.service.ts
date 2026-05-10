@@ -12,6 +12,16 @@ interface LoginPayload {
   activeRole?: string | null;
 }
 
+/** JWT {@code perms} row — short keys to keep token size down. */
+export interface JwtMenuPermRow {
+  m: number;
+  r?: string;
+  v?: boolean;
+  a?: boolean;
+  e?: boolean;
+  d?: boolean;
+}
+
 interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -309,6 +319,24 @@ DdonpI93CG9kkKqwaKPQnsYX3PyFEH2aA3I7N/0=
       return null;
     }
     return String(a);
+  }
+
+  /** True when this role has at least one row in {@code UM_ROLE_MENU_PERM} (strict UI + APIs). */
+  getJwtPermMatrix(): boolean {
+    const p = this.decodeAccessPayload();
+    if (!p) {
+      return false;
+    }
+    return p['permMatrix'] === true;
+  }
+
+  getJwtMenuPerms(): JwtMenuPermRow[] {
+    const p = this.decodeAccessPayload();
+    const raw = p?.['perms'];
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+    return raw as JwtMenuPermRow[];
   }
 
   private decodeAccessPayload(): Record<string, unknown> | null {

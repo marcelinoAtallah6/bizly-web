@@ -13,6 +13,7 @@ import * as TablerIcons from 'angular-tabler-icons/icons';
 //Import all material modules
 import { MaterialModule } from './material.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 
 //Import Layouts
 import { FullComponent } from './layouts/full/full.component';
@@ -51,6 +52,7 @@ import { DeviceIdService } from './services/device-id.service';
     ReactiveFormsModule,
     MaterialModule,
     TablerIconsModule.pick(TablerIcons),
+    DragDropModule,
   ],
   exports: [TablerIconsModule],
   providers: [

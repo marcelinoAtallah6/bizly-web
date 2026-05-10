@@ -2,8 +2,10 @@ import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { ColDef, GridReadyEvent, RowDoubleClickedEvent } from 'ag-grid-community';
 import { finalize } from 'rxjs';
+import { UM_SCREEN_ROUTES } from 'src/app/common/GlobalConstants';
 import { GetUserResponse } from 'src/app/core/models/um.models';
 import { ToolbarButton } from 'src/app/pages/ui-components/button/toolbar/toolbar.component';
+import { MenuPermissionService } from 'src/app/services/menu-permission.service';
 import { UmUserService } from '../../services/um-user.service';
 
 @Component({
@@ -41,14 +43,24 @@ export class UserListComponent implements OnInit {
 
   constructor(
     private readonly umUserService: UmUserService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly menuPerm: MenuPermissionService
   ) {}
 
   get listToolbar(): ToolbarButton[] {
-    return [
+    const out: ToolbarButton[] = [
       { id: 'refresh', icon: 'refresh', tooltip: 'Refresh', action: () => this.load(), disabled: this.loading },
-      { id: 'add', icon: 'person_add', tooltip: 'New user', action: () => this.goNew(), color: 'primary' },
     ];
+    if (this.menuPerm.can(UM_SCREEN_ROUTES.users, 'add')) {
+      out.push({
+        id: 'add',
+        icon: 'person_add',
+        tooltip: 'New user',
+        action: () => this.goNew(),
+        color: 'primary',
+      });
+    }
+    return out;
   }
 
   ngOnInit(): void {

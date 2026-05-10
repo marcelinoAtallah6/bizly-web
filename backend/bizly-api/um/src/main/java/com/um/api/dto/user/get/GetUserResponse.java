@@ -1,5 +1,6 @@
 package com.um.api.dto.user.get;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -13,6 +14,7 @@ public class GetUserResponse {
 	private String mobileNumber;
 	private String status;
 	private LocalDateTime createdAt;
+	private LocalDate dateOfBirth;
 	private List<Long> roleIds;
 
 	private String profileImageMimeType;
@@ -80,6 +82,14 @@ public class GetUserResponse {
 
 	public void setCreatedAt(LocalDateTime createdAt) {
 		this.createdAt = createdAt;
+	}
+
+	public LocalDate getDateOfBirth() {
+		return dateOfBirth;
+	}
+
+	public void setDateOfBirth(LocalDate dateOfBirth) {
+		this.dateOfBirth = dateOfBirth;
 	}
 
 	public List<Long> getRoleIds() {

@@ -6,10 +6,13 @@ import {
   AddRoleResponse,
   DeleteRoleRequest,
   DeleteRoleResponse,
+  GetRoleMenuPermissionsRequest,
   GetRoleRequest,
   GetRoleResponse,
   GetsRolesRequest,
   GetsRolesResponse,
+  RoleMenuPermissionRowResponse,
+  SaveRoleMenuPermissionsRequest,
   UpdateRoleRequest,
   UpdateRoleResponse,
 } from 'src/app/core/models/um.models';
@@ -48,6 +51,23 @@ export class UmRoleService {
   delete(body: DeleteRoleRequest): Observable<DeleteRoleResponse> {
     return this.api.postEnvelope<DeleteRoleResponse>(
       GlobalConstants.API_ENDPOINTS.um.role.delete,
+      body,
+      'success-and-errors'
+    );
+  }
+
+  getMenuPermissions(
+    body: GetRoleMenuPermissionsRequest
+  ): Observable<RoleMenuPermissionRowResponse[]> {
+    return this.api.postEnvelope<RoleMenuPermissionRowResponse[]>(
+      GlobalConstants.API_ENDPOINTS.um.role.menuPermissionsGet,
+      body
+    );
+  }
+
+  saveMenuPermissions(body: SaveRoleMenuPermissionsRequest): Observable<void> {
+    return this.api.postEnvelope<void>(
+      GlobalConstants.API_ENDPOINTS.um.role.menuPermissionsSave,
       body,
       'success-and-errors'
     );

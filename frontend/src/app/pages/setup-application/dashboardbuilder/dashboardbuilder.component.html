@@ -1,1 +1,304 @@
-<p>dashboardbuilder works!</p>
+<div class="builder-page p-24">
+  <div class="builder-intro m-b-16">
+    <h2 class="m-b-8 m-0">Dashboard Builder</h2>
+    <p class="text-muted m-0 f-s-14">
+      Drag types from the left onto the overview, then resize and reorder on the grid. Edit opens the slide-in panel —
+      same charts as <code>/dashboard</code>. Identity and access stay in the panel below.
+    </p>
+  </div>
+
+  <div *ngIf="loading" class="d-flex justify-content-center p-48">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <mat-expansion-panel *ngIf="!loading" class="meta-expansion m-b-16" [expanded]="false">
+    <mat-expansion-panel-header>
+      <mat-panel-title>Dashboard identity &amp; access</mat-panel-title>
+      <mat-panel-description>Name, slug, grants, save</mat-panel-description>
+    </mat-expansion-panel-header>
+
+    <mat-form-field appearance="outline" class="w-100">
+      <mat-label>Dashboard</mat-label>
+      <mat-select
+        [(ngModel)]="selectedKey"
+        [compareWith]="compareDashboardKey"
+        (selectionChange)="onSelectionChange()"
+      >
+        <mat-option value="new">— New dashboard —</mat-option>
+        <mat-option *ngFor="let d of definitions" [value]="d.id">{{ d.name }} ({{ d.slug }})</mat-option>
+      </mat-select>
+      <mat-hint *ngIf="!definitions.length">No dashboards returned — check API / permissions.</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-100">
+      <mat-label>Name</mat-label>
+      <input matInput [(ngModel)]="name" />
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="w-100">
+      <mat-label>Slug (unique key)</mat-label>
+      <input matInput [(ngModel)]="slug" placeholder="e.g. sales-overview" />
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="w-100">
+      <mat-label>Description</mat-label>
+      <textarea matInput rows="2" [(ngModel)]="description"></textarea>
+    </mat-form-field>
+
+    <mat-checkbox [(ngModel)]="builtin">Built-in template</mat-checkbox>
+
+    <mat-form-field appearance="outline" class="w-100 m-t-16">
+      <mat-label>Grant roles</mat-label>
+      <mat-select multiple [(ngModel)]="selectedGrantRoles" placeholder="Select roles">
+        <mat-option *ngFor="let r of allRoles" [value]="r.name">{{ r.name }}</mat-option>
+      </mat-select>
+      <mat-hint>Roles from User Management (full catalog loaded).</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-100 m-t-16">
+      <mat-label>Grant users (search)</mat-label>
+      <input
+        matInput
+        [(ngModel)]="userSearchTerm"
+        (ngModelChange)="onUserSearchChange($event)"
+        [matAutocomplete]="autoUsers"
+        placeholder="Type username, email, or name"
+      />
+      <mat-autocomplete #autoUsers="matAutocomplete" (optionSelected)="onUserPicked($event)">
+        <mat-option *ngFor="let u of filteredUsersForPick" [value]="u">{{ u.username }} — {{ u.email }}</mat-option>
+      </mat-autocomplete>
+      <mat-hint *ngIf="loadingUsers">Loading users…</mat-hint>
+      <mat-hint *ngIf="!loadingUsers">{{ userCatalog.length }} users prefetched for search (paged from UM).</mat-hint>
+    </mat-form-field>
+
+    <div class="selected-pills m-t-8 m-b-16" *ngIf="selectedUsernames.length">
+      <span class="mat-caption text-muted m-r-8">Granted users:</span>
+      <mat-chip-set>
+        <mat-chip-row *ngFor="let name of selectedUsernames" (removed)="removeUsername(name)">
+          {{ name }}
+          <button matChipRemove aria-label="Remove"><mat-icon>cancel</mat-icon></button>
+        </mat-chip-row>
+      </mat-chip-set>
+    </div>
+
+    <div class="d-flex flex-wrap gap-8 m-t-8">
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        (click)="save()"
+        [disabled]="saving || !name.trim() || !slug.trim()"
+      >
+        Save dashboard
+      </button>
+      <button mat-stroked-button color="warn" type="button" (click)="remove()" [disabled]="dashboardId == null">
+        Delete
+      </button>
+    </div>
+  </mat-expansion-panel>
+
+  <div *ngIf="!loading" class="builder-workspace">
+    <mat-sidenav-container class="builder-shell">
+      <mat-sidenav
+        position="end"
+        mode="over"
+        class="builder-edit-sidenav"
+        [(opened)]="editPanelOpen"
+        (openedChange)="onEditPanelOpened($event)"
+      >
+        <div class="builder-edit-sidenav-inner" *ngIf="selectedWidgetIndex !== null">
+          <div class="builder-edit-head d-flex align-items-center justify-content-between gap-8">
+            <div class="min-w-0">
+              <div class="mat-subtitle-2 text-muted m-b-4">Edit widget</div>
+              <div class="f-w-600 text-truncate" *ngIf="widgets[selectedWidgetIndex!] as hw">{{ hw.title }}</div>
+            </div>
+            <button mat-icon-button type="button" aria-label="Close" (click)="editPanelOpen = false">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+
+          <ng-container *ngIf="widgets[selectedWidgetIndex!] as ew">
+            <mat-tab-group mat-stretch-tabs="false" dynamicHeight class="builder-edit-tabs">
+              <mat-tab label="General">
+                <div class="tab-pad">
+                  <mat-form-field appearance="outline" class="w-100">
+                    <mat-label>Title</mat-label>
+                    <input matInput [(ngModel)]="ew.title" (ngModelChange)="schedulePreviewRefresh()" />
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="w-100">
+                    <mat-label>Type</mat-label>
+                    <mat-select [(ngModel)]="ew.widgetType" (ngModelChange)="syncEditorToPreview()">
+                      <mat-option *ngFor="let t of widgetTypes" [value]="t">{{ humanizeType(t) }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </mat-tab>
+
+              <mat-tab label="Data">
+                <div class="tab-pad">
+                  <div class="widget-fields" *ngIf="ew.widgetType !== 'QUICK_ACTION'">
+                    <mat-form-field appearance="outline" class="w-100">
+                      <mat-label>Saved query</mat-label>
+                      <mat-select
+                        [(ngModel)]="ew.queryDefId"
+                        [compareWith]="compareQueryDefId"
+                        (ngModelChange)="syncEditorToPreview()"
+                      >
+                        <mat-option [value]="null">—</mat-option>
+                        <mat-option *ngFor="let q of queries" [value]="q.id">{{ q.name }}</mat-option>
+                      </mat-select>
+                      <mat-hint *ngIf="queriesLoading">Loading queries…</mat-hint>
+                      <mat-hint *ngIf="!queriesLoading && !queries.length">No saved queries — create one in Query builder.</mat-hint>
+                    </mat-form-field>
+                  </div>
+                  <mat-form-field appearance="outline" class="w-100" *ngIf="ew.widgetType === 'QUICK_ACTION'">
+                    <mat-label>Quick actions JSON</mat-label>
+                    <textarea
+                      matInput
+                      rows="6"
+                      [(ngModel)]="ew.configJson"
+                      (ngModelChange)="syncEditorToPreview()"
+                      placeholder='{"actions":[{"label":"Users","route":"/um/user"}]}'
+                    ></textarea>
+                  </mat-form-field>
+                </div>
+              </mat-tab>
+
+              <mat-tab label="Style">
+                <div class="tab-pad">
+                  <div class="grid-fields">
+                    <mat-form-field appearance="outline">
+                      <mat-label>Column (gridX)</mat-label>
+                      <input matInput type="number" [(ngModel)]="ew.gridX" (ngModelChange)="clampGrid(ew)" />
+                    </mat-form-field>
+                    <mat-form-field appearance="outline">
+                      <mat-label>Row (gridY)</mat-label>
+                      <input matInput type="number" [(ngModel)]="ew.gridY" (ngModelChange)="clampGrid(ew)" />
+                    </mat-form-field>
+                  </div>
+                  <div class="size-sliders" *ngIf="ew.widgetType !== 'QUICK_ACTION'">
+                    <div class="slider-block">
+                      <span class="slider-label mat-caption text-muted">Width (columns) — {{ ew.gridW }}</span>
+                      <mat-slider min="1" max="12" step="1" discrete color="primary" class="grid-size-slider">
+                        <input
+                          matSliderThumb
+                          [(ngModel)]="ew.gridW"
+                          [ngModelOptions]="{ standalone: true }"
+                          (ngModelChange)="clampGrid(ew)"
+                        />
+                      </mat-slider>
+                    </div>
+                    <div class="slider-block">
+                      <span class="slider-label mat-caption text-muted">Height (rows) — {{ ew.gridH }}</span>
+                      <mat-slider min="1" max="12" step="1" discrete color="primary" class="grid-size-slider">
+                        <input
+                          matSliderThumb
+                          [(ngModel)]="ew.gridH"
+                          [ngModelOptions]="{ standalone: true }"
+                          (ngModelChange)="clampGrid(ew)"
+                        />
+                      </mat-slider>
+                    </div>
+                  </div>
+                </div>
+              </mat-tab>
+
+              <mat-tab label="Refresh">
+                <div class="tab-pad">
+                  <mat-form-field appearance="outline" class="w-100">
+                    <mat-label>Refresh interval (seconds)</mat-label>
+                    <input
+                      matInput
+                      type="number"
+                      [(ngModel)]="ew.refreshSec"
+                      (ngModelChange)="syncEditorToPreview()"
+                    />
+                    <mat-hint>Optional auto-refresh for runtime dashboard.</mat-hint>
+                  </mat-form-field>
+                </div>
+              </mat-tab>
+            </mat-tab-group>
+          </ng-container>
+        </div>
+      </mat-sidenav>
+
+      <mat-sidenav-content class="builder-sidenav-content">
+        <div class="builder-main-grid">
+          <aside class="panel panel-left">
+            <mat-card class="panel-card">
+              <mat-card-header>
+                <mat-card-title>Widget types</mat-card-title>
+                <mat-card-subtitle>Drag onto the overview</mat-card-subtitle>
+              </mat-card-header>
+              <mat-card-content>
+                <div
+                  id="palette-list"
+                  cdkDropList
+                  [cdkDropListData]="paletteItems"
+                  [cdkDropListConnectedTo]="['overview-list']"
+                  [cdkDropListSortingDisabled]="true"
+                  [cdkDropListEnterPredicate]="paletteNoIncoming"
+                  class="palette-grid"
+                >
+                  <div
+                    *ngFor="let p of paletteItems"
+                    cdkDrag
+                    [cdkDragData]="p"
+                    class="palette-tile"
+                    (cdkDragStarted)="setPreviewDragSuspend(true)"
+                    (cdkDragEnded)="setPreviewDragSuspend(false)"
+                  >
+                    <mat-icon class="palette-tile-icon">{{ p.icon }}</mat-icon>
+                    <span class="palette-tile-label">{{ p.label }}</span>
+                    <span class="palette-tile-hint">{{ p.hint }}</span>
+                  </div>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </aside>
+
+          <section class="panel-overview">
+            <div class="overview-stack">
+              <app-page-action-bar
+                *ngIf="selectedWidgetIndex !== null"
+                [title]="overviewBarTitle"
+                [toolbar]="overviewToolbar"
+                [wrap]="true"
+              ></app-page-action-bar>
+
+              <mat-card class="panel-card preview-live-card">
+                <mat-card-header>
+                  <mat-card-title>Live overview</mat-card-title>
+                  <mat-card-subtitle>Select a widget to show actions · toggle resize or reorder on the bar</mat-card-subtitle>
+                </mat-card-header>
+                <mat-card-content class="preview-live-body">
+                  <div
+                    id="overview-list"
+                    class="builder-overview-droplist"
+                    cdkDropList
+                    [cdkDropListData]="widgets"
+                    (cdkDropListDropped)="onWidgetDrop($event)"
+                  >
+                    <app-dynamic-dashboard-view
+                      [previewMode]="true"
+                      [previewDropListInParent]="true"
+                      [previewDetail]="previewSnapshot"
+                      [previewQueryDefs]="queries"
+                      [previewWidgetsBridge]="widgets"
+                      [previewDragReorder]="reorderMode"
+                      [previewResizeMode]="resizeMode"
+                      [previewSelectedWidgetId]="selectedPreviewWidgetId"
+                      [suspendPreviewReload]="previewDragSuspend"
+                      (previewWidgetSelect)="selectWidgetByPreviewId($event)"
+                      (previewDragActive)="setPreviewDragSuspend($event)"
+                      (previewResizeDelta)="onPreviewResizeDelta($event)"
+                      (previewFloatingAction)="onPreviewFloatingAction($event)"
+                    />
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            </div>
+          </section>
+        </div>
+      </mat-sidenav-content>
+    </mat-sidenav-container>
+  </div>
+</div>

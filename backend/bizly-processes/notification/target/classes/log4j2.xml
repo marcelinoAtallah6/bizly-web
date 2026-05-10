@@ -23,7 +23,7 @@
 
   <Loggers>
     <!-- Application Logging -->
-    <Logger name="com.bizly" level="INFO" additivity="false">
+    <Logger name="com.notification" level="INFO" additivity="false">
       <AppenderRef ref="Console"/>
       <AppenderRef ref="AppLog"/>
     </Logger>

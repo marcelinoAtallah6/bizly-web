@@ -3,8 +3,10 @@ import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
+import { UM_SCREEN_ROUTES } from 'src/app/common/GlobalConstants';
 import { GetUserResponse } from 'src/app/core/models/um.models';
 import { ToolbarButton } from 'src/app/pages/ui-components/button/toolbar/toolbar.component';
+import { MenuPermissionService } from 'src/app/services/menu-permission.service';
 import { SimpleConfirmDialogComponent } from 'src/app/shared/dialogs/simple-confirm-dialog.component';
 import { UmRoleService } from '../../services/um-role.service';
 import { UmUserService } from '../../services/um-user.service';
@@ -23,25 +25,30 @@ export class UserDetailsComponent implements OnInit {
   deleting = false;
 
   get detailToolbar(): ToolbarButton[] {
-    return [
+    const buttons: ToolbarButton[] = [
       { id: 'back', icon: 'arrow_back', tooltip: 'Back to list', action: () => this.back() },
-      {
+    ];
+    if (this.menuPerm.can(UM_SCREEN_ROUTES.users, 'delete')) {
+      buttons.push({
         id: 'delete',
         icon: 'delete_outline',
         tooltip: 'Delete user',
         action: () => this.delete(),
         disabled: !this.user || this.deleting,
         color: 'warn',
-      },
-      {
+      });
+    }
+    if (this.menuPerm.can(UM_SCREEN_ROUTES.users, 'edit')) {
+      buttons.push({
         id: 'edit',
         icon: 'edit',
         tooltip: 'Edit user',
         action: () => this.edit(),
         disabled: !this.user,
         color: 'primary',
-      },
-    ];
+      });
+    }
+    return buttons;
   }
 
   constructor(
@@ -49,7 +56,8 @@ export class UserDetailsComponent implements OnInit {
     private readonly router: Router,
     private readonly umUserService: UmUserService,
     private readonly umRoleService: UmRoleService,
-    private readonly dialog: MatDialog
+    private readonly dialog: MatDialog,
+    private readonly menuPerm: MenuPermissionService
   ) {}
 
   ngOnInit(): void {

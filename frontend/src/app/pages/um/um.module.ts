@@ -12,6 +12,7 @@ import { UserFormComponent } from './form/user-form/user-form.component';
 import { RoleDetailsComponent } from './details/role-details/role-details.component';
 import { UserDetailsComponent } from './details/user-details/user-details.component';
 import { AuditListComponent } from './list/audit-list/audit-list.component';
+import { RoleMenuPermissionsTabComponent } from './details/role-menu-permissions-tab/role-menu-permissions-tab.component';
 
 @NgModule({
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -24,6 +25,7 @@ import { AuditListComponent } from './list/audit-list/audit-list.component';
     RoleFormComponent,
     RoleDetailsComponent,
     AuditListComponent,
+    RoleMenuPermissionsTabComponent,
   ],
   imports: [UmRoutingModule, CommonMaterialModule, UicomponentsModule, CommonModule],
 })

@@ -6,13 +6,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.pm.audit.Audited;
 import com.pm.api.dto.sale.CheckoutRequest;
 import com.pm.api.dto.sale.CheckoutResponse;
 import com.pm.api.dto.sale.GetSaleRequest;
@@ -20,6 +20,8 @@ import com.pm.api.dto.sale.GetSaleResponse;
 import com.pm.api.dto.sale.GetsSalesRequest;
 import com.pm.api.dto.sale.SaleSummaryResponse;
 import com.pm.api.service.ISaleService;
+import com.pm.security.MenuPermissionAction;
+import com.pm.security.RequireMenuPermission;
 import com.pm.common.ApiMessages;
 import com.pm.common.ApiResponse;
 import com.pm.common.PageResponse;
@@ -34,7 +36,8 @@ public class SaleController {
 	private ISaleService saleService;
 
 	@PostMapping("/checkout")
-	@PreAuthorize("hasRole('USER')")
+	@Audited(action = "PM_SALE_CHECKOUT", resourceType = "SALE")
+	@RequireMenuPermission(menuRoute = "/pm/products", action = MenuPermissionAction.EDIT)
 	public @ResponseBody ResponseEntity<ApiResponse<CheckoutResponse>> checkout(
 			@RequestBody @Valid CheckoutRequest request) {
 		log.info("[PM_SALE][CHECKOUT] customerId={} lines={}", request.getCustomerId(),
@@ -43,14 +46,14 @@ public class SaleController {
 	}
 
 	@PostMapping("/get")
-	@PreAuthorize("hasRole('USER')")
+	@RequireMenuPermission(menuRoute = "/pm/products", action = MenuPermissionAction.VIEW)
 	public @ResponseBody ResponseEntity<ApiResponse<GetSaleResponse>> get(@RequestBody @Valid GetSaleRequest request) {
 		log.info("[PM_SALE][GET] id={}", request.getId());
 		return ResponseEntity.ok(ApiResponse.success(saleService.get(request), ApiMessages.SUCCESS));
 	}
 
 	@PostMapping("/gets")
-	@PreAuthorize("hasRole('USER')")
+	@RequireMenuPermission(menuRoute = "/pm/products", action = MenuPermissionAction.VIEW)
 	public @ResponseBody ResponseEntity<ApiResponse<PageResponse<SaleSummaryResponse>>> gets(
 			@RequestBody @Valid GetsSalesRequest request) {
 		log.info("[PM_SALE][GETS] page={}", request.getPageNumber());

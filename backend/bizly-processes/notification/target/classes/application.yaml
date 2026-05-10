@@ -1,0 +1,57 @@
+spring:
+  application:
+    name: notification
+  datasource:
+    url: jdbc:oracle:thin:@localhost:1521/xepdb1
+    username: um
+    password: um
+    driver-class-name: oracle.jdbc.OracleDriver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.Oracle12cDialect
+    open-in-view: false
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: marcelinoatallah6@gmail.com
+    password: bnaw msxy igfm iwpm
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 10000
+          timeout: 10000
+          writetimeout: 10000
+
+server:
+  port: 8690
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+# Scheduler-driven workflows only (no REST process APIs).
+notification:
+  workflow:
+    poll-interval-ms: ${NOTIFICATION_POLL_INTERVAL_MS:1000}
+    max-users-per-tick: ${NOTIFICATION_MAX_USERS_PER_TICK:50}
+  birthday-promo-code: ${NOTIFICATION_BIRTHDAY_PROMO:BDAY-PROMO-2026}
+  mail-from: ${NOTIFICATION_MAIL_FROM:noreply@bizly.local}
+  # When false: no SMTP connection — logs the send only and treats as success (local dev without Mailpit).
+  # When true: requires a reachable server at MAIL_HOST:MAIL_PORT (e.g. docker Mailpit: docker run -p 1025:8025 axllent/mailpit).
+  mail:
+    enabled: ${NOTIFICATION_MAIL_ENABLED:true}

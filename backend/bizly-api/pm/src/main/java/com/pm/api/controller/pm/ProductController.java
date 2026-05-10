@@ -6,7 +6,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -18,10 +17,13 @@ import com.pm.api.dto.delete.DeleteProductRequest;
 import com.pm.api.dto.delete.DeleteProductResponse;
 import com.pm.api.dto.get.GetProductRequest;
 import com.pm.api.dto.get.GetProductResponse;
+import com.pm.audit.Audited;
 import com.pm.api.dto.gets.GetsProductsRequest;
 import com.pm.api.dto.update.UpdateProductRequest;
 import com.pm.api.dto.update.UpdateProductResponse;
 import com.pm.api.service.IProductService;
+import com.pm.security.MenuPermissionAction;
+import com.pm.security.RequireMenuPermission;
 import com.pm.common.ApiMessages;
 import com.pm.common.ApiResponse;
 import com.pm.common.PageResponse;
@@ -38,7 +40,8 @@ public class ProductController {
 
 	// ================= ADD =================
 	@PostMapping("/add")
-	@PreAuthorize("hasRole('USER')")
+	@Audited(action = "PM_PRODUCT_ADD", resourceType = "PRODUCT")
+	@RequireMenuPermission(menuRoute = "/pm/products", action = MenuPermissionAction.ADD)
 	public @ResponseBody ResponseEntity<ApiResponse<AddProductResponse>> add(
 			@RequestBody @Valid AddProductRequest request) {
 
@@ -49,7 +52,8 @@ public class ProductController {
 
 	// ================= UPDATE =================
 	@PostMapping("/update")
-	@PreAuthorize("hasRole('USER')")
+	@Audited(action = "PM_PRODUCT_UPDATE", resourceType = "PRODUCT")
+	@RequireMenuPermission(menuRoute = "/pm/products", action = MenuPermissionAction.EDIT)
 	public @ResponseBody ResponseEntity<ApiResponse<UpdateProductResponse>> update(
 			@RequestBody @Valid UpdateProductRequest request) {
 
@@ -60,7 +64,8 @@ public class ProductController {
 
 	// ================= DELETE =================
 	@PostMapping("/delete")
-	@PreAuthorize("hasRole('USER')")
+	@Audited(action = "PM_PRODUCT_DELETE", resourceType = "PRODUCT")
+	@RequireMenuPermission(menuRoute = "/pm/products", action = MenuPermissionAction.DELETE)
 	public @ResponseBody ResponseEntity<ApiResponse<DeleteProductResponse>> delete(
 			@RequestBody @Valid DeleteProductRequest request) {
 
@@ -70,7 +75,7 @@ public class ProductController {
 	}
 
 	@PostMapping("/get")
-	@PreAuthorize("hasRole('USER')")
+	@RequireMenuPermission(menuRoute = "/pm/products", action = MenuPermissionAction.VIEW)
 	public @ResponseBody ResponseEntity<ApiResponse<GetProductResponse>> get(
 			@RequestBody @Valid GetProductRequest request) {
 
@@ -81,7 +86,7 @@ public class ProductController {
 
 	// ================= GET ALL (PAGINATED) =================
 	@PostMapping("/gets")
-	@PreAuthorize("hasRole('USER')")
+	@RequireMenuPermission(menuRoute = "/pm/products", action = MenuPermissionAction.VIEW)
 	public @ResponseBody ResponseEntity<ApiResponse<PageResponse<GetProductResponse>>> gets(
 			@RequestBody @Valid GetsProductsRequest request) {
 

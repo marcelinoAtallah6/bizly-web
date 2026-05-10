@@ -1,8 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { UM_SCREEN_ROUTES } from 'src/app/common/GlobalConstants';
 import { GetUserResponse } from 'src/app/core/models/um.models';
 import { AuthService } from 'src/app/services/auth.service';
+import { MenuPermissionService } from 'src/app/services/menu-permission.service';
 import { UserProfileService } from 'src/app/services/user-profile.service';
 import { UmRoleService } from '../../services/um-role.service';
 import { UmUserService } from '../../services/um-user.service';
@@ -46,13 +48,23 @@ export class UserFormComponent implements OnInit {
     private readonly umUserService: UmUserService,
     private readonly umRoleService: UmRoleService,
     private readonly auth: AuthService,
-    private readonly userProfile: UserProfileService
+    private readonly userProfile: UserProfileService,
+    private readonly menuPerm: MenuPermissionService
   ) {}
 
   ngOnInit(): void {
     this.mode = (this.route.snapshot.data['mode'] as 'create' | 'edit') ?? 'create';
     const idParam = this.route.snapshot.paramMap.get('id');
     this.userId = idParam ? Number(idParam) : null;
+
+    if (this.mode === 'create' && !this.menuPerm.can(UM_SCREEN_ROUTES.users, 'add')) {
+      this.router.navigate(['/um', 'user']);
+      return;
+    }
+    if (this.mode === 'edit' && !this.menuPerm.can(UM_SCREEN_ROUTES.users, 'edit')) {
+      this.router.navigate(['/um', 'user']);
+      return;
+    }
 
     this.form = this.fb.group({
       username: ['', [Validators.required, Validators.maxLength(50)]],

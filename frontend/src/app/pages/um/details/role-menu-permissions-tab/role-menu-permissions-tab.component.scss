@@ -1,0 +1,102 @@
+.perm-tab {
+  padding: 0 8px 24px;
+}
+
+.perm-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.perm-filter-field {
+  min-width: 180px;
+}
+
+.perm-filter-grow {
+  flex: 1 1 240px;
+  min-width: 200px;
+}
+
+.tree-panel {
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tree-scroll {
+  max-height: min(65vh, 560px);
+  overflow: auto;
+}
+
+.perm-tree-header {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) repeat(4, 52px);
+  gap: 8px;
+  align-items: center;
+  padding: 8px 12px;
+  font-weight: 600;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.perm-tree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.perm-tree-node {
+  margin: 0;
+  padding: 0;
+}
+
+.perm-tree-children {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  padding-left: 20px;
+  border-left: 1px dashed rgba(0, 0, 0, 0.12);
+  margin-left: 8px;
+}
+
+.perm-tree-row {
+  display: grid;
+  grid-template-columns: minmax(200px, 1fr) repeat(4, 52px);
+  gap: 8px;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.perm-tree-meta {
+  min-width: 0;
+}
+
+.perm-tree-path {
+  font-size: 14px;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+.perm-tree-sub {
+  font-size: 12px;
+  margin-top: 2px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.perm-tree-sub.muted {
+  color: rgba(0, 0, 0, 0.55);
+}
+
+.perm-tree-route {
+  font-family: ui-monospace, monospace;
+}
+
+.col-flag {
+  justify-self: center;
+}
