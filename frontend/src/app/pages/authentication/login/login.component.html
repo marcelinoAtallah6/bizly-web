@@ -17,7 +17,13 @@
 
           <div class="row m-t-24 custom-row">
             <div class="col-12 col-sm-6">
-              <button mat-stroked-button class="w-100">
+              <button
+                mat-stroked-button
+                class="w-100"
+                type="button"
+                [disabled]="isLoading"
+                (click)="signInWithProvider('google')"
+              >
                 <div class="d-flex align-items-center">
                   <img
                     src="/assets/images/svgs/google-icon.svg"
@@ -33,6 +39,9 @@
               <button
                 mat-stroked-button
                 class="w-100 d-flex align-items-center"
+                type="button"
+                [disabled]="isLoading"
+                (click)="signInWithProvider('facebook')"
               >
                 <div class="d-flex align-items-center">
                   <img

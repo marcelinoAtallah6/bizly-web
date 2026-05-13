@@ -3,7 +3,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
-import { UM_SCREEN_ROUTES } from 'src/app/common/GlobalConstants';
 import { GetUserResponse } from 'src/app/core/models/um.models';
 import { ToolbarButton } from 'src/app/pages/ui-components/button/toolbar/toolbar.component';
 import { MenuPermissionService } from 'src/app/services/menu-permission.service';
@@ -28,7 +27,7 @@ export class UserDetailsComponent implements OnInit {
     const buttons: ToolbarButton[] = [
       { id: 'back', icon: 'arrow_back', tooltip: 'Back to list', action: () => this.back() },
     ];
-    if (this.menuPerm.can(UM_SCREEN_ROUTES.users, 'delete')) {
+    if (this.menuPerm.can('/um/user', 'delete')) {
       buttons.push({
         id: 'delete',
         icon: 'delete_outline',
@@ -38,7 +37,7 @@ export class UserDetailsComponent implements OnInit {
         color: 'warn',
       });
     }
-    if (this.menuPerm.can(UM_SCREEN_ROUTES.users, 'edit')) {
+    if (this.menuPerm.can('/um/user', 'edit')) {
       buttons.push({
         id: 'edit',
         icon: 'edit',

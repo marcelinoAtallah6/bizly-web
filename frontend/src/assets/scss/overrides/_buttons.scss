@@ -65,6 +65,22 @@
   font-size: 14px;
 }
 
+.mat-mdc-paginator {
+  background-color: var(--cardbg) !important;
+  color: var(--textPrimary) !important;
+
+  .mat-mdc-paginator-container {
+    background-color: transparent !important;
+    color: var(--textPrimary) !important;
+  }
+
+  .mat-mdc-select-value,
+  .mat-mdc-paginator-range-label,
+  .mat-mdc-icon-button {
+    color: var(--textPrimary) !important;
+  }
+}
+
 @media (min-width: 768px) {
   .flex-sm-row {
     flex-direction: row !important;

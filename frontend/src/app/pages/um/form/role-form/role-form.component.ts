@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { UM_SCREEN_ROUTES } from 'src/app/common/GlobalConstants';
 import { MenuPermissionService } from 'src/app/services/menu-permission.service';
 import { UmRoleService } from '../../services/um-role.service';
 import { ToolbarButton } from 'src/app/pages/ui-components/button/toolbar/toolbar.component';
@@ -36,11 +35,11 @@ export class RoleFormComponent implements OnInit {
     const idParam = this.route.snapshot.paramMap.get('id');
     this.roleId = idParam ? Number(idParam) : null;
 
-    if (this.mode === 'create' && !this.menuPerm.can(UM_SCREEN_ROUTES.roles, 'add')) {
+    if (this.mode === 'create' && !this.menuPerm.can('/um/role', 'add')) {
       this.router.navigate(['/um', 'role']);
       return;
     }
-    if (this.mode === 'edit' && !this.menuPerm.can(UM_SCREEN_ROUTES.roles, 'edit')) {
+    if (this.mode === 'edit' && !this.menuPerm.can('/um/role', 'edit')) {
       this.router.navigate(['/um', 'role']);
       return;
     }

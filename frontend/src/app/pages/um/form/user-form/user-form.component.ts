@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { UM_SCREEN_ROUTES } from 'src/app/common/GlobalConstants';
 import { GetUserResponse } from 'src/app/core/models/um.models';
 import { AuthService } from 'src/app/services/auth.service';
 import { MenuPermissionService } from 'src/app/services/menu-permission.service';
@@ -9,7 +8,8 @@ import { UserProfileService } from 'src/app/services/user-profile.service';
 import { UmRoleService } from '../../services/um-role.service';
 import { UmUserService } from '../../services/um-user.service';
 import { ToolbarButton } from 'src/app/pages/ui-components/button/toolbar/toolbar.component';
-import { finalize, of, switchMap } from 'rxjs';
+import { catchError, finalize, of, switchMap, take } from 'rxjs';
+import { compressProfileImage } from 'src/app/common/profile-image.util';
 
 @Component({
   selector: 'app-user-form',
@@ -57,11 +57,11 @@ export class UserFormComponent implements OnInit {
     const idParam = this.route.snapshot.paramMap.get('id');
     this.userId = idParam ? Number(idParam) : null;
 
-    if (this.mode === 'create' && !this.menuPerm.can(UM_SCREEN_ROUTES.users, 'add')) {
+    if (this.mode === 'create' && !this.menuPerm.can('/um/user', 'add')) {
       this.router.navigate(['/um', 'user']);
       return;
     }
-    if (this.mode === 'edit' && !this.menuPerm.can(UM_SCREEN_ROUTES.users, 'edit')) {
+    if (this.mode === 'edit' && !this.menuPerm.can('/um/user', 'edit')) {
       this.router.navigate(['/um', 'user']);
       return;
     }
@@ -125,17 +125,23 @@ export class UserFormComponent implements OnInit {
     if (!file || !file.type.startsWith('image/')) {
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
-      const comma = dataUrl.indexOf(',');
-      const base64 = comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl;
-      this.pendingProfileImage = { mime: file.type, base64 };
-      this.profilePreviewUrl = dataUrl;
-      this.removePhoto = false;
-    };
-    reader.readAsDataURL(file);
-    input.value = '';
+    /* Resize on the client before hitting the wire. UM caps profile uploads at 2 MB and rejects
+       anything larger with "Profile image exceeds maximum size"; a downscaled 256-px JPEG fits
+       that budget every time AND lands small enough that the JWT can carry the avatar inline,
+       so the navbar renders immediately on the next refresh without a /auth/me/avatar fetch. */
+    compressProfileImage(file)
+      .then(({ mime, base64 }) => {
+        this.pendingProfileImage = { mime, base64 };
+        this.profilePreviewUrl = `data:${mime};base64,${base64}`;
+        this.removePhoto = false;
+      })
+      .catch(() => {
+        this.pendingProfileImage = null;
+        this.profilePreviewUrl = null;
+      })
+      .finally(() => {
+        input.value = '';
+      });
   }
 
   clearProfilePhoto(): void {
@@ -179,7 +185,15 @@ export class UserFormComponent implements OnInit {
   private maybeRefreshNavbarProfile(savedUserId: number): void {
     const c = this.auth.getAccessTokenClaims();
     if (c?.userId === savedUserId) {
-      this.userProfile.refresh();
+      // Navbar reads only from the JWT — rotate the access token so claims pick up name / email / avatar.
+      this.auth
+        .refreshToken()
+        .pipe(
+          catchError(() => of(null)),
+          switchMap(() => this.userProfile.refresh(true)),
+          take(1)
+        )
+        .subscribe();
     }
   }
 

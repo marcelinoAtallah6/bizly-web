@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 
 import { UmRoutingModule } from './um-routing.module';
 import { CommonMaterialModule } from 'src/app/common/MaterialModule';
+import { PermissionsModule } from 'src/app/shared/permissions/permissions.module';
 import { UicomponentsModule } from '../ui-components/ui-components.module';
 import { UmComponent } from './um.component';
 import { RoleListComponent } from './list/role-list/role-list.component';
@@ -27,6 +28,6 @@ import { RoleMenuPermissionsTabComponent } from './details/role-menu-permissions
     AuditListComponent,
     RoleMenuPermissionsTabComponent,
   ],
-  imports: [UmRoutingModule, CommonMaterialModule, UicomponentsModule, CommonModule],
+  imports: [UmRoutingModule, CommonMaterialModule, UicomponentsModule, CommonModule, PermissionsModule],
 })
 export class UmModule {}

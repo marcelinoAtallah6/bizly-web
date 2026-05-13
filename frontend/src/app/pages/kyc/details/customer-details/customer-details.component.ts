@@ -16,6 +16,7 @@ import { SaleDetailDialogComponent } from 'src/app/shared/sale-detail-dialog/sal
 import { SimpleConfirmDialogComponent } from 'src/app/shared/dialogs/simple-confirm-dialog.component';
 import { ToolbarButton } from 'src/app/pages/ui-components/button/toolbar/toolbar.component';
 import { ButtonConfig } from 'src/app/pages/ui-components/switch/switch.component';
+import { MenuPermissionService } from 'src/app/services/menu-permission.service';
 import { KycCustomerService } from '../../services/kyc-customer.service';
 
 @Component({
@@ -34,6 +35,8 @@ export class CustomerDetailsComponent implements OnInit {
   ];
   activeTab: 'profile' | 'purchases' = 'profile';
 
+  private readonly routeCustomers = '/kyc/customers';
+
   get detailToolbar(): ToolbarButton[] {
     return [
       { id: 'back', icon: 'arrow_back', tooltip: 'Back to list', action: () => this.back() },
@@ -44,6 +47,7 @@ export class CustomerDetailsComponent implements OnInit {
         action: () => this.delete(),
         disabled: !this.customer || this.deleting,
         color: 'warn',
+        hidden: !this.menuPerm.can(this.routeCustomers, 'delete'),
       },
       {
         id: 'edit',
@@ -52,6 +56,7 @@ export class CustomerDetailsComponent implements OnInit {
         action: () => this.edit(),
         disabled: !this.customer,
         color: 'primary',
+        hidden: !this.menuPerm.can(this.routeCustomers, 'edit'),
       },
     ];
   }
@@ -78,7 +83,8 @@ export class CustomerDetailsComponent implements OnInit {
     private readonly kycCustomerService: KycCustomerService,
     private readonly pmSale: PmSaleService,
     private readonly dialog: MatDialog,
-    private readonly snack: MatSnackBar
+    private readonly snack: MatSnackBar,
+    private readonly menuPerm: MenuPermissionService
   ) {}
 
   ngOnInit(): void {

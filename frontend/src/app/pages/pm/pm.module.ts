@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 
 import { PmRoutingModule } from './pm-routing.module';
 import { CommonMaterialModule } from 'src/app/common/MaterialModule';
+import { PermissionsModule } from 'src/app/shared/permissions/permissions.module';
 import { UicomponentsModule } from '../ui-components/ui-components.module';
 import { PmComponent } from './pm.component';
 import { ProductListComponent } from './list/product-list/product-list.component';
@@ -12,6 +13,6 @@ import { ProductDetailsComponent } from './details/product-details/product-detai
 @NgModule({
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   declarations: [PmComponent, ProductListComponent, ProductFormComponent, ProductDetailsComponent],
-  imports: [PmRoutingModule, CommonMaterialModule, UicomponentsModule, CommonModule],
+  imports: [PmRoutingModule, CommonMaterialModule, UicomponentsModule, CommonModule, PermissionsModule],
 })
 export class PmModule {}

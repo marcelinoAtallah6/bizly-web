@@ -9,7 +9,7 @@
   <table class="sale-lines" *ngIf="data.lines?.length">
     <thead>
       <tr>
-        <th>Product</th>
+        <th>Item</th>
         <th>Qty</th>
         <th>Unit</th>
         <th>Line</th>
@@ -17,7 +17,10 @@
     </thead>
     <tbody>
       <tr *ngFor="let line of data.lines">
-        <td>{{ line.productName || ('#' + line.productId) }}</td>
+        <td>
+          <span *ngIf="line.lineType === 'SERVICE'" class="sale-line-kind">Service · </span>
+          {{ line.productName || ('#' + (line.productId ?? line.serviceId)) }}
+        </td>
         <td>{{ line.quantity }}</td>
         <td>{{ line.unitPrice | number : '1.2-2' }}</td>
         <td>{{ line.lineTotal != null ? (line.lineTotal | number : '1.2-2') : '—' }}</td>

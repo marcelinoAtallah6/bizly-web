@@ -3,7 +3,6 @@ import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, map } from 'rxjs/operators';
-import { UM_SCREEN_ROUTES } from 'src/app/common/GlobalConstants';
 import { GetRoleResponse } from 'src/app/core/models/um.models';
 import { ToolbarButton } from 'src/app/pages/ui-components/button/toolbar/toolbar.component';
 import { MenuPermissionService } from 'src/app/services/menu-permission.service';
@@ -26,7 +25,7 @@ export class RoleDetailsComponent implements OnInit, OnDestroy {
     const buttons: ToolbarButton[] = [
       { id: 'back', icon: 'arrow_back', tooltip: 'Back to list', action: () => this.back() },
     ];
-    if (this.menuPerm.can(UM_SCREEN_ROUTES.roles, 'delete')) {
+    if (this.menuPerm.can('/um/role', 'delete')) {
       buttons.push({
         id: 'delete',
         icon: 'delete_outline',
@@ -36,7 +35,7 @@ export class RoleDetailsComponent implements OnInit, OnDestroy {
         color: 'warn',
       });
     }
-    if (this.menuPerm.can(UM_SCREEN_ROUTES.roles, 'edit')) {
+    if (this.menuPerm.can('/um/role', 'edit')) {
       buttons.push({
         id: 'edit',
         icon: 'edit',

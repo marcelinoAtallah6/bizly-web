@@ -1,0 +1,37 @@
+<div class="broadcast-page">
+  <app-page-action-bar title="Broadcast" [toolbar]="listToolbar"></app-page-action-bar>
+
+  <mat-card class="broadcast-card">
+    <mat-card-content class="broadcast-card__content">
+      <div class="broadcast-grid-wrap">
+        <ag-grid-angular
+          class="ag-theme-quartz"
+          style="width: 100%; height: 100%"
+          [rowData]="rowData"
+          [columnDefs]="columnDefs"
+          [defaultColDef]="defaultColDef"
+          [context]="gridContext"
+          [pagination]="false"
+          [animateRows]="true"
+          (gridReady)="onGridReady($event)"
+        ></ag-grid-angular>
+      </div>
+
+      <mat-paginator
+        class="broadcast-paginator"
+        [length]="totalCount"
+        [pageIndex]="pageNumber"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="[10, 25, 50, 100]"
+        [showFirstLastButtons]="true"
+        [disabled]="loading"
+        (page)="onPage($event)"
+      ></mat-paginator>
+
+      <p class="text-muted f-s-12 m-b-0 broadcast-help">
+        Create a message, preview placeholders, then queue delivery. Permissions are enforced server-side.
+      </p>
+    </mat-card-content>
+  </mat-card>
+</div>
+

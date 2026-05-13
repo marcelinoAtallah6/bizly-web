@@ -41,6 +41,9 @@ public class NotificationDispatchLogEntity {
 	@Column(name = "CREATED_AT", nullable = false)
 	private LocalDateTime createdAt;
 
+	@Column(name = "BROADCAST_MESSAGE_ID")
+	private Long broadcastMessageId;
+
 	@PrePersist
 	public void prePersist() {
 		if (createdAt == null) {
@@ -110,5 +113,13 @@ public class NotificationDispatchLogEntity {
 
 	public void setCreatedAt(LocalDateTime createdAt) {
 		this.createdAt = createdAt;
+	}
+
+	public Long getBroadcastMessageId() {
+		return broadcastMessageId;
+	}
+
+	public void setBroadcastMessageId(Long broadcastMessageId) {
+		this.broadcastMessageId = broadcastMessageId;
 	}
 }

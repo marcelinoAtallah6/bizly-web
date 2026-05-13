@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class TemplatePlaceholderRenderer {
 
-	private static final Pattern PLACEHOLDER = Pattern.compile("\\{\\{(\\w+)\\}\\}");
+	private static final Pattern PLACEHOLDER = Pattern.compile("\\{\\{\\s*(\\w+)\\s*\\}\\}");
 
 	public String render(String template, Map<String, String> values) {
 		if (template == null) {

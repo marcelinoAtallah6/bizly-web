@@ -22,18 +22,28 @@ export class GuestGuard implements CanActivate, CanActivateChild {
     private readonly router: Router
   ) {}
 
-  canActivate(_route: ActivatedRouteSnapshot, _state: RouterStateSnapshot): boolean | UrlTree {
-    return this.allowOnlyGuests();
+  canActivate(_route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | UrlTree {
+    return this.allowOnlyGuests(state.url);
   }
 
-  canActivateChild(_route: ActivatedRouteSnapshot, _state: RouterStateSnapshot): boolean | UrlTree {
-    return this.allowOnlyGuests();
+  canActivateChild(_route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | UrlTree {
+    return this.allowOnlyGuests(state.url);
   }
 
-  private allowOnlyGuests(): boolean | UrlTree {
-    if (this.authService.isAuthenticated()) {
-      return this.router.parseUrl('/dashboard');
+  /**
+   * Routes are exempt from the guest check when they are post-login onboarding screens — the welcome
+   * wizard and business registration only make sense while authenticated. Without this exemption an
+   * authenticated user who lands on /authentication/welcome would be bounced to /dashboard,
+   * defeating the whole onboarding flow.
+   */
+  private static readonly POST_LOGIN_PATHS = ['/authentication/welcome', '/authentication/register-business'];
+
+  private allowOnlyGuests(url: string): boolean | UrlTree {
+    const isAuthed = this.authService.isAuthenticated();
+    if (!isAuthed) return true;
+    if (GuestGuard.POST_LOGIN_PATHS.some((p) => url.startsWith(p))) {
+      return true;
     }
-    return true;
+    return this.router.parseUrl('/dashboard');
   }
 }

@@ -1,0 +1,74 @@
+<div class="gcs" *ngIf="shouldShow()">
+  <button
+    #trigger
+    type="button"
+    class="gcs-trigger"
+    (click)="$event.stopPropagation(); togglePanel()"
+    [class.is-active]="selectedId != null"
+    [attr.title]="
+      selectedId != null
+        ? 'Acting as business: ' + selectedName + ' (#' + selectedId + ')'
+        : 'Pick a business to act as (admin only)'
+    "
+  >
+    <i-tabler name="building" class="icon-16"></i-tabler>
+    <span class="gcs-label" *ngIf="selectedId == null">All businesses</span>
+    <span class="gcs-label" *ngIf="selectedId != null">{{ selectedName || ('#' + selectedId) }}</span>
+    <i-tabler name="chevron-down" class="icon-14"></i-tabler>
+  </button>
+
+  <!-- Rendered position:fixed (see SCSS) and anchored under the trigger via panelStyle.
+       Necessary because the sidenav lives in a separate stacking context that would
+       otherwise paint over the dropdown. -->
+  <div
+    class="gcs-panel"
+    *ngIf="open"
+    [style.top]="panelStyle.top"
+    [style.left]="panelStyle.left"
+    [style.width]="panelStyle.width"
+    (click)="$event.stopPropagation()"
+  >
+    <div class="gcs-panel-header">
+      <span>Switch business</span>
+      <button
+        type="button"
+        class="gcs-clear"
+        *ngIf="selectedId != null"
+        (click)="clear()"
+      >
+        Reset to all
+      </button>
+    </div>
+    <div class="gcs-search">
+      <i-tabler name="search" class="icon-14"></i-tabler>
+      <input
+        [formControl]="searchControl"
+        type="text"
+        placeholder="Search by name or id…"
+        autofocus
+      />
+    </div>
+    <div class="gcs-list">
+      <div class="gcs-hint" *ngIf="searchControl.value.trim().length < 1 && !isLoading">
+        Type a business name, or a numeric id (e.g. <strong>5</strong>).
+      </div>
+      <div class="gcs-loading" *ngIf="isLoading">Searching…</div>
+      <button
+        type="button"
+        class="gcs-item"
+        *ngFor="let b of results"
+        (click)="pick(b)"
+        [class.is-selected]="selectedId === b.id"
+      >
+        <span class="gcs-item-name">{{ b.businessName }}</span>
+        <span class="gcs-item-meta">{{ b.businessType || '—' }} · #{{ b.id }}</span>
+      </button>
+      <div
+        class="gcs-empty"
+        *ngIf="!isLoading && searchControl.value.trim().length >= 1 && results.length === 0"
+      >
+        No matches.
+      </div>
+    </div>
+  </div>
+</div>

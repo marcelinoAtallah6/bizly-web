@@ -4,6 +4,7 @@ import { RouterModule } from '@angular/router';
 
 import { PaymentsRoutingModule } from './payments-routing.module';
 import { CommonMaterialModule } from 'src/app/common/MaterialModule';
+import { PermissionsModule } from 'src/app/shared/permissions/permissions.module';
 import { UicomponentsModule } from '../ui-components/ui-components.module';
 import { PaymentCheckoutComponent } from './payment-checkout/payment-checkout.component';
 import { PaymentHistoryComponent } from './payment-history/payment-history.component';
@@ -20,6 +21,7 @@ import { SaleDetailDialogModule } from 'src/app/shared/sale-detail-dialog/sale-d
     UicomponentsModule,
     SaleDetailDialogModule,
     PaymentsRoutingModule,
+    PermissionsModule,
   ],
 })
 export class PaymentsModule {}

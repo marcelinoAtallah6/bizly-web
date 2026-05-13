@@ -133,6 +133,13 @@ export interface DeleteRoleResponse {
   id: number;
 }
 
+/** com.um.api.dto.audit.GetsAuditLogsRequest */
+export interface GetsAuditLogsRequest {
+  pageNumber: number;
+  pageSize: number;
+  usernameContains?: string;
+}
+
 /** com.um.api.dto.audit.AuditLogRowResponse */
 export interface AuditLogRowResponse {
   id: number;

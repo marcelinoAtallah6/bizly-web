@@ -33,5 +33,11 @@ public class ApiMessages {
 	public static final String SETTINGS_DASHBOARD_SLUG_EXISTS = "A dashboard with this slug already exists";
 	public static final String SETTINGS_ACCESS_DENIED = "You do not have access to this dashboard";
 	public static final String SETTINGS_WIDGET_NOT_FOUND = "Widget not found";
+
+	public static final String REPORTING_TYPE_NOT_FOUND = "Report type not found";
+	public static final String REPORTING_REPORT_NOT_FOUND = "Report not found";
+	public static final String REPORTING_NAME_EXISTS = "A report with this name already exists";
+	public static final String REPORTING_CODE_EXISTS = "A report with this code already exists";
+	public static final String REPORTING_INVALID = "Invalid report payload";
 }
 

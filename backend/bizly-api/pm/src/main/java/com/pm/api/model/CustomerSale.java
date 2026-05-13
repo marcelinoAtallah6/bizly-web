@@ -22,6 +22,10 @@ public class CustomerSale {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	/** Tenant scope. Every sale belongs to exactly one business. */
+	@Column(name = "business_id")
+	private Long businessId;
+
 	@Column(name = "customer_id", nullable = false)
 	private Long customerId;
 
@@ -47,6 +51,9 @@ public class CustomerSale {
 	public void setId(Long id) {
 		this.id = id;
 	}
+
+	public Long getBusinessId() { return businessId; }
+	public void setBusinessId(Long businessId) { this.businessId = businessId; }
 
 	public Long getCustomerId() {
 		return customerId;

@@ -27,4 +27,12 @@ public interface ILoginService {
 
 	public void resetPassword(ResetPasswordRequest request);
 
+	/**
+	 * Issues a fresh access + refresh token pair for the user's current session on the given device.
+	 * Used by the business-registration and welcome-complete flows so the new claims
+	 * ({@code businessId}, {@code firstLogin}, {@code roleLevel}) take effect immediately without
+	 * forcing the user to log out and back in.
+	 */
+	public LoginResponse reissueAccessTokenForUser(Long userId, String deviceId, String ip);
+
 }

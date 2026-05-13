@@ -1,0 +1,21 @@
+/**
+ * Loaded inside CKEditor’s iframe (contentsCss). Classes are toggled from BroadcastComposeComponent.
+ */
+html.cke_editable {
+  min-height: 100%;
+}
+
+body.bizly-editor-body--light {
+  background: #ffffff !important;
+  color: #2a3547 !important;
+}
+
+body.bizly-editor-body--dark {
+  background: #1e1e1e !important;
+  color: #ececec !important;
+}
+
+body.bizly-editor-body--dark-blue {
+  background: #252f42 !important;
+  color: #f0f4f8 !important;
+}

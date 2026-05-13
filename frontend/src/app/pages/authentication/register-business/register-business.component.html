@@ -1,0 +1,79 @@
+<div class="register-business">
+  <div class="register-business__panel">
+    <div class="register-business__header">
+      <a [routerLink]="['/authentication/login']" class="register-business__logo">
+        <img src="./assets/images/logos/logo.svg" alt="Bizly" />
+      </a>
+      <h1 class="register-business__title">Set up your business</h1>
+      <p class="register-business__subtitle">
+        This will be your workspace. All your customers, sales, bookings and reports live
+        inside it and are never shared with anyone outside your business.
+      </p>
+    </div>
+
+    <form class="register-business__form" [formGroup]="form" (ngSubmit)="submit()">
+      <mat-label class="register-business__label">Business name</mat-label>
+      <mat-form-field appearance="outline" class="w-100" color="primary">
+        <input
+          matInput
+          formControlName="businessName"
+          placeholder="e.g. Lina's Boutique"
+          maxlength="200"
+          autocomplete="organization"
+        />
+        <mat-error
+          *ngIf="form.controls.businessName.touched && form.controls.businessName.hasError('required')"
+        >
+          Business name is required.
+        </mat-error>
+      </mat-form-field>
+
+      <mat-label class="register-business__label">Business type</mat-label>
+      <div class="register-business__types">
+        <button
+          type="button"
+          *ngFor="let type of businessTypes"
+          class="register-business__type"
+          [class.is-selected]="form.controls.businessType.value === type.code"
+          (click)="selectType(type.code)"
+        >
+          <span class="register-business__type-icon">
+            <i-tabler [name]="type.icon"></i-tabler>
+          </span>
+          <span class="register-business__type-label">{{ type.label }}</span>
+        </button>
+      </div>
+      <p
+        class="register-business__error"
+        *ngIf="form.controls.businessType.touched && form.controls.businessType.hasError('required')"
+      >
+        Pick the type that best describes your business.
+      </p>
+
+      <div class="register-business__role" *ngIf="assignedRole">
+        <div class="register-business__role-row">
+          <i-tabler name="shield-check"></i-tabler>
+          <div>
+            <div class="register-business__role-name">{{ assignedRole.name }}</div>
+            <div class="register-business__role-hint">
+              Your role is set automatically by the system. You cannot change it here for
+              security reasons. Administrators can grant additional roles later.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="register-business__error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+      <button
+        type="submit"
+        mat-flat-button
+        color="primary"
+        class="register-business__submit"
+        [disabled]="isSubmitting"
+      >
+        {{ isSubmitting ? 'Creating…' : 'Create business' }}
+      </button>
+    </form>
+  </div>
+</div>

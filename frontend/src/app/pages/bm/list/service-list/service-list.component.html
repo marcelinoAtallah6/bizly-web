@@ -1,0 +1,24 @@
+<div class="bm-page p-24">
+  <app-page-action-bar title="Services" [toolbar]="listToolbar"></app-page-action-bar>
+
+  <div class="bm-toolbar-row">
+    <mat-slide-toggle [checked]="includeInactive" (change)="onIncludeInactiveChange($event.checked)">
+      Show inactive
+    </mat-slide-toggle>
+    <span class="bm-toolbar-row__hint">Select a row to edit or deactivate. Double-click to edit.</span>
+  </div>
+
+  <div class="bm-grid-wrap">
+    <ag-grid-angular
+      class="ag-theme-quartz bm-ag-grid"
+      [rowData]="rowData"
+      [columnDefs]="columnDefs"
+      [defaultColDef]="defaultColDef"
+      [animateRows]="true"
+      [rowSelection]="'single'"
+      (gridReady)="onGridReady($event)"
+      (selectionChanged)="onSelectionChanged($event)"
+      (rowDoubleClicked)="onRowDoubleClicked($event)"
+    ></ag-grid-angular>
+  </div>
+</div>

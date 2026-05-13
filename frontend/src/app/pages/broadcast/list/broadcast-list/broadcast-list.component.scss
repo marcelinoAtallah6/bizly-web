@@ -1,0 +1,39 @@
+:host ::ng-deep .broadcast-list-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.broadcast-page {
+  padding: 24px;
+}
+
+.broadcast-card__content {
+  padding: 16px;
+}
+
+.broadcast-grid-wrap {
+  width: 100%;
+  height: min(70vh, 640px);
+}
+
+.broadcast-paginator {
+  margin-top: 8px;
+}
+
+.broadcast-help {
+  margin-top: 8px;
+}
+
+@media (max-width: 600px) {
+  .broadcast-page {
+    padding: 12px;
+  }
+  .broadcast-card__content {
+    padding: 12px;
+  }
+  .broadcast-grid-wrap {
+    height: min(70vh, 520px);
+  }
+}
+

@@ -42,6 +42,15 @@ public class SettingsDashboard {
 	@Column(name = "is_builtin", nullable = false)
 	private boolean builtin;
 
+	/**
+	 * Tenant scope. {@code NULL} means a global / built-in dashboard available to every business
+	 * (the seed scripts leave built-in rows NULL); a non-null value scopes the dashboard to a
+	 * single business. The service layer must filter with
+	 * {@code WHERE business_id IS NULL OR business_id = :bid} for reads.
+	 */
+	@Column(name = "business_id")
+	private Long businessId;
+
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
 
@@ -136,4 +145,7 @@ public class SettingsDashboard {
 	public void setWidgets(List<SettingsWidget> widgets) {
 		this.widgets = widgets;
 	}
+
+	public Long getBusinessId() { return businessId; }
+	public void setBusinessId(Long businessId) { this.businessId = businessId; }
 }

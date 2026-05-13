@@ -46,6 +46,26 @@ public class UserEntity {
 	@Column(name = "account_locked")
 	private boolean accountLocked;
 
+	/** Tenant scoping. NULL for system-wide admin accounts that span every business. */
+	@Column(name = "business_id")
+	private Long businessId;
+
+	/**
+	 * 1 until the user finishes the welcome wizard. Flipped to 0 by
+	 * {@code /auth/welcome-complete}.
+	 */
+	@Column(name = "first_login", nullable = false)
+	private Integer firstLogin;
+
+	@Column(name = "welcome_completed_at")
+	private java.time.LocalDateTime welcomeCompletedAt;
+
+	@Column(name = "auth_provider", nullable = false, length = 20)
+	private String authProvider;
+
+	@Column(name = "provider_user_id", length = 200)
+	private String providerUserId;
+
 	public UserEntity() {
 	}
 
@@ -128,4 +148,20 @@ public class UserEntity {
 	public void setAccountLocked(boolean accountLocked) {
 		this.accountLocked = accountLocked;
 	}
+
+	public Long getBusinessId() { return businessId; }
+	public void setBusinessId(Long businessId) { this.businessId = businessId; }
+
+	public Integer getFirstLogin() { return firstLogin; }
+	public void setFirstLogin(Integer firstLogin) { this.firstLogin = firstLogin; }
+	public boolean isFirstLogin() { return firstLogin != null && firstLogin == 1; }
+
+	public java.time.LocalDateTime getWelcomeCompletedAt() { return welcomeCompletedAt; }
+	public void setWelcomeCompletedAt(java.time.LocalDateTime welcomeCompletedAt) { this.welcomeCompletedAt = welcomeCompletedAt; }
+
+	public String getAuthProvider() { return authProvider; }
+	public void setAuthProvider(String authProvider) { this.authProvider = authProvider; }
+
+	public String getProviderUserId() { return providerUserId; }
+	public void setProviderUserId(String providerUserId) { this.providerUserId = providerUserId; }
 }

@@ -1,6 +1,7 @@
 package com.settings.api.dto.query;
 
 import java.time.Instant;
+import java.util.List;
 
 public class QueryDefResponse {
 
@@ -12,6 +13,14 @@ public class QueryDefResponse {
 	private Instant createdAt;
 	private Instant updatedAt;
 	private String createdBy;
+
+	private List<String> grantRoles;
+	private List<String> grantUsernames;
+
+	public List<String> getGrantRoles() { return grantRoles; }
+	public void setGrantRoles(List<String> grantRoles) { this.grantRoles = grantRoles; }
+	public List<String> getGrantUsernames() { return grantUsernames; }
+	public void setGrantUsernames(List<String> grantUsernames) { this.grantUsernames = grantUsernames; }
 
 	public Long getId() {
 		return id;

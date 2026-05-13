@@ -7,12 +7,17 @@ import {
   OnInit,
   ViewChild,
 } from '@angular/core';
+import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { PageEvent } from '@angular/material/paginator';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import type { editor } from 'monaco-editor';
 import loader from '@monaco-editor/loader';
 import { ColDef, ICellRendererParams } from 'ag-grid-community';
+import { firstValueFrom } from 'rxjs';
 import { QueryDefDto } from 'src/app/core/models/settings.models';
+import { GetRoleResponse, GetUserResponse } from 'src/app/core/models/um.models';
+import { UmRoleService } from 'src/app/pages/um/services/um-role.service';
+import { UmUserService } from 'src/app/pages/um/services/um-user.service';
 import { SettingsApiService } from 'src/app/services/settings-api.service';
 
 @Component({
@@ -38,6 +43,18 @@ export class QuerybuilderComponent implements OnInit, AfterViewInit, OnDestroy {
 
   name = '';
   description = '';
+
+  // ---- Visibility (mirrors Dashboard & Report Builders) ----
+  selectedGrantRoles: string[] = [];
+  allRoles: GetRoleResponse[] = [];
+
+  selectedUsernames: string[] = [];
+  userCatalog: GetUserResponse[] = [];
+  filteredUsersForPick: GetUserResponse[] = [];
+  userSearchTerm = '';
+  loadingUsers = false;
+  readonly userPageSize = 100;
+  readonly maxUserPagesToPrefetch = 25;
 
   testRows: Record<string, unknown>[] = [];
   testing = false;
@@ -69,6 +86,8 @@ export class QuerybuilderComponent implements OnInit, AfterViewInit, OnDestroy {
     private readonly settingsApi: SettingsApiService,
     private readonly snackBar: MatSnackBar,
     private readonly ngZone: NgZone,
+    private readonly umRoleService: UmRoleService,
+    private readonly umUserService: UmUserService,
   ) {
     this.queryGridColumnDefs = [
       { field: 'name', headerName: 'Name', flex: 2, minWidth: 160 },
@@ -122,6 +141,9 @@ export class QuerybuilderComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit(): void {
     void this.reloadList();
+    // Visibility picker data — fire-and-forget so UM outages don't block the editor.
+    void this.loadAllRoles();
+    void this.prefetchUsers();
   }
 
   ngAfterViewInit(): void {
@@ -356,6 +378,8 @@ export class QuerybuilderComponent implements OnInit, AfterViewInit, OnDestroy {
         name: this.name.trim(),
         description: this.description.trim() || undefined,
         sqlText: sql,
+        grantRoles: this.selectedGrantRoles.filter(Boolean),
+        grantUsernames: this.selectedUsernames.filter(Boolean),
       });
       await this.reloadList();
       this.newQuery();
@@ -374,5 +398,79 @@ export class QuerybuilderComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.editingId === q.id) {
       this.newQuery();
     }
+  }
+
+  // ---------- Visibility helpers (mirrors DashboardbuilderComponent) ----------
+
+  private async loadAllRoles(): Promise<void> {
+    try {
+      const acc: GetRoleResponse[] = [];
+      let page = 0;
+      const pageSize = 200;
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const res = await firstValueFrom(this.umRoleService.gets({ pageNumber: page, pageSize }));
+        const items = res.items ?? [];
+        acc.push(...items);
+        if (items.length < pageSize) break;
+        page++;
+      }
+      this.allRoles = acc.sort((a, b) => a.name.localeCompare(b.name));
+    } catch {
+      this.allRoles = [];
+    }
+  }
+
+  private async prefetchUsers(): Promise<void> {
+    this.loadingUsers = true;
+    try {
+      const acc: GetUserResponse[] = [];
+      for (let page = 0; page < this.maxUserPagesToPrefetch; page++) {
+        const res = await firstValueFrom(
+          this.umUserService.gets({ pageNumber: page, pageSize: this.userPageSize })
+        );
+        const items = res.items ?? [];
+        acc.push(...items);
+        if (items.length < this.userPageSize) break;
+      }
+      this.userCatalog = acc;
+      this.applyUserFilter();
+    } catch {
+      this.userCatalog = [];
+      this.applyUserFilter();
+    } finally {
+      this.loadingUsers = false;
+    }
+  }
+
+  onUserSearchChange(term: string): void {
+    this.userSearchTerm = term;
+    this.applyUserFilter();
+  }
+
+  private applyUserFilter(): void {
+    const t = (this.userSearchTerm ?? '').trim().toLowerCase();
+    const pool = this.userCatalog.filter((u) => !this.selectedUsernames.includes(u.username));
+    if (!t) {
+      this.filteredUsersForPick = pool.slice(0, 60);
+      return;
+    }
+    this.filteredUsersForPick = pool
+      .filter((u) => `${u.username} ${u.email} ${u.firstName} ${u.lastName}`.toLowerCase().includes(t))
+      .slice(0, 80);
+  }
+
+  onUserPicked(event: MatAutocompleteSelectedEvent): void {
+    const u = event.option.value as GetUserResponse;
+    if (u?.username && !this.selectedUsernames.includes(u.username)) {
+      this.selectedUsernames = [...this.selectedUsernames, u.username];
+    }
+    this.userSearchTerm = '';
+    this.applyUserFilter();
+  }
+
+  removeUsername(name: string): void {
+    this.selectedUsernames = this.selectedUsernames.filter((x) => x !== name);
+    this.applyUserFilter();
   }
 }

@@ -1,0 +1,164 @@
+/* ---------------------------------------------------------------------------
+ * CDK overlays (tooltips, menus, popovers, chart tooltips, datepickers).
+ * These elements are rendered into `<body>` via `cdk-overlay-container`, so
+ * component-scoped styles cannot reach them. We theme them here using the
+ * same CSS variables that drive the rest of the app (light / dark / dark-blue).
+ * ------------------------------------------------------------------------- */
+
+/* Material tooltips (matTooltip) — used on every widget hover button. */
+.mat-mdc-tooltip {
+  --mdc-plain-tooltip-container-color: var(--cardbg);
+  --mdc-plain-tooltip-supporting-text-color: var(--textPrimary);
+
+  .mdc-tooltip__surface {
+    background-color: var(--cardbg) !important;
+    color: var(--textPrimary) !important;
+    border: 1px solid var(--borderColor);
+    box-shadow: var(--cardshadow);
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 1.35;
+    padding: 6px 10px;
+    max-width: 280px;
+  }
+}
+
+/* Menu panels (mat-menu) — widget toolbar dropdowns and dashboard switcher. */
+.mat-mdc-menu-panel {
+  background-color: var(--cardbg) !important;
+  border: 1px solid var(--borderColor);
+  box-shadow: var(--cardshadow) !important;
+  border-radius: 8px;
+
+  .mat-mdc-menu-content {
+    background-color: var(--cardbg) !important;
+    padding: 4px 0;
+  }
+
+  .mat-mdc-menu-item {
+    background-color: transparent !important;
+    color: var(--textPrimary) !important;
+    transition: background-color 0.15s ease;
+
+    .mat-icon,
+    .mat-mdc-menu-item-text {
+      color: var(--textPrimary) !important;
+    }
+
+    &:hover:not([disabled]),
+    &.cdk-program-focused:not([disabled]),
+    &.cdk-keyboard-focused:not([disabled]) {
+      background-color: var(--hoverBgColor) !important;
+    }
+
+    &[disabled] {
+      color: var(--textPrimary) !important;
+      opacity: 0.45;
+    }
+  }
+}
+
+/* mat-select dropdown panel (chart filters, audience picker inside widget dialogs). */
+.mat-mdc-select-panel {
+  background-color: var(--cardbg) !important;
+  border: 1px solid var(--borderColor);
+  box-shadow: var(--cardshadow) !important;
+
+  .mat-mdc-option {
+    color: var(--textPrimary) !important;
+    background-color: transparent !important;
+
+    &:hover:not(.mdc-list-item--disabled),
+    &.mat-mdc-option-active,
+    &.mdc-list-item--selected {
+      background-color: var(--hoverBgColor) !important;
+    }
+
+    .mdc-list-item__primary-text {
+      color: var(--textPrimary) !important;
+    }
+  }
+}
+
+/* mat-autocomplete suggestions (used inside some widget filter inputs). */
+.mat-mdc-autocomplete-panel {
+  background-color: var(--cardbg) !important;
+  border: 1px solid var(--borderColor);
+  box-shadow: var(--cardshadow) !important;
+  color: var(--textPrimary);
+}
+
+/* Datepicker popup — opened from chart range filters. */
+.mat-datepicker-content {
+  background-color: var(--cardbg) !important;
+  color: var(--textPrimary) !important;
+  border: 1px solid var(--borderColor);
+  box-shadow: var(--cardshadow) !important;
+
+  .mat-calendar-body-cell-content,
+  .mat-calendar-table-header,
+  .mat-calendar-body-label,
+  .mat-calendar-period-button {
+    color: var(--textPrimary) !important;
+  }
+
+  .mat-calendar-body-cell:hover .mat-calendar-body-cell-content:not(.mat-calendar-body-selected) {
+    background-color: var(--hoverBgColor) !important;
+  }
+}
+
+/* ApexCharts tooltip + legend — appears when hovering a chart widget. */
+.apexcharts-tooltip {
+  background-color: var(--cardbg) !important;
+  color: var(--textPrimary) !important;
+  border: 1px solid var(--borderColor) !important;
+  box-shadow: var(--cardshadow) !important;
+
+  .apexcharts-tooltip-title {
+    background-color: var(--hoverBgColor) !important;
+    color: var(--textPrimary) !important;
+    border-bottom: 1px solid var(--borderColor) !important;
+    font-weight: 600;
+  }
+
+  .apexcharts-tooltip-series-group,
+  .apexcharts-tooltip-text,
+  .apexcharts-tooltip-y-group,
+  .apexcharts-tooltip-goals-group,
+  .apexcharts-tooltip-z-group {
+    color: var(--textPrimary) !important;
+  }
+}
+
+.apexcharts-xaxistooltip,
+.apexcharts-yaxistooltip {
+  background-color: var(--cardbg) !important;
+  color: var(--textPrimary) !important;
+  border: 1px solid var(--borderColor) !important;
+
+  &::before {
+    border-bottom-color: var(--borderColor) !important;
+  }
+  &::after {
+    border-bottom-color: var(--cardbg) !important;
+  }
+}
+
+.apexcharts-legend-text {
+  color: var(--textPrimary) !important;
+}
+
+/* AG Grid tooltip (used by data grid widgets via panel class .ag-tooltip). */
+.ag-tooltip {
+  background-color: var(--cardbg) !important;
+  color: var(--textPrimary) !important;
+  border: 1px solid var(--borderColor) !important;
+  box-shadow: var(--cardshadow) !important;
+}
+
+/* CDK menu / popover surfaces dropped at body level (e.g. context menus). */
+.cdk-overlay-pane > .mat-mdc-card,
+.cdk-overlay-pane > .mat-mdc-paginator {
+  background-color: var(--cardbg) !important;
+  color: var(--textPrimary) !important;
+}

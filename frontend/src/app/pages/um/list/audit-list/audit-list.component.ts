@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
+import { PageEvent } from '@angular/material/paginator';
 import { ColDef, GridReadyEvent } from 'ag-grid-community';
 import { finalize } from 'rxjs';
 import { GlobalConstants } from 'src/app/common/GlobalConstants';
 import {
   AuditLogRowResponse,
+  GetsAuditLogsRequest,
   GetsAuditLogsResponse,
 } from 'src/app/core/models/um.models';
 import { ToolbarButton } from 'src/app/pages/ui-components/button/toolbar/toolbar.component';
@@ -17,6 +19,10 @@ import { BusinessApiService } from 'src/app/services/business-api.service';
 export class AuditListComponent implements OnInit {
   rowData: AuditLogRowResponse[] = [];
   loading = false;
+
+  totalCount = 0;
+  pageNumber = 0;
+  pageSize = 25;
 
   columnDefs: ColDef[] = [
     { field: 'id', headerName: 'ID', width: 90, sortable: true, filter: true },
@@ -56,19 +62,34 @@ export class AuditListComponent implements OnInit {
   load(): void {
     this.loading = true;
     const url = GlobalConstants.API_ENDPOINTS.um.audit.gets;
+    const body: GetsAuditLogsRequest = {
+      pageNumber: this.pageNumber,
+      pageSize: this.pageSize,
+    };
     this.businessApi
-      .postEnvelope<GetsAuditLogsResponse>(
-        url,
-        { pageNumber: 0, pageSize: 100 },
-        'errors'
-      )
+      .postEnvelope<GetsAuditLogsResponse>(url, body, 'errors')
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: (page) => {
+          const totalPages = page.totalPages ?? 0;
+          if (totalPages === 0) {
+            this.pageNumber = 0;
+          } else if (this.pageNumber >= totalPages) {
+            this.pageNumber = totalPages - 1;
+            this.load();
+            return;
+          }
           this.rowData = page.items ?? [];
+          this.totalCount = page.totalCount ?? 0;
         },
         error: () => {},
       });
+  }
+
+  onPage(ev: PageEvent): void {
+    this.pageNumber = ev.pageIndex;
+    this.pageSize = ev.pageSize;
+    this.load();
   }
 
   onGridReady(_e: GridReadyEvent): void {}

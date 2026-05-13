@@ -26,6 +26,7 @@ import com.kyc.api.repository.KycCustomerRepository;
 import com.kyc.common.ApiMessages;
 import com.kyc.common.PageResponse;
 import com.kyc.exception.ServiceException;
+import com.kyc.security.BusinessContextHolder;
 
 @Service
 public class CustomerServiceImpl implements ICustomerService {
@@ -36,10 +37,15 @@ public class CustomerServiceImpl implements ICustomerService {
 	@Override
 	public AddCustomerResponse add(AddCustomerRequest request) {
 
+		Long businessId = BusinessContextHolder.requireBusinessId();
+
 		KycCustomer customer = new KycCustomer();
 		mapRequestOntoEntity(request, customer);
 		customer.setFullName(request.getFirstName() + " " + request.getLastName());
+		customer.setBusinessId(businessId);
 		customer.setCreatedAt(LocalDateTime.now());
+		customer.setNotifWelcomeFlag(0);
+		customer.setNotifWelcomeStatus(0);
 
 		repository.save(customer);
 
@@ -51,7 +57,8 @@ public class CustomerServiceImpl implements ICustomerService {
 	@Override
 	public UpdateCustomerResponse update(UpdateCustomerRequest request) {
 
-		KycCustomer customer = repository.findById(request.getId())
+		Long businessId = BusinessContextHolder.requireBusinessId();
+		KycCustomer customer = repository.findByIdAndBusinessId(request.getId(), businessId)
 				.orElseThrow(() -> new ServiceException(ApiMessages.CUSTOMER_NOT_FOUND, HttpStatus.NOT_FOUND));
 
 		mapRequestOntoEntity(request, customer);
@@ -106,11 +113,11 @@ public class CustomerServiceImpl implements ICustomerService {
 	@Override
 	public DeleteCustomerResponse delete(DeleteCustomerRequest request) {
 
-		if (!repository.existsById(request.getId())) {
-			throw new ServiceException(ApiMessages.CUSTOMER_NOT_FOUND, HttpStatus.NOT_FOUND);
-		}
+		Long businessId = BusinessContextHolder.requireBusinessId();
+		KycCustomer customer = repository.findByIdAndBusinessId(request.getId(), businessId)
+				.orElseThrow(() -> new ServiceException(ApiMessages.CUSTOMER_NOT_FOUND, HttpStatus.NOT_FOUND));
 
-		repository.deleteById(request.getId());
+		repository.delete(customer);
 
 		DeleteCustomerResponse response = new DeleteCustomerResponse();
 		response.setId(request.getId());
@@ -120,7 +127,8 @@ public class CustomerServiceImpl implements ICustomerService {
 	@Override
 	public GetCustomerResponse get(GetCustomerRequest request) {
 
-		KycCustomer customer = repository.findById(request.getId())
+		Long businessId = BusinessContextHolder.requireBusinessId();
+		KycCustomer customer = repository.findByIdAndBusinessId(request.getId(), businessId)
 				.orElseThrow(() -> new ServiceException(ApiMessages.CUSTOMER_NOT_FOUND, HttpStatus.NOT_FOUND));
 
 		return buildResponse(customer);
@@ -129,8 +137,9 @@ public class CustomerServiceImpl implements ICustomerService {
 	@Override
 	public PageResponse<GetCustomerResponse> gets(GetsCustomersRequest request) {
 
+		Long businessId = BusinessContextHolder.requireBusinessId();
 		Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
-		Page<KycCustomer> page = repository.findAll(pageable);
+		Page<KycCustomer> page = repository.findAllByBusinessId(businessId, pageable);
 
 		List<GetCustomerResponse> items = page.getContent().stream().map(this::buildResponse).collect(Collectors.toList());
 

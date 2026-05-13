@@ -1,0 +1,126 @@
+.step-dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid #dde2f1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: #5b657f;
+  background: #ffffff;
+  transition: all 180ms ease;
+}
+
+.step-dot.is-active {
+  border-color: #2f5fff;
+  color: #ffffff;
+  background: #2f5fff;
+  box-shadow: 0 0 0 4px rgba(47, 95, 255, 0.18);
+}
+
+.step-dot.is-done {
+  border-color: #2f5fff;
+  background: rgba(47, 95, 255, 0.12);
+  color: #2f5fff;
+}
+
+.step-line {
+  width: 56px;
+  height: 2px;
+  background: #dde2f1;
+  margin: 0 8px;
+  transition: background 180ms ease;
+}
+
+.step-line.is-done {
+  background: #2f5fff;
+}
+
+.alert-soft {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(47, 95, 255, 0.08), rgba(181, 107, 255, 0.06));
+  border: 1px solid rgba(47, 95, 255, 0.15);
+  color: #1a2240;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.alert-soft i-tabler {
+  width: 22px;
+  height: 22px;
+  color: #2f5fff;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.text-error {
+  color: #d3322a;
+  font-size: 13px;
+  margin: 0;
+}
+
+.text-muted {
+  color: #5b657f;
+}
+
+/* Re-declared locally so register and register-business share the same look — Angular
+ * scopes styles by default, so we can't inherit from the sibling component. */
+.register-business__types {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+  margin: 4px 0 8px;
+}
+
+.register-business__type {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1.5px solid #dde2f1;
+  background: #ffffff;
+  cursor: pointer;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.register-business__type:hover {
+  border-color: #6690ff;
+  transform: translateY(-1px);
+}
+
+.register-business__type.is-selected {
+  border-color: #6690ff;
+  box-shadow: 0 0 0 3px rgba(102, 144, 255, 0.18);
+}
+
+.register-business__type-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: rgba(102, 144, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2f5fff;
+  flex-shrink: 0;
+}
+
+.register-business__type-icon i-tabler {
+  width: 20px;
+  height: 20px;
+}
+
+.register-business__type-label {
+  font-weight: 600;
+  color: #1a2240;
+}

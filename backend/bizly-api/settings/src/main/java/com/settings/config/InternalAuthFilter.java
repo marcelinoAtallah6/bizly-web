@@ -22,6 +22,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.settings.config.model.session.SessionEntity;
 import com.settings.config.repository.SessionRepository;
+import com.settings.security.BusinessContextHolder;
 
 @Component
 public class InternalAuthFilter extends OncePerRequestFilter {
@@ -71,7 +72,23 @@ public class InternalAuthFilter extends OncePerRequestFilter {
 			SecurityContextHolder.getContext().setAuthentication(auth);
 		}
 
-		filterChain.doFilter(request, response);
+		Long bid = parseLong(request.getHeader("X-Business-Id"));
+		String roleLevel = request.getHeader("X-Role-Level");
+		Long override = null;
+		if ("ADMIN".equalsIgnoreCase(roleLevel)) {
+			override = parseLong(request.getHeader("X-Business-Override"));
+		}
+		BusinessContextHolder.set(bid, roleLevel, override);
+		try {
+			filterChain.doFilter(request, response);
+		} finally {
+			BusinessContextHolder.clear();
+		}
+	}
+
+	private static Long parseLong(String s) {
+		if (s == null || s.isBlank()) return null;
+		try { return Long.parseLong(s.trim()); } catch (NumberFormatException e) { return null; }
 	}
 
 	/**

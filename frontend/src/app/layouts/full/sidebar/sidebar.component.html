@@ -1,31 +1,44 @@
 <div class="flex-layout">
   <app-branding></app-branding>
-  <mat-nav-list class="sidebar-list" >
+  <mat-nav-list class="sidebar-list">
+    <ng-container *ngFor="let item of navItems">
+      <div mat-subheader class="nav-caption">
+        {{ item.name }}
+      </div>
+      <app-nav-item *ngFor="let app of item.menus" [item]="app"></app-nav-item>
+    </ng-container>
+  </mat-nav-list>
 
-    <ng-container *ngFor="let item of navItems" >
-      
-    <div mat-subheader class="nav-caption">
-      {{ item.name }}
-    </div>
-    <app-nav-item *ngFor="let app of item.menus" [item]="app"> </app-nav-item>
-  </ng-container>
-</mat-nav-list>
-  <div class="profile-box">
-    <div class="profile-box-content bg-light-accent ">
-      <img
-        class="sidebar-profile-img"
-        [src]="sidebarProf?.avatarUrl || '/assets/images/profile/user-1.jpg'"
-        alt="Profile"
-      />
-      <div class="profile-info">
-        <h5>{{ sidebarProf?.displayName || 'User' }}</h5>
-        <span>{{ sidebarProf?.subtitle || '' }}</span>
+  <div class="profile-box sidebar-profile">
+    <div class="sidebar-profile-card bg-light-accent">
+      <div class="sidebar-profile__avatar">
+        <img
+          class="sidebar-profile-img"
+          [src]="sidebarProf?.avatarUrl || '/assets/images/profile/user-1.jpg'"
+          alt=""
+        />
       </div>
-      <div class="profile-actions">
-        <a class="mat-icon-button" (click)="onSignOut()">
-          <img src="/assets/images/svgs/power.svg" alt="Logout Icon" class="logout-icon">
-        </a>
+      <div class="sidebar-profile__meta">
+        <div class="sidebar-profile__name">{{ sidebarProf?.displayName || 'User' }}</div>
+        <div
+          class="sidebar-profile__email"
+          [matTooltip]="sidebarProf?.subtitle || ''"
+          [matTooltipDisabled]="!(sidebarProf?.subtitle)"
+          matTooltipShowDelay="250"
+        >
+          {{ sidebarProf?.subtitle || '' }}
+        </div>
       </div>
+      <button
+        mat-icon-button
+        type="button"
+        class="sidebar-profile__logout"
+        (click)="onSignOut()"
+        [disabled]="isSigningOut"
+        aria-label="Sign out"
+      >
+        <img src="/assets/images/svgs/power.svg" alt="" class="logout-icon" />
+      </button>
     </div>
   </div>
-  
+</div>

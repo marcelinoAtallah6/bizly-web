@@ -19,6 +19,8 @@ import { AuthenticationRoutes } from './authentication.routing';
 import { AppSideLoginComponent } from './login/login.component';
 import { AppSideRegisterComponent } from './register/register.component';
 import { AppForgotPasswordComponent } from './forgot-password/forgot-password.component';
+import { WelcomeWizardComponent } from './welcome/welcome-wizard.component';
+import { RegisterBusinessComponent } from './register-business/register-business.component';
 
 @NgModule({
   imports: [
@@ -39,6 +41,8 @@ import { AppForgotPasswordComponent } from './forgot-password/forgot-password.co
     AppSideLoginComponent,
     AppSideRegisterComponent,
     AppForgotPasswordComponent,
+    WelcomeWizardComponent,
+    RegisterBusinessComponent,
   ],
 })
 export class AuthenticationModule {}

@@ -1,0 +1,321 @@
+// Report Builder admin page — matches the Query Builder two-card layout,
+// the dashboard builder header style, and shared settings spacing.
+
+:host {
+  display: block;
+  padding: 24px;
+}
+
+.rb-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  &__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  &__title {
+    margin: 0 0 4px;
+    font-size: 22px;
+    font-weight: 600;
+  }
+
+  &__intro {
+    margin: 0;
+    max-width: 720px;
+  }
+
+  &__layout {
+    display: grid;
+    grid-template-columns: minmax(420px, 1fr) minmax(420px, 1fr);
+    gap: 20px;
+    align-items: start;
+
+    @media (max-width: 1199px) {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+.rb-panel {
+  border-radius: 12px !important;
+  padding: 4px !important;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px 0;
+    gap: 12px;
+
+    mat-card-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+  }
+
+  &__content {
+    padding: 12px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 0 16px 16px;
+  }
+}
+
+.rb-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+
+  &--3 {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  @media (max-width: 767px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.rb-icon-row {
+  display: inline-flex;
+  align-items: center;
+}
+
+.rb-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px 12px;
+  background: rgba(33, 150, 243, 0.04);
+  border-radius: 10px;
+  border: 1px dashed rgba(33, 150, 243, 0.24);
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    h4 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+    }
+  }
+}
+
+.rb-filter {
+  background: var(--mat-app-background-color, #fff);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  &__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 8px;
+    align-items: center;
+
+    @media (max-width: 767px) {
+      grid-template-columns: 1fr 1fr;
+      &:last-child { grid-template-columns: 1fr; }
+    }
+  }
+
+  &__cell {
+    width: 100%;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+  }
+}
+
+.rb-options {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+  padding: 8px 10px;
+
+  &__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+}
+
+.rb-option-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.rb-cols {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.rb-col-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: rgba(33, 150, 243, 0.1);
+  color: #1976d2;
+  border-radius: 999px;
+  font-size: 12px;
+
+  small {
+    margin-left: 4px;
+    font-size: 10px;
+    opacity: 0.75;
+  }
+}
+
+// Right list
+.rb-list {
+  &__loading {
+    display: flex;
+    justify-content: center;
+    padding: 24px;
+  }
+}
+
+.rb-empty {
+  text-align: center;
+  padding: 36px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+
+  p {
+    margin: 0;
+    max-width: 320px;
+  }
+}
+
+.rb-row {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 8px;
+  border-radius: 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.02);
+  }
+
+  &__icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(33, 150, 243, 0.12);
+    color: #1976d2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    i-tabler {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  &__meta {
+    min-width: 0;
+  }
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  &__sub {
+    margin: 2px 0 0;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+}
+
+.rb-status {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  background: rgba(76, 175, 80, 0.18);
+  color: #2e7d32;
+  padding: 2px 8px;
+  border-radius: 999px;
+
+  &.is-inactive {
+    background: rgba(158, 158, 158, 0.18);
+    color: #616161;
+  }
+}
+
+.rb-search {
+  width: 220px;
+}
+
+// Dark themes
+:host-context(.dark-theme),
+:host-context(.dark-blue_theme) {
+  .rb-section {
+    background: rgba(96, 165, 250, 0.08);
+    border-color: rgba(96, 165, 250, 0.32);
+  }
+
+  .rb-filter {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .rb-options {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .rb-row {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    &__icon {
+      background: rgba(96, 165, 250, 0.22);
+      color: #60a5fa;
+    }
+  }
+
+  .rb-col-chip {
+    background: rgba(96, 165, 250, 0.18);
+    color: #93c5fd;
+  }
+}

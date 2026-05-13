@@ -49,6 +49,11 @@ notification:
   workflow:
     poll-interval-ms: ${NOTIFICATION_POLL_INTERVAL_MS:1000}
     max-users-per-tick: ${NOTIFICATION_MAX_USERS_PER_TICK:50}
+  birthday:
+    daily-cron: ${NOTIFICATION_BIRTHDAY_CRON:0 0 7 * * *}
+  broadcast:
+    max-broadcasts-per-tick: ${NOTIFICATION_MAX_BROADCASTS_PER_TICK:3}
+    max-recipients-per-run: ${NOTIFICATION_BROADCAST_MAX_RCPT:500}
   birthday-promo-code: ${NOTIFICATION_BIRTHDAY_PROMO:BDAY-PROMO-2026}
   mail-from: ${NOTIFICATION_MAIL_FROM:noreply@bizly.local}
   # When false: no SMTP connection — logs the send only and treats as success (local dev without Mailpit).

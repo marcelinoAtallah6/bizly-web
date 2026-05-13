@@ -49,6 +49,7 @@ DECLARE
   q_tbl_sales        NUMBER;
 
   d_show NUMBER;
+  v_admin_type NUMBER;
 
   PROCEDURE ins_query(p_name VARCHAR2, p_desc VARCHAR2, p_sql CLOB, p_id OUT NUMBER) IS
   BEGIN
@@ -400,7 +401,17 @@ BEGIN
     21
   );
 
-  INSERT INTO UM.SETTINGS_DASH_ROLE_GRANT (DASHBOARD_ID, ROLE_NAME) VALUES (d_show, 'ADMIN');
+  BEGIN
+    SELECT ROLE_TYPE INTO v_admin_type
+      FROM UM.UM_ROLE
+     WHERE UPPER(TRIM(NAME)) = 'ADMIN'
+       AND ROLE_TYPE IS NOT NULL
+       AND ROWNUM = 1;
+  EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+      RAISE_APPLICATION_ERROR(-20001, 'Seed aborted: no UM_ROLE named ADMIN with a ROLE_TYPE configured.');
+  END;
+  INSERT INTO UM.SETTINGS_DASH_ROLE_GRANT (DASHBOARD_ID, ROLE_TYPE) VALUES (d_show, v_admin_type);
 
   COMMIT;
 END;

@@ -3,8 +3,10 @@
     align-items: center;
     justify-content: space-between;
     background-color:var(--toolbar); /* Light background color for the navbar */
-    border-bottom: 1px solid var(--toolbar); /* Bottom border to separate navbar from content */
-    padding: 0 10px;
+    border-bottom: 1px solid var(--borderColor);
+    padding: 0 12px;
+    min-height: var(--header-height);
+    box-sizing: border-box;
   }
   
   .horizontal-navbar {
@@ -15,6 +17,7 @@
     top: 0;
     z-index: 9;
     flex-direction: row;
+    min-height: var(--header-height);
   }
   
   .horizontal-nav-list {
@@ -43,30 +46,46 @@
   .profile-box-content {
     display: flex;
     align-items: center;
-    padding: 8px;
-    background-color: #ffffff;
-    border-radius: 4px;
+    padding: 10px 14px;
+    background-color: var(--light-accent);
+    border: 1px solid var(--borderColor);
+    border-radius: 12px;
+    box-shadow: var(--cardshadow);
+    gap: 4px;
   }
 
   .navbar-profile-img {
-    width: 40px;
-    height: 40px;
+    width: 52px;
+    height: 52px;
     border-radius: 50%;
     object-fit: cover;
+    border: 2px solid rgba(var(--primary-rgb), 0.22);
+    flex-shrink: 0;
   }
   
   .profile-info {
-    margin-left: 10px;
+    margin-left: 12px;
+    min-width: 0;
   }
   
   .profile-info h5 {
     margin: 0;
     font-size: 16px;
+    font-weight: 600;
+    color: var(--textPrimary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   
   .profile-info span {
-    font-size: 14px;
-    color: #666;
+    font-size: 13px;
+    color: var(--labelText);
+    opacity: 0.9;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   
   .profile-actions .mat-icon-button {

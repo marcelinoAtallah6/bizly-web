@@ -1,0 +1,71 @@
+<div class="welcome-wizard">
+  <div class="welcome-wizard__bg"></div>
+
+  <div class="welcome-wizard__stage">
+    <div
+      class="welcome-wizard__track"
+      [style.transform]="'translateX(-' + currentStep * 100 + '%)'"
+    >
+      <div class="welcome-wizard__slide" *ngFor="let step of steps; let i = index">
+        <div class="welcome-wizard__card" [class.is-active]="i === currentStep">
+          <div class="welcome-wizard__icon">
+            <i-tabler [name]="step.icon"></i-tabler>
+          </div>
+          <h1 class="welcome-wizard__title">{{ step.title }}</h1>
+          <p class="welcome-wizard__subtitle">{{ step.subtitle }}</p>
+          <p class="welcome-wizard__body">{{ step.body }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="welcome-wizard__footer">
+    <div class="welcome-wizard__dots">
+      <button
+        type="button"
+        *ngFor="let step of steps; let i = index"
+        class="welcome-wizard__dot"
+        [class.is-active]="i === currentStep"
+        [attr.aria-label]="'Go to step ' + (i + 1)"
+        (click)="goToStep(i)"
+      ></button>
+    </div>
+
+    <div class="welcome-wizard__actions">
+      <button
+        mat-stroked-button
+        type="button"
+        class="welcome-wizard__back"
+        [disabled]="currentStep === 0 || isFinishing"
+        (click)="previous()"
+      >
+        Back
+      </button>
+
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        class="welcome-wizard__next"
+        *ngIf="currentStep < steps.length - 1"
+        (click)="next()"
+      >
+        Continue
+      </button>
+
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        class="welcome-wizard__next"
+        *ngIf="currentStep === steps.length - 1"
+        [disabled]="isFinishing"
+        (click)="finish()"
+      >
+        {{ isFinishing ? 'Finishing…' : 'Get Started' }}
+      </button>
+    </div>
+
+    <p class="welcome-wizard__error" *ngIf="errorMessage">{{ errorMessage }}</p>
+  </div>
+</div>

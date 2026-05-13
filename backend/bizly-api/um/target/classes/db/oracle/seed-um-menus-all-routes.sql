@@ -104,10 +104,9 @@ SELECT UM.S_UM_MENUS.NEXTVAL, a.ID, NULL, 'Query builder', '/qbe', NULL, 1, NULL
 FROM UM.UM_APPLICATIONS a WHERE UPPER(a.NAME) LIKE '%QUERY%' OR UPPER(a.NAME) LIKE '%SETUP%' AND ROWNUM = 1
   AND NOT EXISTS (SELECT 1 FROM UM.UM_MENUS m WHERE m.ROUTE = '/qbe');
 
-INSERT INTO UM.UM_MENUS (ID, APPLICATION_ID, PARENT_ID, NAME, ROUTE, ICON, IS_ACTIVE, ALLOWED_ROLES)
-SELECT UM.S_UM_MENUS.NEXTVAL, a.ID, NULL, 'Reports', '/rpt', NULL, 1, NULL
-FROM UM.UM_APPLICATIONS a WHERE UPPER(a.NAME) LIKE '%REPORT%' AND ROWNUM = 1
-  AND NOT EXISTS (SELECT 1 FROM UM.UM_MENUS m WHERE m.ROUTE = '/rpt');
+-- Reports menu was retired — the sidebar now renders one entry per active
+-- row in UM.SETTINGS_REPORT (Report Builder), under a synthetic "Reports"
+-- group injected by MenuCatalogService. The legacy /rpt placeholder is gone.
 
 INSERT INTO UM.UM_MENUS (ID, APPLICATION_ID, PARENT_ID, NAME, ROUTE, ICON, IS_ACTIVE, ALLOWED_ROLES)
 SELECT UM.S_UM_MENUS.NEXTVAL, a.ID, NULL, 'API builder', '/api', NULL, 1, NULL

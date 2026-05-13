@@ -40,13 +40,35 @@ export class AppDashboardComponent implements OnInit, OnDestroy {
       })
     );
 
-    void this.dashCtx.loadSummaries().then(() => {
-      const list = this.dashCtx.summariesSnapshot;
-      if (list.length && this.dashCtx.selectedIdSnapshot == null) {
-        void this.dashCtx.selectDashboardById(list[0].id, false);
-      }
+    void this.bootstrapDashboardSelection();
+  }
+
+  /**
+   * Loads the navbar dashboards and decides which one to open. Preference order is:
+   *   1. The user's currently-selected dashboard (if any — survives in-app navigation).
+   *   2. The dashboard the user opened last (persisted server-side via SETTINGS_USER_PREF).
+   *   3. The first dashboard in the navbar list (fallback when the user has never picked one).
+   */
+  private async bootstrapDashboardSelection(): Promise<void> {
+    const [, savedId] = await Promise.all([
+      this.dashCtx.loadSummaries(),
+      this.dashCtx.loadSavedSelection(),
+    ]);
+
+    if (this.dashCtx.selectedIdSnapshot != null) {
       this.rebuildDashboardToolbar();
-    });
+      return;
+    }
+
+    const list = this.dashCtx.summariesSnapshot;
+    if (!list.length) {
+      this.rebuildDashboardToolbar();
+      return;
+    }
+
+    const preferred = savedId != null && list.some((d) => d.id === savedId) ? savedId : list[0].id;
+    await this.dashCtx.selectDashboardById(preferred, false);
+    this.rebuildDashboardToolbar();
   }
 
   ngOnDestroy(): void {

@@ -19,6 +19,8 @@ export class PmSaleService {
   constructor(private readonly api: BusinessApiService) {}
 
   checkout(body: CheckoutRequest): Observable<CheckoutResponse> {
+    /* Unified product + service checkout now lives in PM ({@code /pm/sale/checkout}). The role only
+       needs {@code /pm/products} edit to call it — services are read-only here, looked up in BM. */
     return this.api.postEnvelope<CheckoutResponse>(
       GlobalConstants.API_ENDPOINTS.pm.sale.checkout,
       body,

@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { GetProductResponse } from 'src/app/core/models/pm.models';
 import { ToolbarButton } from 'src/app/pages/ui-components/button/toolbar/toolbar.component';
+import { MenuPermissionService } from 'src/app/services/menu-permission.service';
 import { SimpleConfirmDialogComponent } from 'src/app/shared/dialogs/simple-confirm-dialog.component';
 import { PmProductService } from '../../services/pm-product.service';
 
@@ -18,6 +19,8 @@ export class ProductDetailsComponent implements OnInit {
   loading = false;
   deleting = false;
 
+  private readonly routeProducts = '/pm/products';
+
   get detailToolbar(): ToolbarButton[] {
     return [
       { id: 'back', icon: 'arrow_back', tooltip: 'Back to list', action: () => this.back() },
@@ -28,6 +31,7 @@ export class ProductDetailsComponent implements OnInit {
         action: () => this.delete(),
         disabled: !this.product || this.deleting,
         color: 'warn',
+        hidden: !this.menuPerm.can(this.routeProducts, 'delete'),
       },
       {
         id: 'edit',
@@ -36,6 +40,7 @@ export class ProductDetailsComponent implements OnInit {
         action: () => this.edit(),
         disabled: !this.product,
         color: 'primary',
+        hidden: !this.menuPerm.can(this.routeProducts, 'edit'),
       },
     ];
   }
@@ -44,7 +49,8 @@ export class ProductDetailsComponent implements OnInit {
     private readonly route: ActivatedRoute,
     private readonly router: Router,
     private readonly pmProductService: PmProductService,
-    private readonly dialog: MatDialog
+    private readonly dialog: MatDialog,
+    private readonly menuPerm: MenuPermissionService
   ) {}
 
   ngOnInit(): void {

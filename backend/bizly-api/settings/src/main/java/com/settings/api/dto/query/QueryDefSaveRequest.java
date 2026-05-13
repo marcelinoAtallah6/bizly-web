@@ -1,5 +1,7 @@
 package com.settings.api.dto.query;
 
+import java.util.List;
+
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -18,6 +20,17 @@ public class QueryDefSaveRequest {
 	private String sqlText;
 
 	private String parametersJson;
+
+	/** Role-based visibility — see {@code ReportBuilderSaveRequest} for the same pattern. */
+	private List<String> grantRoles;
+
+	/** User-based visibility — empty + empty role grants = global to the tenant. */
+	private List<String> grantUsernames;
+
+	public List<String> getGrantRoles() { return grantRoles; }
+	public void setGrantRoles(List<String> grantRoles) { this.grantRoles = grantRoles; }
+	public List<String> getGrantUsernames() { return grantUsernames; }
+	public void setGrantUsernames(List<String> grantUsernames) { this.grantUsernames = grantUsernames; }
 
 	public Long getId() {
 		return id;

@@ -56,7 +56,7 @@ export class CustomizerComponent implements OnInit {
   themes = [
     { name: 'Light Theme', class: 'light-theme', value: 'light' },
     { name: 'Dark Theme', class: 'dark-theme', value: 'dark' },
-    { name: 'Blue Theme', class: 'blue-theme', value: 'blue' },
+    { name: 'White Theme', class: 'white-theme', value: 'white' },
     // Add more themes as needed
   ];
 

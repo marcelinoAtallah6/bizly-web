@@ -10,6 +10,86 @@ interface LoginPayload {
   sessionId: string;
   availableRoles?: string[];
   activeRole?: string | null;
+  /** True until the user finishes the welcome wizard. Drives the post-login redirect. */
+  firstLogin?: boolean | null;
+  /** Tenant id; null until business registration is complete. */
+  businessId?: number | null;
+  businessName?: string | null;
+  /** ADMIN | BUSINESS — used by guards to decide whether to allow the registration flow. */
+  roleLevel?: string | null;
+}
+
+export interface MeResponse {
+  userId: number;
+  username: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  firstLogin: boolean;
+  businessId?: number | null;
+  businessName?: string | null;
+  roles: string[];
+  roleLevel?: string | null;
+  canRegisterBusiness: boolean;
+}
+
+export interface AssignableRole {
+  id: number;
+  name: string;
+  levelCode: string;
+  isDefault: boolean;
+}
+
+export interface RegisterBusinessRequest {
+  businessName: string;
+  businessType?: string;
+}
+
+export interface RegisterBusinessResponse {
+  businessId: number;
+  businessName: string;
+  session: LoginPayload;
+}
+
+/** Public sign-up payload. {@code authProvider} / {@code providerUserId} are filled when
+ *  the user clicked Google/Facebook on the Create-Account screen — otherwise omitted. */
+export interface RegisterRequest {
+  username: string;
+  email: string;
+  password?: string;
+  confirmPassword?: string;
+  firstName: string;
+  lastName: string;
+  mobileNumber?: string;
+  businessName: string;
+  businessType?: string;
+  authProvider?: 'GOOGLE' | 'FACEBOOK' | 'APPLE' | null;
+  providerUserId?: string | null;
+}
+
+export interface RegisterResponse {
+  userId: number;
+  username: string;
+  businessId: number;
+  businessName: string;
+  session: LoginPayload;
+}
+
+export interface AdminBusiness {
+  id: number;
+  businessName: string;
+  businessType?: string | null;
+  status?: string | null;
+  createdAt?: string | null;
+}
+
+export interface AdminUser {
+  id: number;
+  username: string;
+  email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  businessId?: number | null;
 }
 
 /** JWT {@code perms} row — short keys to keep token size down. */
@@ -20,6 +100,34 @@ export interface JwtMenuPermRow {
   a?: boolean;
   e?: boolean;
   d?: boolean;
+}
+
+/** Unverified payload fields from the access JWT (shell + guards). Issued at login / refresh / role switch. */
+export interface JwtAccessClaims {
+  userId: number;
+  username: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  businessId?: number | null;
+  roles: string[];
+  activeRole?: string | null;
+  firstLogin?: boolean;
+  roleLevel?: string | null;
+  permMatrix?: boolean;
+  perms?: JwtMenuPermRow[];
+  profileImageMime?: string;
+  profileImageBase64?: string;
+  profileImageInJwt?: boolean;
+  /** Backend issued the JWT without the image because it exceeds the embed budget. */
+  profileImageOversized?: boolean;
+}
+
+/** Response of {@code POST /auth/me/avatar} — full avatar bytes when JWT couldn't embed them. */
+export interface MeAvatarResponse {
+  userId: number;
+  mime: string;
+  base64: string;
 }
 
 interface ApiResponse<T> {
@@ -244,32 +352,77 @@ DdonpI93CG9kkKqwaKPQnsYX3PyFEH2aA3I7N/0=
     return !!this.getAccessToken();
   }
 
-  /** Decodes JWT access token payload (unverified) for UI; use `userId` for profile load. */
-  getAccessTokenClaims(): { userId: number; firstName?: string; lastName?: string } | null {
-    const t = this.getAccessToken();
-    if (!t) {
+  /**
+   * Decodes JWT access token payload (unverified) for UI — identity, tenant, roles, permissions, profile.
+   * Prefer this over calling UM {@code /user/get} for the layout shell so users without UM view rights still
+   * render the header correctly.
+   */
+  getAccessTokenClaims(): JwtAccessClaims | null {
+    const p = this.decodeAccessPayload();
+    if (!p) {
       return null;
     }
-    try {
-      const parts = t.split('.');
-      if (parts.length !== 3) {
-        return null;
-      }
-      const json = atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'));
-      const p = JSON.parse(json) as Record<string, unknown>;
-      const rawId = p['userId'];
-      const userId = typeof rawId === 'number' ? rawId : Number(rawId);
-      if (!Number.isFinite(userId)) {
-        return null;
-      }
-      return {
-        userId,
-        firstName: p['firstName'] != null ? String(p['firstName']) : undefined,
-        lastName: p['lastName'] != null ? String(p['lastName']) : undefined,
-      };
-    } catch {
+    const rawId = p['userId'] ?? p['user_id'];
+    const userId = typeof rawId === 'number' ? rawId : Number(rawId);
+    if (!Number.isFinite(userId)) {
       return null;
     }
+    const rawRoles = p['roles'] ?? p['role'];
+    const roles = Array.isArray(rawRoles)
+      ? rawRoles.map((x) => String(x))
+      : rawRoles != null && rawRoles !== ''
+        ? [String(rawRoles)]
+        : [];
+    const rawBiz = p['businessId'];
+    let businessId: number | null | undefined;
+    if (rawBiz === undefined) {
+      businessId = undefined;
+    } else if (rawBiz === null) {
+      businessId = null;
+    } else {
+      const n = typeof rawBiz === 'number' ? rawBiz : Number(rawBiz);
+      businessId = Number.isFinite(n) ? n : null;
+    }
+    const fl = p['firstLogin'];
+    const permsRaw = p['perms'];
+    const perms = Array.isArray(permsRaw) ? (permsRaw as JwtMenuPermRow[]) : undefined;
+    const ar = p['activeRole'];
+    return {
+      userId,
+      username: p['username'] != null ? String(p['username']) : '',
+      email: p['email'] != null ? String(p['email']) : '',
+      firstName: p['firstName'] != null ? String(p['firstName']) : undefined,
+      lastName: p['lastName'] != null ? String(p['lastName']) : undefined,
+      businessId,
+      roles,
+      activeRole: ar == null || ar === '' ? undefined : String(ar),
+      firstLogin: typeof fl === 'boolean' ? fl : fl === 'true' ? true : fl === 'false' ? false : undefined,
+      roleLevel: p['roleLevel'] != null ? String(p['roleLevel']) : undefined,
+      permMatrix: p['permMatrix'] === true,
+      perms,
+      profileImageMime: p['profileImageMime'] != null ? String(p['profileImageMime']) : undefined,
+      profileImageBase64: p['profileImageBase64'] != null ? String(p['profileImageBase64']) : undefined,
+      profileImageInJwt: p['profileImageInJwt'] === true,
+      profileImageOversized: p['profileImageOversized'] === true,
+    };
+  }
+
+  /**
+   * Lazy fetch the navbar avatar when the JWT couldn't carry it (oversized or absent). Hits the
+   * gateway-protected {@code /auth/me/avatar} so the user is resolved from the verified X-User
+   * header — the SPA never has to send a userId for someone else's picture.
+   */
+  fetchMyAvatar(): Observable<ApiResponse<MeAvatarResponse>> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'X-DEVICE-ID': this.deviceIdService.getDeviceId(),
+    });
+    return this.http.post<ApiResponse<MeAvatarResponse>>(
+      GlobalConstants.API_ENDPOINTS.auth.meAvatar,
+      {},
+      { headers }
+    );
   }
 
   getAccessToken(): string | null {
@@ -290,6 +443,12 @@ DdonpI93CG9kkKqwaKPQnsYX3PyFEH2aA3I7N/0=
     localStorage.removeItem('jwtSessionId');
     localStorage.removeItem('bizlyAvailableRoles');
     localStorage.removeItem('bizlyActiveRole');
+    localStorage.removeItem('bizlyFirstLogin');
+    localStorage.removeItem('bizlyBusinessId');
+    localStorage.removeItem('bizlyBusinessName');
+    localStorage.removeItem('bizlyRoleLevel');
+    localStorage.removeItem('bizlyAdminBusinessOverride');
+    localStorage.removeItem('bizlyAdminBusinessOverrideName');
   }
 
   /** Role codes from JWT {@code role} claim (all assignments). */
@@ -298,9 +457,11 @@ DdonpI93CG9kkKqwaKPQnsYX3PyFEH2aA3I7N/0=
     if (!p) {
       return [];
     }
-    const r = p['role'];
+    /* Auth service issues {@code roles} (array). Legacy tokens used singular {@code role}; we still
+       honour it so a stale token in localStorage doesn't break the role-switcher dropdown. */
+    const r = p['roles'] ?? p['role'];
     if (Array.isArray(r)) {
-      return r.map((x) => String(x));
+      return r.map((x) => String(x)).filter((x) => x.length > 0);
     }
     if (r != null && r !== '') {
       return [String(r)];
@@ -379,6 +540,231 @@ DdonpI93CG9kkKqwaKPQnsYX3PyFEH2aA3I7N/0=
         localStorage.setItem('bizlyActiveRole', data.activeRole);
       }
     }
+    // Cache tenant + onboarding state for routing guards. The backend remains the source of
+    // truth (re-validated on every /auth/me call), but caching avoids a network round-trip
+    // before every navigation.
+    if (data.firstLogin != null) {
+      localStorage.setItem('bizlyFirstLogin', data.firstLogin ? '1' : '0');
+    }
+    if (data.businessId != null) {
+      localStorage.setItem('bizlyBusinessId', String(data.businessId));
+    } else if (data.businessId === null) {
+      localStorage.removeItem('bizlyBusinessId');
+    }
+    if (data.businessName != null) {
+      localStorage.setItem('bizlyBusinessName', data.businessName);
+    } else if (data.businessName === null) {
+      localStorage.removeItem('bizlyBusinessName');
+    }
+    if (data.roleLevel != null && data.roleLevel !== '') {
+      localStorage.setItem('bizlyRoleLevel', data.roleLevel);
+    }
+  }
+
+  /** Cached helpers backed by the values persistSession wrote. */
+  getCachedFirstLogin(): boolean | null {
+    const v = localStorage.getItem('bizlyFirstLogin');
+    if (v == null) return null;
+    return v === '1';
+  }
+  getCachedBusinessId(): number | null {
+    const v = localStorage.getItem('bizlyBusinessId');
+    if (!v) return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+  getCachedBusinessName(): string | null { return localStorage.getItem('bizlyBusinessName'); }
+  getCachedRoleLevel(): string | null { return localStorage.getItem('bizlyRoleLevel'); }
+
+  /** Fresh state from backend — call after login and after every register-business / welcome-complete. */
+  fetchMe() {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'X-DEVICE-ID': this.deviceIdService.getDeviceId(),
+    });
+    return this.http
+      .post<ApiResponse<MeResponse>>(GlobalConstants.API_ENDPOINTS.auth.me, {}, { headers })
+      .pipe(
+        tap((response) => {
+          const d = response?.data;
+          if (!d) return;
+          localStorage.setItem('bizlyFirstLogin', d.firstLogin ? '1' : '0');
+          if (d.businessId != null) {
+            localStorage.setItem('bizlyBusinessId', String(d.businessId));
+          } else {
+            localStorage.removeItem('bizlyBusinessId');
+          }
+          if (d.businessName) {
+            localStorage.setItem('bizlyBusinessName', d.businessName);
+          }
+          if (d.roleLevel) {
+            localStorage.setItem('bizlyRoleLevel', d.roleLevel);
+          }
+        })
+      );
+  }
+
+  listAssignableRoles() {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'X-DEVICE-ID': this.deviceIdService.getDeviceId(),
+    });
+    return this.http.post<ApiResponse<AssignableRole[]>>(
+      GlobalConstants.API_ENDPOINTS.auth.assignableRoles, {}, { headers }
+    );
+  }
+
+  registerBusiness(req: RegisterBusinessRequest) {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'X-DEVICE-ID': this.deviceIdService.getDeviceId(),
+    });
+    return this.http
+      .post<ApiResponse<RegisterBusinessResponse>>(
+        GlobalConstants.API_ENDPOINTS.auth.registerBusiness, req, { headers })
+      .pipe(tap((response) => this.persistSession(response?.data?.session)));
+  }
+
+  /**
+   * Public self-service sign-up — creates the user, business, role assignment, and an
+   * authenticated session in one atomic backend transaction. The wizard collects the
+   * fields across two steps but submits them together; the password is encrypted before
+   * leaving the browser, exactly the same way /auth/login does it.
+   *
+   * On success the SPA is already logged-in (the response includes a full LoginPayload),
+   * so the caller should navigate to the dashboard directly.
+   */
+  register(req: RegisterRequest, rememberDevice: boolean): Observable<ApiResponse<RegisterResponse>> {
+    return from(
+      Promise.all([
+        req.password ? this.encryptPassword(req.password) : Promise.resolve(''),
+        req.confirmPassword ? this.encryptPassword(req.confirmPassword) : Promise.resolve(''),
+        this.deviceIdService.getOrCreateDeviceId(rememberDevice),
+      ])
+    ).pipe(
+      switchMap(([encryptedPwd, encryptedConfirm, deviceId]) => {
+        const headers = new HttpHeaders({
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'X-DEVICE-ID': deviceId,
+        });
+        // We intentionally send the encrypted password (same envelope as /auth/login).
+        // Social sign-ups send an empty password; the backend generates a random one.
+        const body: RegisterRequest = {
+          ...req,
+          password: req.authProvider ? undefined : encryptedPwd,
+          confirmPassword: req.authProvider ? undefined : encryptedConfirm,
+        };
+        return this.http
+          .post<ApiResponse<RegisterResponse>>(
+            GlobalConstants.API_ENDPOINTS.auth.register, body, { headers })
+          .pipe(tap((response) => this.persistSession(response?.data?.session)));
+      })
+    );
+  }
+
+  /* ------- Admin context switcher (SUPER_ADMIN only). ------- */
+  adminSearchBusinesses(q: string, limit = 20): Observable<ApiResponse<AdminBusiness[]>> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json', Accept: 'application/json',
+      'X-DEVICE-ID': this.deviceIdService.getDeviceId(),
+    });
+    return this.http.post<ApiResponse<AdminBusiness[]>>(
+      GlobalConstants.API_ENDPOINTS.auth.adminSearchBusinesses, { q, limit }, { headers });
+  }
+
+  adminSearchUsers(q: string, limit = 20): Observable<ApiResponse<AdminUser[]>> {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json', Accept: 'application/json',
+      'X-DEVICE-ID': this.deviceIdService.getDeviceId(),
+    });
+    return this.http.post<ApiResponse<AdminUser[]>>(
+      GlobalConstants.API_ENDPOINTS.auth.adminSearchUsers, { q, limit }, { headers });
+  }
+
+  /**
+   * Selected "act-as" business id for admin power-users. Stored in localStorage so it
+   * survives a refresh, picked up by the CustomHTTPInterceptor and sent as
+   * {@code X-Business-Override} on every downstream API call. Cleared by
+   * {@link clearAdminContext} or {@link clearSession}.
+   *
+   * Server-side, the downstream {@code InternalAuthFilter} only honours this header when
+   * the caller's role level is ADMIN — a tampered SPA cannot bypass tenancy.
+   */
+  setAdminBusinessContext(businessId: number | null, businessName: string | null): void {
+    if (businessId == null) {
+      localStorage.removeItem('bizlyAdminBusinessOverride');
+      localStorage.removeItem('bizlyAdminBusinessOverrideName');
+      return;
+    }
+    localStorage.setItem('bizlyAdminBusinessOverride', String(businessId));
+    if (businessName) {
+      localStorage.setItem('bizlyAdminBusinessOverrideName', businessName);
+    }
+  }
+  getAdminBusinessContext(): number | null {
+    const v = localStorage.getItem('bizlyAdminBusinessOverride');
+    if (!v) return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+  getAdminBusinessContextName(): string | null {
+    return localStorage.getItem('bizlyAdminBusinessOverrideName');
+  }
+  clearAdminContext(): void {
+    localStorage.removeItem('bizlyAdminBusinessOverride');
+    localStorage.removeItem('bizlyAdminBusinessOverrideName');
+  }
+  /** True when the cached role level is ADMIN — used to show/hide admin-only UI. */
+  isSystemAdmin(): boolean {
+    const lvl = this.getCachedRoleLevel();
+    return !!lvl && lvl.toUpperCase() === 'ADMIN';
+  }
+
+  completeWelcome() {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'X-DEVICE-ID': this.deviceIdService.getDeviceId(),
+    });
+    return this.http
+      .post<ApiResponse<RegisterBusinessResponse>>(
+        GlobalConstants.API_ENDPOINTS.auth.welcomeComplete, {}, { headers })
+      .pipe(tap((response) => this.persistSession(response?.data?.session)));
+  }
+
+  /**
+   * Exchange a provider-issued token for a Bizly session. The backend verifies the token with
+   * the provider before issuing the JWT, so a forged client-side token cannot grant access.
+   */
+  socialLogin(
+    provider: 'google' | 'facebook' | 'apple',
+    idToken: string | null,
+    accessToken: string | null,
+    rememberDevice: boolean
+  ): Observable<ApiResponse<LoginPayload>> {
+    return from(this.deviceIdService.getOrCreateDeviceId(rememberDevice)).pipe(
+      switchMap((deviceId) => {
+        const headers = new HttpHeaders({
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          'X-DEVICE-ID': deviceId,
+        });
+        const body: Record<string, string | null> = {};
+        if (idToken) body['idToken'] = idToken;
+        if (accessToken) body['accessToken'] = accessToken;
+        return this.http
+          .post<ApiResponse<LoginPayload>>(
+            GlobalConstants.API_ENDPOINTS.auth.social(provider),
+            body,
+            { headers }
+          )
+          .pipe(tap((response) => this.persistSession(response?.data)));
+      })
+    );
   }
   
 

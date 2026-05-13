@@ -6,6 +6,7 @@ import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -50,8 +51,12 @@ import com.auth.api.model.permission.RoleMenuPermissionEntity;
 import com.auth.api.model.session.SessionEntity;
 import com.auth.api.model.user.RoleEntity;
 import com.auth.api.model.user.UserEntity;
+import com.auth.api.model.business.BusinessEntity;
+import com.auth.api.model.role.RoleLevelEntity;
+import com.auth.api.repository.business.BusinessRepository;
 import com.auth.api.repository.menu.UmMenuRouteRepository;
 import com.auth.api.repository.permission.RoleMenuPermissionRepository;
+import com.auth.api.repository.role.RoleLevelRepository;
 import com.auth.api.repository.session.SessionRepository;
 import com.auth.api.repository.user.RoleRepository;
 import com.auth.api.repository.user.UserRepository;
@@ -63,6 +68,16 @@ import com.auth.config.Exception.ServiceException;
 @Service
 public class LoginServiceImpl implements ILoginService {
 	private static final String RESET_PURPOSE = "PASSWORD_RESET";
+
+	/** Cap embedded avatar base64 so access tokens stay within practical header / cookie limits. */
+	/**
+	 * Upper bound for base64-encoded avatar bytes embedded in the JWT. Kept small on purpose: the
+	 * JWT travels in the {@code Authorization} header of every API call, and Spring Cloud Gateway's
+	 * Netty default header limit is ~8 KB. Anything bigger than this is dropped from the token (the
+	 * claim is cleared, {@code profileImageOversized = true}) and the SPA fetches the full image
+	 * once per session through {@code POST /auth/me/avatar}.
+	 */
+	private static final int MAX_JWT_PROFILE_IMAGE_BASE64_CHARS = 4096;
 
 	@Value("${keyStore.expiryTime}")
 	private long accessTokenMinutes;
@@ -102,6 +117,12 @@ public class LoginServiceImpl implements ILoginService {
 
 	@Autowired
 	private RoleRepository roleRepository;
+
+	@Autowired
+	private RoleLevelRepository roleLevelRepository;
+
+	@Autowired
+	private BusinessRepository businessRepository;
 
 	@Autowired
 	private RoleMenuPermissionRepository roleMenuPermissionRepository;
@@ -204,7 +225,7 @@ public class LoginServiceImpl implements ILoginService {
 				refreshedSession.getSessionId(), roles, refreshedSession);
 
 		return buildLoginResponse(accessToken, refreshToken, refreshedSession.getSessionId(), roles,
-				refreshedSession.getActiveRoleName());
+				refreshedSession.getActiveRoleName(), user, refreshedSession);
 	}
 
 	@Override
@@ -250,7 +271,7 @@ public class LoginServiceImpl implements ILoginService {
 		sessionRepository.save(session);
 
 		return buildLoginResponse(newAccessToken, newRefresh, session.getSessionId(), roles,
-				session.getActiveRoleName());
+				session.getActiveRoleName(), user, session);
 	}
 
 	@Override
@@ -301,7 +322,8 @@ public class LoginServiceImpl implements ILoginService {
 		String accessToken = generateAccessToken(user, auth, now, expiry, ip, deviceId, session.getSessionId(), roles,
 				session);
 
-		return buildLoginResponse(accessToken, null, session.getSessionId(), roles, session.getActiveRoleName());
+		return buildLoginResponse(accessToken, null, session.getSessionId(), roles, session.getActiveRoleName(), user,
+				session);
 	}
 
 	@Override
@@ -452,14 +474,57 @@ public class LoginServiceImpl implements ILoginService {
 	}
 
 	private LoginResponse buildLoginResponse(String accessToken, String refreshToken, String sessionId,
-			List<String> roles, String activeRole) {
+			List<String> roles, String activeRole, UserEntity user, SessionEntity session) {
 		LoginResponse response = new LoginResponse();
 		response.setToken(accessToken);
 		response.setRefreshToken(refreshToken);
 		response.setSessionId(sessionId);
 		response.setAvailableRoles(roles);
 		response.setActiveRole(activeRole);
+
+		if (user != null) {
+			response.setFirstLogin(user.isFirstLogin());
+			response.setBusinessId(user.getBusinessId());
+			if (user.getBusinessId() != null) {
+				businessRepository.findById(user.getBusinessId())
+						.map(BusinessEntity::getBusinessName)
+						.ifPresent(response::setBusinessName);
+			}
+		}
+		response.setRoleLevel(resolveRoleLevelCode(resolveEffectiveRoleIdForClaims(session, roles)));
 		return response;
+	}
+
+	@Override
+	public LoginResponse reissueAccessTokenForUser(Long userId, String deviceId, String ip) {
+		if (deviceId == null || deviceId.isBlank()) {
+			throw new ServiceException(ApiMessages.MISSING_DEVICE_ID, HttpStatus.BAD_REQUEST);
+		}
+		UserEntity user = userRepository.findById(userId)
+				.orElseThrow(() -> new ServiceException(ApiMessages.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
+		SessionEntity session = sessionRepository.findByUserIdAndDeviceId(userId, deviceId)
+				.orElseThrow(() -> new ServiceException(ApiMessages.INVALID_SESSION, HttpStatus.UNAUTHORIZED));
+		if (!"1".equals(session.isActive())) {
+			throw new ServiceException(ApiMessages.SESSION_INACTIVE, HttpStatus.UNAUTHORIZED);
+		}
+
+		List<String> roles = loadUserRoleNames(userId);
+		requireRoleProfile(roles);
+
+		Authentication auth = new UsernamePasswordAuthenticationToken(user.getUsername(), null);
+		Instant now = Instant.now();
+		Instant expiry = now.plus(accessTokenMinutes, ChronoUnit.MINUTES);
+
+		String accessToken = generateAccessToken(user, auth, now, expiry, ip, deviceId, session.getSessionId(),
+				roles, session);
+
+		// Rotate refresh token so the previously-issued one cannot be replayed.
+		String newRefresh = UUID.randomUUID().toString();
+		session.setRefreshTokenHash(BCrypt.hashpw(newRefresh, BCrypt.gensalt()));
+		sessionRepository.save(session);
+
+		return buildLoginResponse(accessToken, newRefresh, session.getSessionId(), roles,
+				session.getActiveRoleName(), user, session);
 	}
 
 	private void recordFailedLoginAttempt(Long userId) {
@@ -503,19 +568,69 @@ public class LoginServiceImpl implements ILoginService {
 
 		// JwtClaimsSet rejects null claim values ("value cannot be null").
 		JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.builder().issuer("Bizly").issuedAt(now).expiresAt(expiry)
-				.subject(authentication.getName()).claim("role", roles)
+				.subject(authentication.getName())
+				.claim("roles", new ArrayList<>(roles))
+				.claim("username", user.getUsername() != null ? user.getUsername() : "")
+				.claim("email", user.getEmail() != null ? user.getEmail() : "")
 				.claim("firstName", user.getFirstName() != null ? user.getFirstName() : "")
 				.claim("lastName", user.getLastName() != null ? user.getLastName() : "").claim("userId", user.getId())
+				.claim("user_id", user.getId())
 				.claim("deviceId", deviceId).claim("ip", ip).claim("sessionId", sessionId);
 		if (activeRoleName != null && !activeRoleName.isBlank()) {
 			claimsBuilder.claim("activeRole", activeRoleName);
 		}
-		appendPermissionClaims(claimsBuilder, resolveEffectiveRoleIdForClaims(session, roles));
+
+		/* Tenant scoping + onboarding state. business_id may be null for system-wide admins or for users
+		   who have not yet finished registration; in that case we deliberately omit the claim so the
+		   gateway can detect "no tenant" without parsing the JWT for a 0/empty placeholder. */
+		Optional<Long> effectiveRoleId = resolveEffectiveRoleIdForClaims(session, roles);
+		String roleLevel = resolveRoleLevelCode(effectiveRoleId);
+		if (user.getBusinessId() != null) {
+			claimsBuilder.claim("businessId", user.getBusinessId());
+		}
+		claimsBuilder.claim("firstLogin", user.isFirstLogin());
+		if (roleLevel != null && !roleLevel.isBlank()) {
+			claimsBuilder.claim("roleLevel", roleLevel);
+		}
+
+		appendProfileImageClaims(claimsBuilder, user);
+		appendPermissionClaims(claimsBuilder, effectiveRoleId);
 		JwtClaimsSet claims = claimsBuilder.build();
 
 		return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
 	}
 
+	/**
+	 * Resolves the {@code role_level.code} (ADMIN / BUSINESS) for the currently active role. Returns
+	 * {@code null} if the role row, the level row, or both are missing — the JWT then simply omits the
+	 * claim, which downstream services treat as "no level".
+	 */
+	private String resolveRoleLevelCode(Optional<Long> roleIdOpt) {
+		if (roleIdOpt.isEmpty()) {
+			return null;
+		}
+		return roleRepository.findById(roleIdOpt.get())
+				.map(com.auth.api.model.user.RoleEntity::getRoleLevelId)
+				.flatMap(levelId -> levelId == null ? Optional.<RoleLevelEntity>empty() : roleLevelRepository.findById(levelId))
+				.map(RoleLevelEntity::getCode)
+				.orElse(null);
+	}
+
+	/**
+	 * Resolves which of the caller's roles should drive the JWT's {@code roleLevel} claim.
+	 *
+	 * <p>Order of precedence:
+	 * <ol>
+	 *   <li>If the session pins an {@code activeRole}, that wins — the user explicitly picked
+	 *       which hat to wear.</li>
+	 *   <li>Otherwise, scan every assigned role and PREFER one that resolves to
+	 *       {@code role_level.code = 'ADMIN'}. Without this preference a SUPER_ADMIN who also
+	 *       holds (say) a {@code BUSINESS_ADMIN} role would get {@code roleLevel = BUSINESS}
+	 *       in their JWT — because the role list is sorted alphabetically — and downstream
+	 *       services would tenant-scope all their queries, defeating the global-view design.</li>
+	 *   <li>Fallback: the first role in the alphabetical list (legacy behaviour).</li>
+	 * </ol>
+	 */
 	private Optional<Long> resolveEffectiveRoleIdForClaims(SessionEntity session, List<String> roles) {
 		if (session != null && session.getActiveRoleName() != null && !session.getActiveRoleName().isBlank()) {
 			String name = stripRolePrefixForDb(session.getActiveRoleName());
@@ -524,8 +639,31 @@ public class LoginServiceImpl implements ILoginService {
 		if (roles == null || roles.isEmpty()) {
 			return Optional.empty();
 		}
-		String first = stripRolePrefixForDb(roles.get(0));
-		return roleRepository.findByNameIgnoreCase(first).map(RoleEntity::getId);
+		Optional<Long> adminRoleId = Optional.empty();
+		Optional<Long> firstRoleId = Optional.empty();
+		for (String raw : roles) {
+			String name = stripRolePrefixForDb(raw);
+			if (name == null || name.isEmpty()) {
+				continue;
+			}
+			Optional<RoleEntity> hit = roleRepository.findByNameIgnoreCase(name);
+			if (hit.isEmpty()) {
+				continue;
+			}
+			if (firstRoleId.isEmpty()) {
+				firstRoleId = hit.map(RoleEntity::getId);
+			}
+			Long levelId = hit.get().getRoleLevelId();
+			if (levelId == null) {
+				continue;
+			}
+			String code = roleLevelRepository.findById(levelId).map(RoleLevelEntity::getCode).orElse(null);
+			if (RoleLevelEntity.CODE_ADMIN.equalsIgnoreCase(code)) {
+				adminRoleId = hit.map(RoleEntity::getId);
+				break;
+			}
+		}
+		return adminRoleId.isPresent() ? adminRoleId : firstRoleId;
 	}
 
 	private static String stripRolePrefixForDb(String authority) {
@@ -537,6 +675,32 @@ public class LoginServiceImpl implements ILoginService {
 			return t.substring(5);
 		}
 		return t;
+	}
+
+	/**
+	 * Self-service profile image for the shell UI. Large blobs are omitted (JWT stays small); the client
+	 * can fall back to initials until the user opens UM or we add a dedicated avatar URL service.
+	 */
+	private void appendProfileImageClaims(JwtClaimsSet.Builder claimsBuilder, UserEntity user) {
+		byte[] data = user.getProfileImageData();
+		String mime = user.getProfileImageMime();
+		if (data == null || data.length == 0 || mime == null || mime.isBlank()) {
+			claimsBuilder.claim("profileImageMime", "");
+			claimsBuilder.claim("profileImageBase64", "");
+			claimsBuilder.claim("profileImageInJwt", false);
+			return;
+		}
+		String b64 = Base64.getEncoder().encodeToString(data);
+		if (b64.length() > MAX_JWT_PROFILE_IMAGE_BASE64_CHARS) {
+			claimsBuilder.claim("profileImageMime", "");
+			claimsBuilder.claim("profileImageBase64", "");
+			claimsBuilder.claim("profileImageInJwt", false);
+			claimsBuilder.claim("profileImageOversized", true);
+			return;
+		}
+		claimsBuilder.claim("profileImageMime", mime);
+		claimsBuilder.claim("profileImageBase64", b64);
+		claimsBuilder.claim("profileImageInJwt", true);
 	}
 
 	private void appendPermissionClaims(JwtClaimsSet.Builder claimsBuilder, Optional<Long> roleIdOpt) {

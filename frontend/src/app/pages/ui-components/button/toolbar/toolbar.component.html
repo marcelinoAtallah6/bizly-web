@@ -2,7 +2,7 @@
 <div class="email-toolbar" role="toolbar">
   <div class="button-group">
     <ng-container *ngFor="let button of toolbar; trackBy: trackToolbarBtn">
-      <ng-container *ngIf="!button.hasSubmenu">
+      <ng-container *ngIf="!button.hasSubmenu && !button.hidden">
         <button
           mat-icon-button
           type="button"
@@ -15,7 +15,7 @@
         </button>
       </ng-container>
 
-      <ng-container *ngIf="button.hasSubmenu">
+      <ng-container *ngIf="button.hasSubmenu && !button.hidden">
         <button
           mat-icon-button
           type="button"

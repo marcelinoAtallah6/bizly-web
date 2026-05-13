@@ -1,13 +1,12 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
-import { finalize, firstValueFrom } from 'rxjs';
+import { finalize } from 'rxjs';
 import { NavService } from '../../../services/nav.service';
-import { GlobalConstants } from 'src/app/common/GlobalConstants';
 import { NavGroupItem, NavItem } from './nav-item/nav-item';
 import { AuthService } from 'src/app/services/auth.service';
 import { NavbarProfileView, UserProfileService } from 'src/app/services/user-profile.service';
-import { BusinessApiService } from 'src/app/services/business-api.service';
+import { MenuCatalogService } from 'src/app/services/menu-catalog.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -27,37 +26,27 @@ export class SidebarComponent implements OnInit, OnDestroy {
     private readonly authService: AuthService,
     private readonly userProfile: UserProfileService,
     private readonly router: Router,
-    private readonly businessApiService: BusinessApiService
+    private readonly menuCatalog: MenuCatalogService
   ) {}
 
-  private roleRefreshSub?: Subscription;
+  private menuSub?: Subscription;
 
   async ngOnInit(): Promise<void> {
     this.userProfile.refresh();
     this.profileSub = this.userProfile.profile$.subscribe((p) => {
       this.sidebarProf = p;
     });
-    this.roleRefreshSub = this.authService.roleRefresh$.subscribe(() => {
-      void this.getNavItems();
+    // Subscribe to the shared catalog: the service handles role-refresh
+    // reloads internally, so we only own the binding to view state.
+    this.menuSub = this.menuCatalog.groups$.subscribe((groups) => {
+      this.navItems = groups;
     });
-    await this.getNavItems();
+    await this.menuCatalog.ensureLoaded();
   }
 
   ngOnDestroy(): void {
     this.profileSub?.unsubscribe();
-    this.roleRefreshSub?.unsubscribe();
-  }
-
-  private apiUrl = GlobalConstants.API_ENDPOINTS.application.getAll; 
-
-  async getNavItems(): Promise<void> {
-    try {
-      this.navItems = await firstValueFrom(
-        this.businessApiService.post<NavGroupItem[]>(this.apiUrl, {})
-      );
-    } catch (error) {
-      console.error('Error fetching nav items:', error);
-    }
+    this.menuSub?.unsubscribe();
   }
 
   onSignOut(): void {

@@ -1,0 +1,72 @@
+<h2 mat-dialog-title>{{ data.mode === 'create' ? 'New appointment' : 'Edit appointment' }}</h2>
+
+<mat-dialog-content class="appt-dialog">
+  <div *ngIf="loading" class="loading-wrap">
+    <mat-progress-spinner diameter="40" mode="indeterminate"></mat-progress-spinner>
+  </div>
+
+  <form *ngIf="!loading" [formGroup]="form" (ngSubmit)="submit()">
+    <mat-form-field *ngIf="data.mode === 'create'" appearance="outline" class="full">
+      <mat-label>Customer</mat-label>
+      <mat-select formControlName="customerId" [compareWith]="compareIds" panelClass="bm-dialog-select-panel">
+        <mat-option *ngFor="let c of customers" [value]="c.id">{{ customerLabel(c) }}</mat-option>
+      </mat-select>
+      <mat-hint *ngIf="customers.length === 0">No customers found — add customers in KYC first.</mat-hint>
+    </mat-form-field>
+
+    <div *ngIf="data.mode === 'edit'" class="readonly-customer">
+      <span class="readonly-customer__label">Customer</span>
+      <span class="readonly-customer__value">{{ editCustomerLabel || '—' }}</span>
+      <span class="readonly-customer__hint">Customer cannot be changed for an existing booking</span>
+    </div>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Service</mat-label>
+      <mat-select formControlName="serviceId" [compareWith]="compareIds" panelClass="bm-dialog-select-panel">
+        <mat-option *ngFor="let s of services" [value]="s.id">
+          {{ s.name }} · {{ s.durationMinutes }} min · {{ s.price | number : '1.2-2' }}
+        </mat-option>
+      </mat-select>
+      <mat-hint *ngIf="services.length === 0">No active services — create some under Services.</mat-hint>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Title</mat-label>
+      <input matInput formControlName="title" autocomplete="off" />
+    </mat-form-field>
+
+    <div class="row-datetime">
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Date</mat-label>
+        <input matInput [matDatepicker]="startPicker" formControlName="startDate" />
+        <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+        <mat-datepicker #startPicker></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Time</mat-label>
+        <input matInput type="time" formControlName="startTimeOnly" />
+        <mat-hint>End time follows from service duration</mat-hint>
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Status</mat-label>
+      <mat-select formControlName="status">
+        <mat-option *ngFor="let st of statuses" [value]="st">{{ st }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full">
+      <mat-label>Notes</mat-label>
+      <textarea matInput formControlName="notes" rows="3"></textarea>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()" [disabled]="saving">Cancel</button>
+  <button mat-flat-button color="primary" type="button" (click)="submit()" [disabled]="saving || loading">
+    {{ saving ? 'Saving…' : 'Save' }}
+  </button>
+</mat-dialog-actions>

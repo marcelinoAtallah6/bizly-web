@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 
 import { KycRoutingModule } from './kyc-routing.module';
 import { CommonMaterialModule } from 'src/app/common/MaterialModule';
+import { PermissionsModule } from 'src/app/shared/permissions/permissions.module';
 import { SaleDetailDialogModule } from 'src/app/shared/sale-detail-dialog/sale-detail-dialog.module';
 import { UicomponentsModule } from '../ui-components/ui-components.module';
 import { KycComponent } from './kyc.component';
@@ -24,6 +25,7 @@ import { CustomerDetailsComponent } from './details/customer-details/customer-de
     UicomponentsModule,
     SaleDetailDialogModule,
     CommonModule,
+    PermissionsModule,
   ],
 })
 export class KycModule {}

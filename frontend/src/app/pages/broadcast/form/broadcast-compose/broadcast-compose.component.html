@@ -1,0 +1,102 @@
+<div class="broadcast-page">
+  <app-page-action-bar title="New broadcast" [toolbar]="formToolbar"></app-page-action-bar>
+
+  <mat-card class="broadcast-card">
+    <mat-card-content class="broadcast-card__content">
+      <form [formGroup]="form" (ngSubmit)="submit()" class="broadcast-form">
+        <div class="broadcast-form__grid">
+          <div class="broadcast-form__full">
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Subject</mat-label>
+              <input matInput formControlName="subject" maxlength="512" />
+              <mat-hint align="end">{{ form.controls.subject.value.length }}/512</mat-hint>
+              <mat-error *ngIf="form.controls.subject.hasError('required')">Required</mat-error>
+              <mat-error *ngIf="form.controls.subject.hasError('maxlength')">Max 512 characters</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="broadcast-form__full">
+            <div class="broadcast-body">
+              <div class="broadcast-body__header">
+                <div class="broadcast-body__label">Body</div>
+                <div class="broadcast-body__hint f-s-12">
+                  Placeholders:
+                  <code>{{ '{' }}{{ '{' }}name{{ '}' }}{{ '}' }}</code>,
+                  <code>{{ '{' }}{{ '{' }}email{{ '}' }}{{ '}' }}</code>,
+                  <code>{{ '{' }}{{ '{' }}promotion{{ '}' }}{{ '}' }}</code>
+                </div>
+              </div>
+
+              <div class="broadcast-body__editor">
+                <ckeditor
+                  formControlName="body"
+                  [config]="editorConfig"
+                  class="broadcast-editor"
+                  (ready)="onBroadcastEditorReady($event)"
+                ></ckeditor>
+              </div>
+
+              <div class="broadcast-body__error" *ngIf="form.controls.body.touched && !form.controls.body.value">
+                Body is required
+              </div>
+            </div>
+          </div>
+
+          <div class="broadcast-form__full">
+            <mat-divider></mat-divider>
+          </div>
+
+          <div class="broadcast-form__col">
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Audience</mat-label>
+              <mat-select formControlName="targetType">
+                <mat-option *ngFor="let o of targetOptions" [value]="o.value">{{ o.label }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <div class="broadcast-form__col" *ngIf="form.controls.targetType.value === 'ROLE_BASED'">
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Role</mat-label>
+              <mat-select formControlName="targetRoleId">
+                <mat-option *ngFor="let r of roles" [value]="r.id">{{ r.name }}</mat-option>
+              </mat-select>
+              <mat-hint *ngIf="loadingRoles">Loading roles…</mat-hint>
+              <mat-error *ngIf="form.controls.targetRoleId.hasError('required')">Choose a role</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="broadcast-form__full" *ngIf="form.controls.targetType.value === 'CUSTOM_SEGMENT'">
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label>Custom segment JSON</mat-label>
+              <textarea
+                matInput
+                formControlName="customSegmentJson"
+                rows="6"
+                placeholder='{"emails":["a@b.com","c@d.com"]}'
+              ></textarea>
+              <mat-hint>Either a JSON array, or an object with an <code>emails</code> array.</mat-hint>
+              <mat-error *ngIf="form.controls.customSegmentJson.hasError('required')">Required for custom segment</mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="broadcast-form__full">
+            <mat-checkbox formControlName="queueForSend">
+              Queue for send immediately after save
+            </mat-checkbox>
+          </div>
+        </div>
+
+        <div class="broadcast-form__actions">
+          <button mat-flat-button color="primary" type="submit" [disabled]="submitting">
+            {{ submitting ? 'Saving…' : 'Save broadcast' }}
+          </button>
+          <button mat-stroked-button type="button" (click)="preview()" [disabled]="submitting">
+            Preview
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>
+

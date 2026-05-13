@@ -35,6 +35,7 @@ import com.um.common.PageResponse;
 import com.um.common.PasswordUtil;
 import com.um.common.ProfileImageUtil;
 import com.um.exception.ServiceException;
+import com.um.security.BusinessContextHolder;
 
 @Service
 public class UserServiceImpl implements IUserService {
@@ -68,6 +69,14 @@ public class UserServiceImpl implements IUserService {
 		user.setDateOfBirth(request.getDateOfBirth());
 		user.setNotifWelcomeFlag(0);
 		user.setNotifWelcomeStatus(0);
+		/*
+		 * Tenant scope: business admins can only create users inside their own tenant. SUPER_ADMIN
+		 * (role-level=ADMIN) provisions users across tenants — they may pre-bind a business id via
+		 * the X-Business-Override header (already substituted by BusinessContextHolder) OR leave it
+		 * NULL for a system-wide account. Defence-in-depth: we never trust a business id sent in
+		 * the request body.
+		 */
+		user.setBusinessId(BusinessContextHolder.currentBusinessId());
 
 		String decryptedPassword;
 		try {
@@ -84,10 +93,19 @@ public class UserServiceImpl implements IUserService {
 
 		repository.save(user);
 
-		// Save user roles
+		/*
+		 * Save user roles. Even though this endpoint is admin-gated (RequireMenuPermission on the
+		 * controller), we still refuse to grant {@code is_system_restricted = 1} roles from here as
+		 * a defence-in-depth measure. If a malicious or compromised admin client tries to seed a
+		 * SUPER_ADMIN role via /user/add, the assignment is rejected with 403 and logged.
+		 */
 		for (Long roleId : request.getRoleIds()) {
 			Role role = roleRepository.findById(roleId)
 					.orElseThrow(() -> new ServiceException(ApiMessages.ROLE_NOT_FOUND, HttpStatus.BAD_REQUEST));
+			if (role.isSystemRestricted()) {
+				throw new ServiceException("This role cannot be granted via the user admin screen.",
+						HttpStatus.FORBIDDEN);
+			}
 			UserRole userRole = new UserRole();
 			UserRoleId userRoleId = new UserRoleId();
 			userRoleId.setUserId(user.getId());
@@ -105,8 +123,7 @@ public class UserServiceImpl implements IUserService {
 	@Override
 	@Transactional
 	public UpdateUserResponse update(UpdateUserRequest request) {
-		User user = repository.findById(request.getId())
-				.orElseThrow(() -> new ServiceException(ApiMessages.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
+		User user = loadUserForCaller(request.getId());
 
 		user.setUsername(request.getUsername());
 		user.setFirstName(request.getFirstName());
@@ -139,11 +156,8 @@ public class UserServiceImpl implements IUserService {
 
 	@Override
 	public DeleteUserResponse delete(DeleteUserRequest request) {
-		if (!repository.existsById(request.getId())) {
-			throw new ServiceException(ApiMessages.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
-		}
-
-		repository.deleteById(request.getId());
+		User user = loadUserForCaller(request.getId());
+		repository.delete(user);
 
 		DeleteUserResponse response = new DeleteUserResponse();
 		response.setId(request.getId());
@@ -152,16 +166,39 @@ public class UserServiceImpl implements IUserService {
 
 	@Override
 	public GetUserResponse get(GetUserRequest request) {
-		User user = repository.findById(request.getId())
-				.orElseThrow(() -> new ServiceException(ApiMessages.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
-
+		User user = loadUserForCaller(request.getId());
 		return mapToResponse(user, true);
+	}
+
+	/**
+	 * Tenant-scoped lookup. Business admins can only see users in their own tenant; SUPER_ADMIN
+	 * (role-level=ADMIN) can address any user — including SUPER_ADMIN accounts that have a NULL
+	 * business id — across tenants.
+	 */
+	private User loadUserForCaller(Long id) {
+		if (BusinessContextHolder.canBypassTenant()) {
+			return repository.findById(id)
+					.orElseThrow(() -> new ServiceException(ApiMessages.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
+		}
+		Long businessId = BusinessContextHolder.currentBusinessId();
+		if (businessId == null) {
+			throw new ServiceException(ApiMessages.USER_NOT_FOUND, HttpStatus.NOT_FOUND);
+		}
+		return repository.findByIdAndBusinessId(id, businessId)
+				.orElseThrow(() -> new ServiceException(ApiMessages.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
 	}
 
 	@Override
 	public PageResponse<GetUserResponse> gets(GetsUsersRequest request) {
 		Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
-		Page<User> page = repository.findAll(pageable);
+		// Tenant scope: business admins only see their tenant's users; SUPER_ADMIN sees everyone.
+		Page<User> page;
+		if (BusinessContextHolder.canBypassTenant()) {
+			page = repository.findAll(pageable);
+		} else {
+			Long businessId = BusinessContextHolder.currentBusinessId();
+			page = businessId == null ? Page.empty(pageable) : repository.findAllByBusinessId(businessId, pageable);
+		}
 
 		List<GetUserResponse> items = page.getContent().stream().map(u -> mapToResponse(u, false))
 				.collect(Collectors.toList());

@@ -22,6 +22,10 @@ public class UmAuditLog {
 	@SequenceGenerator(name = "um_audit_log_seq", sequenceName = DatabaseConstants.AUDIT_LOG_SEQ, allocationSize = 1)
 	private Long id;
 
+	/** Tenant scope. NULL means a system-level event (e.g. SUPER_ADMIN action). */
+	@Column(name = "business_id")
+	private Long businessId;
+
 	@Column(name = "username", length = 128)
 	private String username;
 
@@ -64,6 +68,9 @@ public class UmAuditLog {
 	public void setId(Long id) {
 		this.id = id;
 	}
+
+	public Long getBusinessId() { return businessId; }
+	public void setBusinessId(Long businessId) { this.businessId = businessId; }
 
 	public String getUsername() {
 		return username;

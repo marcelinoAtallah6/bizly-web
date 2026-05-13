@@ -112,6 +112,14 @@ export class CustomHTTPInterceptor implements HttpInterceptor {
       headers['X-DEVICE-ID'] = deviceId;
     }
 
+    // SUPER_ADMIN "act-as" header — the downstream InternalAuthFilter only honours it
+    // when the caller's role-level (carried in the JWT) is ADMIN. A tampered SPA cannot
+    // bypass tenancy because the role-level claim is signed.
+    const adminCtx = this.authService.getAdminBusinessContext();
+    if (adminCtx != null) {
+      headers['X-Business-Override'] = String(adminCtx);
+    }
+
     if (Object.keys(headers).length === 0) {
       return req;
     }

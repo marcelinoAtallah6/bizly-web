@@ -1,0 +1,66 @@
+<div class="bm-appt p-24">
+  <app-page-action-bar title="Appointments" [toolbar]="listToolbar"></app-page-action-bar>
+
+  <div class="bm-appt__nav">
+    <button mat-stroked-button type="button" (click)="prevMonth()" [disabled]="loading">
+      <mat-icon>chevron_left</mat-icon>
+      Prev
+    </button>
+    <div class="bm-appt__month">
+      <span class="bm-appt__month-label">{{ viewMonth | date : 'MMMM yyyy' }}</span>
+      <button mat-button type="button" color="primary" (click)="goTodayMonth()" [disabled]="loading">
+        Today
+      </button>
+    </div>
+    <button mat-stroked-button type="button" (click)="nextMonth()" [disabled]="loading">
+      Next
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="bm-appt__loading">
+    <mat-progress-spinner diameter="44" mode="indeterminate"></mat-progress-spinner>
+  </div>
+
+  <div *ngIf="!loading && !dayGroups.length" class="bm-appt__empty">
+    <mat-icon class="bm-appt__empty-icon">event_note</mat-icon>
+    <p>No appointments this month.</p>
+    <button mat-flat-button color="primary" type="button" (click)="openCreate()" *hasPermission="routeAppts; action: 'add'">
+      Schedule one
+    </button>
+  </div>
+
+  <div class="bm-appt__days" *ngIf="!loading && dayGroups.length">
+    <section class="bm-day" *ngFor="let g of dayGroups">
+      <h2 class="bm-day__title">{{ g.label }}</h2>
+      <div class="bm-day__cards">
+        <button
+          type="button"
+          class="bm-card"
+          *ngFor="let a of g.items; trackBy: trackAppt"
+          [class.bm-card--selected]="selected?.id === a.id"
+          (click)="selectCard(a)"
+          (dblclick)="selectCard(a); onCardDoubleClick()"
+        >
+          <span class="bm-card__strip" [ngClass]="cardColorClass(a.color)"></span>
+          <div class="bm-card__body">
+            <div class="bm-card__time">
+              {{ a.startTime | date : 'shortTime' }} – {{ a.endTime | date : 'shortTime' }}
+            </div>
+            <div class="bm-card__title">{{ a.title }}</div>
+            <div class="bm-card__meta">
+              <span>{{ a.customerName || 'Customer' }}</span>
+              <span class="bm-card__dot">·</span>
+              <span>{{ a.serviceName || 'Service' }}</span>
+            </div>
+            <span class="bm-card__pill">{{ a.status }}</span>
+          </div>
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <p class="bm-appt__hint text-muted f-s-12 m-t-12 m-b-0">
+    Tap a card to select · Double-click selected card to edit · Colors match appointment status
+  </p>
+</div>

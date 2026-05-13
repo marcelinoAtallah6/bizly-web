@@ -4,6 +4,7 @@ import { ColDef, GridReadyEvent, RowDoubleClickedEvent } from 'ag-grid-community
 import { finalize } from 'rxjs';
 import { GetCustomerResponse } from 'src/app/core/models/kyc.models';
 import { ToolbarButton } from 'src/app/pages/ui-components/button/toolbar/toolbar.component';
+import { MenuPermissionService } from 'src/app/services/menu-permission.service';
 import { KycCustomerService } from '../../services/kyc-customer.service';
 
 @Component({
@@ -39,15 +40,25 @@ export class CustomerListComponent implements OnInit {
     floatingFilter: true,
   };
 
+  private readonly routeCustomers = '/kyc/customers';
+
   constructor(
     private readonly kycCustomerService: KycCustomerService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly menuPerm: MenuPermissionService
   ) {}
 
   get listToolbar(): ToolbarButton[] {
     return [
       { id: 'refresh', icon: 'refresh', tooltip: 'Refresh', action: () => this.load(), disabled: this.loading },
-      { id: 'add', icon: 'person_add', tooltip: 'New customer', action: () => this.goNew(), color: 'primary' },
+      {
+        id: 'add',
+        icon: 'person_add',
+        tooltip: 'New customer',
+        action: () => this.goNew(),
+        color: 'primary',
+        hidden: !this.menuPerm.can(this.routeCustomers, 'add'),
+      },
     ];
   }
 

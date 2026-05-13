@@ -1,0 +1,122 @@
+---
+description: Enforce business_id (tenant) scoping on every backend CRUD path in bizly-api/*
+globs: backend/bizly-api/**/*.java
+alwaysApply: false
+---
+
+# Multi-Tenant Business Scope — REQUIRED for every tenant CRUD
+
+Every Spring Boot service / repository / controller under `backend/bizly-api/*`
+that touches a **tenant-owned** table (one with a `business_id` column) MUST
+filter and stamp by tenant. The current tenant lives in
+`com.<module>.security.BusinessContextHolder`, populated by `InternalAuthFilter`
+from the `X-Business-Id` / `X-Role-Level` / `X-Business-Override` headers.
+
+## Tenant table cheat sheet
+
+`PM_PRODUCT`, `PM_PRODUCT_ITEMS`, `PM_CUSTOMER_SALE`, `PM_CUSTOMER_SALE_LINE`,
+`BM_SERVICE_ITEM`, `BM_APPOINTMENT`, `KYC_CUSTOMER`, `KYC_CUSTOMER_ORDER`,
+`SETTINGS_DASHBOARD`, `SETTINGS_WIDGET`, `SETTINGS_REPORT`, `SETTINGS_QUERY_DEF`,
+`SETTINGS_DASH_*_GRANT`, `SETTINGS_REPORT_*_GRANT`, `SETTINGS_QDEF_*_GRANT`,
+`NOTIF_INBOX`, `NOTIF_BROADCAST_MESSAGE`, `NOTIF_EMAIL_TEMPLATE`,
+`UM_USER`, `UM_AUDIT_LOG`.
+
+Catalogs that stay **global** (never scope, never stamp): `UM_ROLE`,
+`UM_ROLE_LEVEL`, `UM_USER_ROLE`, `UM_MENUS`, `UM_APPLICATIONS`, `UM_BUSINESS`.
+
+## Repository contract
+
+Expose tenant-scoped finders **before** anyone can write a service against the
+repository:
+
+```java
+// BAD — public JpaRepository surface lets callers read ANY tenant's data
+public interface ProductRepository extends JpaRepository<Product, Long> {}
+
+// GOOD — every business-aware finder takes a businessId param
+public interface ProductRepository extends JpaRepository<Product, Long> {
+  Optional<Product> findByIdAndBusinessId(Long id, Long businessId);
+  Page<Product> findAllByBusinessId(Long businessId, Pageable pageable);
+}
+```
+
+For Settings tables where built-in / admin templates live as
+`business_id IS NULL`, use the `*ForBusinessOrGlobal` pattern:
+
+```java
+@Query("SELECT r FROM SettingsReport r WHERE r.id = :id "
+     + "AND (r.businessId IS NULL OR r.businessId = :businessId)")
+Optional<SettingsReport> findByIdForBusinessOrGlobal(@Param("id") Long id,
+    @Param("businessId") Long businessId);
+```
+
+## Service contract
+
+```java
+@Override
+public AddXResponse add(AddXRequest req) {
+  Long businessId = BusinessContextHolder.requireBusinessId();
+  X x = new X();
+  x.setBusinessId(businessId);   // ← stamp on create
+  // …
+  repository.save(x);
+  return new AddXResponse(x.getId());
+}
+
+@Override
+public GetXResponse get(GetXRequest req) {
+  Long businessId = BusinessContextHolder.requireBusinessId();
+  X x = repository.findByIdAndBusinessId(req.getId(), businessId)   // ← scoped read
+    .orElseThrow(() -> new ServiceException(ApiMessages.X_NOT_FOUND, HttpStatus.NOT_FOUND));
+  return mapToResponse(x);
+}
+```
+
+**Update / delete** MUST load via `findByIdAndBusinessId` so a cross-tenant id
+is treated as 404 — never `repository.findById(id)` and then mutate.
+
+## SUPER_ADMIN bypass
+
+Admin screens that legitimately need to read across tenants check
+`BusinessContextHolder.canBypassTenant()` (true when role-level=ADMIN) and may
+fall back to un-scoped finders:
+
+```java
+if (BusinessContextHolder.canBypassTenant()) {
+  return repository.findAll(pageable);             // cross-tenant
+}
+Long businessId = BusinessContextHolder.requireBusinessId();
+return repository.findAllByBusinessId(businessId, pageable);   // tenant only
+```
+
+The `X-Business-Override` header is already substituted into
+`currentBusinessId()` automatically, so the same code transparently honours the
+SUPER_ADMIN global context switcher.
+
+## Audit + notifications
+
+`UM.AuditAspect` and `BM.NotifInboxServiceImpl#publish` stamp `business_id`
+from `BusinessContextHolder.currentBusinessId()` (which may be `NULL` for
+system-level events).
+
+## Definition of done — checklist
+
+- [ ] Entity has a `@Column(name = "business_id") private Long businessId` field
+      with getter/setter.
+- [ ] Repository exposes `findByIdAndBusinessId` and `findAllByBusinessId`
+      (or `*ForBusinessOrGlobal` for tables with global templates).
+- [ ] Service `add` calls `BusinessContextHolder.requireBusinessId()` and
+      stamps the new entity (or `currentBusinessId()` if global rows are valid).
+- [ ] Service `update` / `delete` load via the scoped finder, never raw
+      `findById` / `existsById` / `deleteById`.
+- [ ] Service `get` / `gets` use the scoped finder, with an admin-bypass
+      branch where appropriate.
+- [ ] DDL: the table has a `BUSINESS_ID NUMBER` column, an index on it, and an
+      FK to `UM.UM_BUSINESS(ID)`. The comprehensive patch
+      `um/src/main/resources/db/oracle/patch-business-scope-all-tenant-tables-oracle.sql`
+      already covers every table in the cheat sheet; **add a new table to
+      that script and re-run** rather than writing a new ad-hoc patch.
+- [ ] Frontend never sends `business_id` in request bodies — the value comes
+      from the JWT on the gateway. Reject it if the DTO accidentally exposes it.
+
+See `docs/BUSINESS_REGISTRATION_ROLLOUT.md` for the full rollout history.

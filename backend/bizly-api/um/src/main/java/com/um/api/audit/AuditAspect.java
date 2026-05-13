@@ -19,6 +19,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.um.api.model.audit.UmAuditLog;
 import com.um.api.repository.audit.UmAuditLogRepository;
+import com.um.security.BusinessContextHolder;
 
 @Aspect
 @Component
@@ -42,6 +43,12 @@ public class AuditAspect {
 
 			UmAuditLog row = new UmAuditLog();
 			row.setUsername(username);
+			/*
+			 * Tenant scope: every audit row is stamped with the caller's current business id so each
+			 * tenant can later query their own audit trail. SUPER_ADMIN actions outside any tenant
+			 * context leave business_id NULL (system-wide events).
+			 */
+			row.setBusinessId(BusinessContextHolder.currentBusinessId());
 			row.setActionCode(audited.action());
 			row.setResourceType(emptyToNull(audited.resourceType()));
 			row.setHttpMethod(req != null ? req.getMethod() : null);

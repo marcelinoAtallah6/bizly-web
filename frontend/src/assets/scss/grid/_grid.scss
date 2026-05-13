@@ -191,31 +191,7 @@ body {
   color: var(--textPrimary) !important;
 }
 
-/* Quartz — map AG theme variables to app tokens (any body theme: light, dark, dark-blue, …) */
-.ag-theme-quartz {
-  --ag-background-color: var(--background);
-  --ag-foreground-color: var(--textPrimary);
-  --ag-border-color: var(--borderColor);
-  --ag-header-background-color: var(--toolbar);
-  --ag-header-foreground-color: var(--textPrimary);
-  --ag-odd-row-background-color: var(--background);
-  --ag-row-hover-color: rgba(var(--primary-rgb), 0.08);
-  --ag-selected-row-background-color: rgba(var(--primary-rgb), 0.14);
-  --ag-menu-background-color: var(--cardbg);
-  --ag-menu-border-color: var(--borderColor);
-  --ag-panel-background-color: var(--cardbg);
-  --ag-subheader-background-color: var(--toolbar);
-  --ag-input-background-color: var(--background);
-  --ag-input-border-color: var(--borderformColor);
-  --ag-input-focus-border-color: var(--primary);
-  --ag-popup-shadow: var(--cardshadow);
-  --ag-modal-overlay-background-color: rgba(0, 0, 0, 0.45);
-  --ag-tooltip-background-color: var(--cardbg);
-  --ag-tooltip-foreground-color: var(--textPrimary);
-  --ag-secondary-foreground-color: var(--textPrimary);
-  --ag-disabled-foreground-color: var(--labelText);
-  --ag-chip-background-color: var(--toolbar);
-}
+/* Quartz token bridge lives in `_ag-grid-quartz-after-imports.scss` (loaded after ag-theme-quartz.css). */
 
 .ag-theme-quartz .ag-root-wrapper,
 .ag-theme-quartz .ag-body-viewport {
@@ -236,11 +212,6 @@ body {
 
 .ag-theme-quartz .ag-row-odd {
   background-color: rgba(var(--primary-rgb), 0.04) !important;
-}
-
-.ag-theme-quartz .ag-paging-panel {
-  background-color: var(--background) !important;
-  color: var(--textPrimary) !important;
 }
 
 /* Popups (column menu, filters, submenus) render under body — inherit same tokens */

@@ -27,6 +27,7 @@ import com.pm.common.ApiMessages;
 import com.pm.common.PageResponse;
 import com.pm.common.ProductImageUtil;
 import com.pm.exception.ServiceException;
+import com.pm.security.BusinessContextHolder;
 
 @Service
 public class ProductServiceImpl implements IProductService {
@@ -37,10 +38,13 @@ public class ProductServiceImpl implements IProductService {
 	@Override
 	public AddProductResponse add(AddProductRequest request) {
 
+		Long businessId = BusinessContextHolder.requireBusinessId();
+
 		Product p = new Product();
 		p.setName(request.getName());
 		p.setPrice(request.getPrice());
 		p.setCreatedAt(LocalDateTime.now());
+		p.setBusinessId(businessId);
 		if (request.getStockQuantity() != null) {
 			p.setStockQuantity(request.getStockQuantity());
 		}
@@ -56,7 +60,8 @@ public class ProductServiceImpl implements IProductService {
 	@Override
 	public UpdateProductResponse update(UpdateProductRequest request) {
 
-		Product p = repository.findById(request.getId())
+		Long businessId = BusinessContextHolder.requireBusinessId();
+		Product p = repository.findByIdAndBusinessId(request.getId(), businessId)
 				.orElseThrow(() -> new ServiceException(ApiMessages.PRODUCT_NOT_FOUND, HttpStatus.NOT_FOUND));
 
 		p.setName(request.getName());
@@ -74,7 +79,10 @@ public class ProductServiceImpl implements IProductService {
 	@Override
 	public DeleteProductResponse delete(DeleteProductRequest request) {
 
-		repository.deleteById(request.getId());
+		Long businessId = BusinessContextHolder.requireBusinessId();
+		Product p = repository.findByIdAndBusinessId(request.getId(), businessId)
+				.orElseThrow(() -> new ServiceException(ApiMessages.PRODUCT_NOT_FOUND, HttpStatus.NOT_FOUND));
+		repository.delete(p);
 
 		return new DeleteProductResponse();
 	}
@@ -82,7 +90,8 @@ public class ProductServiceImpl implements IProductService {
 	@Override
 	public GetProductResponse get(GetProductRequest request) {
 
-		Product p = repository.findById(request.getId())
+		Long businessId = BusinessContextHolder.requireBusinessId();
+		Product p = repository.findByIdAndBusinessId(request.getId(), businessId)
 				.orElseThrow(() -> new ServiceException(ApiMessages.PRODUCT_NOT_FOUND, HttpStatus.NOT_FOUND));
 
 		return mapToResponse(p, true);
@@ -91,9 +100,10 @@ public class ProductServiceImpl implements IProductService {
 	@Override
 	public PageResponse<GetProductResponse> gets(GetsProductsRequest request) {
 
+		Long businessId = BusinessContextHolder.requireBusinessId();
 		Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize());
 
-		Page<Product> page = repository.findAll(pageable);
+		Page<Product> page = repository.findAllByBusinessId(businessId, pageable);
 
 		boolean includeImages = Boolean.TRUE.equals(request.getIncludeImages());
 

@@ -22,6 +22,7 @@ import { BlankComponent } from './layouts/blank/blank.component';
 // Vertical Layout
 import { SidebarComponent } from './layouts/full/sidebar/sidebar.component';
 import { HeaderComponent } from './layouts/full/header/header.component';
+import { GlobalContextSwitcherComponent } from './layouts/full/header/global-context-switcher/global-context-switcher.component';
 import { CustomizerComponent } from './layouts/full/customizer/customizer.component';
 import { TopSideBarComponent } from './layouts/full/topSideBar/top-side-bar/top-side-bar.component';
 import { BrandingComponent } from './layouts/full/sidebar/branding.component';
@@ -29,6 +30,7 @@ import { AppNavItemComponent } from './layouts/full/sidebar/nav-item/nav-item.co
 import { BreadcrumbComponent } from './pages/ui-components/breadcrumb/breadcrumb.component';
 import { CustomHTTPInterceptor } from './common/CustomHTTPInterceptor';
 import { DeviceIdService } from './services/device-id.service';
+import { PermissionsModule } from './shared/permissions/permissions.module';
 
 @NgModule({
   declarations: [
@@ -37,6 +39,7 @@ import { DeviceIdService } from './services/device-id.service';
     BlankComponent,
     SidebarComponent,
     HeaderComponent,
+    GlobalContextSwitcherComponent,
     CustomizerComponent,
     BrandingComponent,
     AppNavItemComponent,
@@ -53,6 +56,7 @@ import { DeviceIdService } from './services/device-id.service';
     MaterialModule,
     TablerIconsModule.pick(TablerIcons),
     DragDropModule,
+    PermissionsModule,
   ],
   exports: [TablerIconsModule],
   providers: [

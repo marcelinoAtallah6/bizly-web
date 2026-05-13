@@ -4,6 +4,7 @@ import { ColDef, GridReadyEvent, RowDoubleClickedEvent } from 'ag-grid-community
 import { finalize } from 'rxjs';
 import { GetProductResponse } from 'src/app/core/models/pm.models';
 import { ToolbarButton } from 'src/app/pages/ui-components/button/toolbar/toolbar.component';
+import { MenuPermissionService } from 'src/app/services/menu-permission.service';
 import { PmProductService } from '../../services/pm-product.service';
 
 @Component({
@@ -41,15 +42,25 @@ export class ProductListComponent implements OnInit {
     floatingFilter: true,
   };
 
+  private readonly routeProducts = '/pm/products';
+
   constructor(
     private readonly pmProductService: PmProductService,
-    private readonly router: Router
+    private readonly router: Router,
+    private readonly menuPerm: MenuPermissionService
   ) {}
 
   get listToolbar(): ToolbarButton[] {
     return [
       { id: 'refresh', icon: 'refresh', tooltip: 'Refresh', action: () => this.load(), disabled: this.loading },
-      { id: 'add', icon: 'add_box', tooltip: 'New product', action: () => this.goNew(), color: 'primary' },
+      {
+        id: 'add',
+        icon: 'add_box',
+        tooltip: 'New product',
+        action: () => this.goNew(),
+        color: 'primary',
+        hidden: !this.menuPerm.can(this.routeProducts, 'add'),
+      },
     ];
   }
 

@@ -1,0 +1,71 @@
+/**
+ * Loaded after `node_modules/ag-grid-community/styles/ag-theme-quartz.css` (see angular.json).
+ * Quartz ships `.ag-theme-quartz { --ag-* }` defaults (#fff backgrounds, etc.) which override
+ * earlier app mappings from `style.scss`. Re-map tokens here so every quartz grid (Query Builder
+ * included) follows body themes without per-component fixes.
+ *
+ * AG Grid applies `background-color: var(--ag-background-color)` on `.ag-root-wrapper`,
+ * `.ag-sticky-bottom`, etc. (see ag-grid.css). Those variables must match the app on the host
+ * (`ag-grid-angular.ag-theme-quartz`) so pagination / sticky chrome updates on theme change.
+ */
+
+.ag-theme-quartz,
+ag-grid-angular.ag-theme-quartz {
+  --ag-background-color: var(--background);
+  --ag-foreground-color: var(--textPrimary);
+  --ag-border-color: var(--borderColor);
+  --ag-header-background-color: var(--toolbar);
+  --ag-header-foreground-color: var(--textPrimary);
+  --ag-odd-row-background-color: var(--background);
+  --ag-row-hover-color: rgba(var(--primary-rgb), 0.08);
+  --ag-selected-row-background-color: rgba(var(--primary-rgb), 0.14);
+  --ag-menu-background-color: var(--cardbg);
+  --ag-menu-border-color: var(--borderColor);
+  --ag-panel-background-color: var(--cardbg);
+  --ag-subheader-background-color: var(--toolbar);
+  --ag-input-background-color: var(--background);
+  --ag-input-border-color: var(--borderformColor);
+  --ag-input-focus-border-color: var(--primary);
+  --ag-popup-shadow: var(--cardshadow);
+  --ag-modal-overlay-background-color: rgba(0, 0, 0, 0.45);
+  --ag-tooltip-background-color: var(--cardbg);
+  --ag-tooltip-foreground-color: var(--textPrimary);
+  --ag-secondary-foreground-color: var(--textPrimary);
+  --ag-disabled-foreground-color: var(--labelText);
+  --ag-chip-background-color: var(--toolbar);
+  --ag-control-panel-background-color: var(--toolbar);
+  --ag-active-color: var(--primary);
+}
+
+/* Core layout chrome (ag-grid.css ties these to --ag-background-color) */
+.ag-theme-quartz .ag-root-wrapper,
+.ag-theme-quartz .ag-sticky-top,
+.ag-theme-quartz .ag-sticky-bottom,
+.ag-theme-quartz .ag-dnd-ghost {
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important;
+}
+
+.ag-theme-quartz .ag-body-horizontal-scroll,
+.ag-theme-quartz .ag-body-horizontal-scroll-viewport {
+  background-color: var(--background) !important;
+}
+
+.ag-theme-quartz .ag-paging-panel,
+.ag-theme-quartz .ag-status-bar {
+  background-color: var(--background) !important;
+  background: var(--background) !important;
+  color: var(--textPrimary) !important;
+}
+
+.ag-theme-quartz .ag-paging-panel .ag-picker-field-wrapper,
+.ag-theme-quartz .ag-paging-panel .ag-wrapper,
+.ag-theme-quartz .ag-paging-panel .ag-select,
+.ag-theme-quartz .ag-paging-panel .ag-picker-field-display {
+  background-color: var(--background) !important;
+  color: var(--textPrimary) !important;
+}
+
+.ag-theme-quartz .ag-floating-bottom {
+  background-color: var(--background) !important;
+}

@@ -24,6 +24,30 @@ public class RoleEntity {
 	@Column(name = "created_at")
 	private LocalDateTime createdAt;
 
+	/**
+	 * FK to {@code UM.UM_ROLE_LEVEL}. Identifies whether this role is an
+	 * ADMIN-level role (system-wide) or a BUSINESS-level role (tenant scoped).
+	 * Registration only accepts roles whose level is BUSINESS-assignable.
+	 */
+	@Column(name = "role_level_id")
+	private Long roleLevelId;
+
+	/**
+	 * 1 = this role is auto-assigned when a user finishes the
+	 * {@code /auth/register-business} flow. Exactly one BUSINESS-level row
+	 * should carry this flag.
+	 */
+	@Column(name = "is_default_for_registration", nullable = false)
+	private Integer isDefaultForRegistration;
+
+	/**
+	 * 1 = the registration flow must refuse this role even if the client tries
+	 * to send its id. Acts as a server-side blocklist on top of the level
+	 * check so SUPER_ADMIN-style rows can never be auto-granted.
+	 */
+	@Column(name = "is_system_restricted", nullable = false)
+	private Integer isSystemRestricted;
+
 	public Long getId() {
 		return id;
 	}
@@ -55,5 +79,16 @@ public class RoleEntity {
 	public void setCreatedAt(LocalDateTime createdAt) {
 		this.createdAt = createdAt;
 	}
+
+	public Long getRoleLevelId() { return roleLevelId; }
+	public void setRoleLevelId(Long roleLevelId) { this.roleLevelId = roleLevelId; }
+
+	public Integer getIsDefaultForRegistration() { return isDefaultForRegistration; }
+	public void setIsDefaultForRegistration(Integer v) { this.isDefaultForRegistration = v; }
+	public boolean isDefaultForRegistration() { return isDefaultForRegistration != null && isDefaultForRegistration == 1; }
+
+	public Integer getIsSystemRestricted() { return isSystemRestricted; }
+	public void setIsSystemRestricted(Integer v) { this.isSystemRestricted = v; }
+	public boolean isSystemRestricted() { return isSystemRestricted != null && isSystemRestricted == 1; }
 
 }

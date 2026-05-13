@@ -1,0 +1,58 @@
+package com.auth.api.model.business;
+
+import java.time.LocalDateTime;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+/**
+ * Auth-service projection of UM.UM_BUSINESS. The full canonical entity lives
+ * in the UM module; this class exists only so the auth service can create new
+ * businesses during the registration flow without taking a cross-module
+ * dependency on UM.
+ */
+@Entity
+@Table(name = "um_business", schema = "um")
+public class BusinessEntity {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+
+	@Column(name = "business_name", nullable = false, unique = true, length = 200)
+	private String businessName;
+
+	@Column(name = "business_type", length = 80)
+	private String businessType;
+
+	@Column(name = "status", nullable = false, length = 20)
+	private String status;
+
+	@Column(name = "created_by", nullable = false)
+	private Long createdBy;
+
+	@Column(name = "created_at", nullable = false)
+	private LocalDateTime createdAt;
+
+	@Column(name = "updated_at")
+	private LocalDateTime updatedAt;
+
+	public Long getId() { return id; }
+	public void setId(Long id) { this.id = id; }
+	public String getBusinessName() { return businessName; }
+	public void setBusinessName(String businessName) { this.businessName = businessName; }
+	public String getBusinessType() { return businessType; }
+	public void setBusinessType(String businessType) { this.businessType = businessType; }
+	public String getStatus() { return status; }
+	public void setStatus(String status) { this.status = status; }
+	public Long getCreatedBy() { return createdBy; }
+	public void setCreatedBy(Long createdBy) { this.createdBy = createdBy; }
+	public LocalDateTime getCreatedAt() { return createdAt; }
+	public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+	public LocalDateTime getUpdatedAt() { return updatedAt; }
+	public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+}

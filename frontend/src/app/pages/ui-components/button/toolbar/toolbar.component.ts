@@ -6,6 +6,11 @@ export interface ToolbarButton {
   submenuItems?: SubmenuItem[];
   action?: () => void;
   disabled?: boolean;
+  /**
+   * When true, the button is omitted from the DOM entirely. Use this for permission-driven hiding
+   * so the toolbar matches the "hide what the role can't access" contract from the JWT matrix.
+   */
+  hidden?: boolean;
   /** Material palette for icon buttons (e.g. primary add, warn delete). */
   color?: 'primary' | 'accent' | 'warn';
 }

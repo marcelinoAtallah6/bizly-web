@@ -19,13 +19,18 @@ import com.settings.api.model.SettingsDashboardRoleGrant;
 import com.settings.api.model.SettingsDashboardUserGrant;
 import com.settings.api.model.SettingsQueryDef;
 import com.settings.api.model.SettingsWidget;
+import com.settings.api.model.UmRoleRef;
 import com.settings.api.repository.SettingsDashboardRepository;
 import com.settings.api.repository.SettingsDashboardRoleGrantRepository;
 import com.settings.api.repository.SettingsDashboardUserGrantRepository;
 import com.settings.api.repository.SettingsQueryDefRepository;
 import com.settings.api.repository.SettingsWidgetRepository;
+import com.settings.api.repository.UmRoleRefRepository;
 import com.settings.common.ApiMessages;
 import com.settings.exception.ServiceException;
+import com.settings.security.BusinessContextHolder;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 public class SettingsDashboardManagementService {
@@ -51,11 +56,23 @@ public class SettingsDashboardManagementService {
 	@Autowired
 	private SettingsDashboardCatalogService catalogService;
 
+	@Autowired
+	private UmRoleRefRepository umRoleRefRepository;
+
 	@Transactional
 	public DashboardDetailResponse save(DashboardSaveRequest req) {
 		if (req.getWidgets() == null) {
 			req.setWidgets(Collections.emptyList());
 		}
+
+		/*
+		 * Tenant scope: an unprivileged caller's saves are always stamped with their business id
+		 * (and existing rows must already belong to the same tenant). SUPER_ADMIN (role-level=ADMIN)
+		 * can curate global dashboards (business_id = NULL) when no business override is in effect.
+		 */
+		Long businessId = BusinessContextHolder.currentBusinessId();
+		boolean canBypass = BusinessContextHolder.canBypassTenant();
+
 		Optional<SettingsDashboard> slugOwner = dashboardRepository.findBySlugIgnoreCase(req.getSlug().trim());
 		if (req.getId() == null) {
 			if (slugOwner.isPresent()) {
@@ -72,23 +89,25 @@ public class SettingsDashboardManagementService {
 						HttpStatus.BAD_REQUEST);
 			}
 			if (w.getQueryDefId() != null) {
-				SettingsQueryDef q = queryDefRepository.findById(w.getQueryDefId())
-						.orElseThrow(() -> new ServiceException(ApiMessages.SETTINGS_QUERY_NOT_FOUND,
-								HttpStatus.NOT_FOUND));
+				SettingsQueryDef q = loadQueryForCaller(w.getQueryDefId(), businessId, canBypass);
 				validationService.validateSelectOnly(q.getSqlText());
 			}
 		}
 
 		SettingsDashboard d;
 		if (req.getId() != null) {
-			d = dashboardRepository.findById(req.getId())
-					.orElseThrow(() -> new ServiceException(ApiMessages.SETTINGS_DASHBOARD_NOT_FOUND,
-							HttpStatus.NOT_FOUND));
+			d = loadDashboardForCaller(req.getId(), businessId, canBypass);
 			widgetRepository.deleteByDashboard_Id(d.getId());
 			roleGrantRepository.deleteByIdDashboardId(d.getId());
 			userGrantRepository.deleteByIdDashboardId(d.getId());
 		} else {
 			d = new SettingsDashboard();
+			if (!canBypass) {
+				if (businessId == null) {
+					throw new ServiceException(ApiMessages.SETTINGS_DASHBOARD_NOT_FOUND, HttpStatus.FORBIDDEN);
+				}
+				d.setBusinessId(businessId);
+			}
 		}
 
 		d.setName(req.getName().trim());
@@ -113,8 +132,7 @@ public class SettingsDashboardManagementService {
 			sw.setRefreshSec(wd.getRefreshSec());
 			sw.setSortOrder(wd.getSortOrder());
 			if (wd.getQueryDefId() != null) {
-				sw.setQueryDef(queryDefRepository.findById(wd.getQueryDefId()).orElseThrow(
-						() -> new ServiceException(ApiMessages.SETTINGS_QUERY_NOT_FOUND, HttpStatus.NOT_FOUND)));
+				sw.setQueryDef(loadQueryForCaller(wd.getQueryDefId(), businessId, canBypass));
 			}
 			rows.add(sw);
 		}
@@ -123,24 +141,67 @@ public class SettingsDashboardManagementService {
 		saveGrants(d.getId(), req.getGrantRoles(), req.getGrantUsernames());
 
 		List<SettingsWidget> loaded = widgetRepository.findForDashboardWithQuery(d.getId());
-		SettingsDashboard fresh = dashboardRepository.findById(d.getId())
-				.orElseThrow(() -> new ServiceException(ApiMessages.SETTINGS_DASHBOARD_NOT_FOUND, HttpStatus.NOT_FOUND));
+		SettingsDashboard fresh = loadDashboardForCaller(d.getId(), businessId, canBypass);
 		return catalogService.toDetail(fresh, loaded);
+	}
+
+	/** Loads a dashboard the current caller is allowed to see — tenant own + globals, or anything when admin-bypassed. */
+	private SettingsDashboard loadDashboardForCaller(Long id, Long businessId, boolean canBypass) {
+		if (canBypass) {
+			return dashboardRepository.findById(id)
+					.orElseThrow(() -> new ServiceException(ApiMessages.SETTINGS_DASHBOARD_NOT_FOUND, HttpStatus.NOT_FOUND));
+		}
+		if (businessId == null) {
+			throw new ServiceException(ApiMessages.SETTINGS_DASHBOARD_NOT_FOUND, HttpStatus.NOT_FOUND);
+		}
+		return dashboardRepository.findByIdForBusinessOrGlobal(id, businessId)
+				.orElseThrow(() -> new ServiceException(ApiMessages.SETTINGS_DASHBOARD_NOT_FOUND, HttpStatus.NOT_FOUND));
+	}
+
+	private SettingsQueryDef loadQueryForCaller(Long id, Long businessId, boolean canBypass) {
+		if (canBypass) {
+			return queryDefRepository.findById(id)
+					.orElseThrow(() -> new ServiceException(ApiMessages.SETTINGS_QUERY_NOT_FOUND, HttpStatus.NOT_FOUND));
+		}
+		if (businessId == null) {
+			throw new ServiceException(ApiMessages.SETTINGS_QUERY_NOT_FOUND, HttpStatus.NOT_FOUND);
+		}
+		return queryDefRepository.findByIdForBusinessOrGlobal(id, businessId)
+				.orElseThrow(() -> new ServiceException(ApiMessages.SETTINGS_QUERY_NOT_FOUND, HttpStatus.NOT_FOUND));
 	}
 
 	private void saveGrants(Long dashboardId, List<String> roles, List<String> users) {
 		if (roles != null) {
+			/*
+			 * Grants are persisted by role_type (numeric, stable) — not role name. Translate each
+			 * supplied name to its UM_ROLE.ROLE_TYPE; skip silently when the role is missing or has no
+			 * type configured. Deduplicate so the same type is never inserted twice.
+			 */
+			Set<Integer> persisted = new HashSet<>();
 			for (String r : roles) {
 				if (r == null || r.isBlank()) {
 					continue;
 				}
+				String stripped = DashboardAccessEvaluator.normalizeRole(r);
+				if (stripped.isEmpty()) {
+					continue;
+				}
+				Optional<UmRoleRef> refOpt = umRoleRefRepository.findFirstByNameIgnoreCaseWithType(stripped);
+				Integer type = refOpt.map(UmRoleRef::getRoleType).orElse(null);
+				if (type == null || !persisted.add(type)) {
+					continue;
+				}
+				String persistedName = refOpt.map(UmRoleRef::getName).orElse(stripped);
 				SettingsDashboardRoleGrant g = new SettingsDashboardRoleGrant();
 				SettingsDashboardRoleGrant.GrantId id = new SettingsDashboardRoleGrant.GrantId();
 				id.setDashboardId(dashboardId);
-				String rn = r.trim();
-				id.setRoleName(DashboardAccessEvaluator
-						.normalizeRole(rn.regionMatches(true, 0, "ROLE_", 0, 5) ? rn : "ROLE_" + rn));
+				id.setRoleType(type);
 				g.setId(id);
+				/*
+				 * Legacy Oracle installs keep a NOT NULL ROLE_NAME column alongside ROLE_TYPE.
+				 * Always stamp the canonical UM_ROLE.NAME so INSERT never violates ORA-01400.
+				 */
+				g.setRoleName(persistedName);
 				roleGrantRepository.save(g);
 			}
 		}
@@ -162,12 +223,11 @@ public class SettingsDashboardManagementService {
 	@Transactional
 	public void delete(DashboardIdRequest req) {
 		Long id = req.getId();
-		if (!dashboardRepository.existsById(id)) {
-			throw new ServiceException(ApiMessages.SETTINGS_DASHBOARD_NOT_FOUND, HttpStatus.NOT_FOUND);
-		}
-		widgetRepository.deleteByDashboard_Id(id);
-		roleGrantRepository.deleteByIdDashboardId(id);
-		userGrantRepository.deleteByIdDashboardId(id);
-		dashboardRepository.deleteById(id);
+		SettingsDashboard d = loadDashboardForCaller(id, BusinessContextHolder.currentBusinessId(),
+				BusinessContextHolder.canBypassTenant());
+		widgetRepository.deleteByDashboard_Id(d.getId());
+		roleGrantRepository.deleteByIdDashboardId(d.getId());
+		userGrantRepository.deleteByIdDashboardId(d.getId());
+		dashboardRepository.delete(d);
 	}
 }

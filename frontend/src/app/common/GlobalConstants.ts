@@ -28,7 +28,21 @@ export class GlobalConstants {
       sessionActiveRole: `${GlobalConstants.API_BASE_URL}/auth/session/active-role`,
       forgotPassword: `${GlobalConstants.API_BASE_URL}/auth/forgot-password`,
       verifyForgotPasswordToken: `${GlobalConstants.API_BASE_URL}/auth/forgot-password/verify`,
-      resetForgotPassword: `${GlobalConstants.API_BASE_URL}/auth/forgot-password/reset`
+      resetForgotPassword: `${GlobalConstants.API_BASE_URL}/auth/forgot-password/reset`,
+      me: `${GlobalConstants.API_BASE_URL}/auth/me`,
+      /** Lazy-fetched avatar bytes for the navbar when the JWT can't embed the image. */
+      meAvatar: `${GlobalConstants.API_BASE_URL}/auth/me/avatar`,
+      /** Public self-service sign-up: creates user + business + role + session in one shot. */
+      register: `${GlobalConstants.API_BASE_URL}/auth/register`,
+      /** Legacy: completes the business step for a user that already has an account. */
+      registerBusiness: `${GlobalConstants.API_BASE_URL}/auth/register-business`,
+      welcomeComplete: `${GlobalConstants.API_BASE_URL}/auth/welcome-complete`,
+      assignableRoles: `${GlobalConstants.API_BASE_URL}/auth/roles/assignable`,
+      social: (provider: 'google' | 'facebook' | 'apple') =>
+        `${GlobalConstants.API_BASE_URL}/auth/social/${provider}`,
+      /** SUPER_ADMIN context switcher — must run as role-level ADMIN. */
+      adminSearchBusinesses: `${GlobalConstants.API_BASE_URL}/auth/admin/businesses/search`,
+      adminSearchUsers: `${GlobalConstants.API_BASE_URL}/auth/admin/users/search`
     },
     // Add other endpoint categories as needed
     users: {
@@ -59,6 +73,40 @@ export class GlobalConstants {
         gets: `${GlobalConstants.API_BASE_URL}/pm/sale/gets`,
       },
     },
+    /** Gateway: Path=/bm/** StripPrefix=1 → BM controllers. Unified product + service checkout
+     *  has moved to {@code pm.sale.*} ({@code /pm/sale/*}); BM keeps service items, appointments,
+     *  notifications, and the header-pulse KPIs. */
+    bm: {
+      serviceItem: {
+        add: `${GlobalConstants.API_BASE_URL}/bm/service-item/add`,
+        update: `${GlobalConstants.API_BASE_URL}/bm/service-item/update`,
+        deactivate: `${GlobalConstants.API_BASE_URL}/bm/service-item/deactivate`,
+        get: `${GlobalConstants.API_BASE_URL}/bm/service-item/get`,
+        gets: `${GlobalConstants.API_BASE_URL}/bm/service-item/gets`,
+      },
+      appointment: {
+        add: `${GlobalConstants.API_BASE_URL}/bm/appointments/add`,
+        update: `${GlobalConstants.API_BASE_URL}/bm/appointments/update`,
+        cancel: `${GlobalConstants.API_BASE_URL}/bm/appointments/cancel`,
+        get: `${GlobalConstants.API_BASE_URL}/bm/appointments/get`,
+        gets: `${GlobalConstants.API_BASE_URL}/bm/appointments/gets`,
+        range: `${GlobalConstants.API_BASE_URL}/bm/appointments/range`,
+        calendar: `${GlobalConstants.API_BASE_URL}/bm/appointments/calendar`,
+      },
+      /** Per-user in-app notifications (recipient resolved from JWT/X-User). */
+      notifInbox: {
+        recent: `${GlobalConstants.API_BASE_URL}/bm/notif-inbox/recent`,
+        unreadCount: `${GlobalConstants.API_BASE_URL}/bm/notif-inbox/unread-count`,
+        markRead: `${GlobalConstants.API_BASE_URL}/bm/notif-inbox/mark-read`,
+        markAllRead: `${GlobalConstants.API_BASE_URL}/bm/notif-inbox/mark-all-read`,
+        /** Diagnostic-only: publishes one test row to the calling user. */
+        seedTest: `${GlobalConstants.API_BASE_URL}/bm/notif-inbox/seed-test`,
+      },
+      /** Small KPI tile data for the top bar ticker. */
+      headerPulse: {
+        get: `${GlobalConstants.API_BASE_URL}/bm/header-pulse/get`,
+      },
+    },
     um: {
       user: {
         add: `${GlobalConstants.API_BASE_URL}/um/user/add`,
@@ -78,6 +126,16 @@ export class GlobalConstants {
       },
       audit: {
         gets: `${GlobalConstants.API_BASE_URL}/um/audit/gets`,
+      },
+    },
+    /** Broadcast microservice (gateway path prefix `/broadcast`). */
+    broadcast: {
+      message: {
+        create: `${GlobalConstants.API_BASE_URL}/broadcast/message/create`,
+        preview: `${GlobalConstants.API_BASE_URL}/broadcast/message/preview`,
+        send: `${GlobalConstants.API_BASE_URL}/broadcast/message/send`,
+        get: `${GlobalConstants.API_BASE_URL}/broadcast/message/get`,
+        gets: `${GlobalConstants.API_BASE_URL}/broadcast/message/gets`,
       },
     },
     application: {
@@ -102,6 +160,31 @@ export class GlobalConstants {
         load: `${GlobalConstants.API_BASE_URL}/settings/dashboard-runtime/load`,
         widgetData: `${GlobalConstants.API_BASE_URL}/settings/dashboard-runtime/widget-data`,
         navPref: `${GlobalConstants.API_BASE_URL}/settings/dashboard-runtime/nav-pref`,
+        lastDashboardGet: `${GlobalConstants.API_BASE_URL}/settings/dashboard-runtime/last-dashboard/get`,
+        lastDashboardSet: `${GlobalConstants.API_BASE_URL}/settings/dashboard-runtime/last-dashboard/set`,
+      },
+      /** Reporting engine (runner) + Report Builder admin. */
+      reporting: {
+        getTypes: `${GlobalConstants.API_BASE_URL}/settings/reporting/getTypes`,
+        generate: `${GlobalConstants.API_BASE_URL}/settings/reporting/generate`,
+        export: `${GlobalConstants.API_BASE_URL}/settings/reporting/export`,
+        builder: {
+          list: `${GlobalConstants.API_BASE_URL}/settings/reporting/builder/list`,
+          get: `${GlobalConstants.API_BASE_URL}/settings/reporting/builder/get`,
+          save: `${GlobalConstants.API_BASE_URL}/settings/reporting/builder/save`,
+          delete: `${GlobalConstants.API_BASE_URL}/settings/reporting/builder/delete`,
+          listActive: `${GlobalConstants.API_BASE_URL}/settings/reporting/builder/listActive`,
+        },
+      },
+      /** Starred menus + the single one marked as the post-login default. */
+      userFavorites: {
+        list: `${GlobalConstants.API_BASE_URL}/settings/user-favorites/list`,
+        add: `${GlobalConstants.API_BASE_URL}/settings/user-favorites/add`,
+        remove: `${GlobalConstants.API_BASE_URL}/settings/user-favorites/remove`,
+        setDefault: `${GlobalConstants.API_BASE_URL}/settings/user-favorites/set-default`,
+        reorder: `${GlobalConstants.API_BASE_URL}/settings/user-favorites/reorder`,
+        /** Lightweight: just the default route or null, used by login redirect. */
+        defaultRoute: `${GlobalConstants.API_BASE_URL}/settings/user-favorites/default-route/get`,
       },
     },
   };
@@ -120,12 +203,3 @@ export class GlobalConstants {
     return httpHeaders;
   }
 }
-
-/** Angular routes aligned with UM_MENUS.route for JWT menu permission matrix. */
-export const UM_SCREEN_ROUTES = {
-  users: '/um/user',
-  roles: '/um/role',
-  audit: '/um/audit',
-  customers: '/kyc/customers',
-  products: '/pm/products',
-} as const;

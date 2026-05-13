@@ -1,0 +1,260 @@
+<section class="reporting-page">
+  <header class="reporting-page__head">
+    <div>
+      <button mat-button color="primary" type="button" class="reporting-back" (click)="goToBuilder()">
+        <i-tabler name="arrow-left" class="icon-18 mr-4"></i-tabler>
+        Back to Report Builder
+      </button>
+      <h2 class="reporting-page__title">{{ meta?.name || 'Report' }}</h2>
+      <p class="reporting-page__intro text-muted f-s-14" *ngIf="meta?.description">
+        {{ meta?.description }}
+      </p>
+    </div>
+    <div class="reporting-page__head-actions" *ngIf="meta">
+      <button mat-stroked-button type="button" [matMenuTriggerFor]="columnsMenu" [disabled]="!displayColumns || !displayColumns.length">
+        <i-tabler name="columns" class="icon-18 mr-4"></i-tabler>
+        Columns
+      </button>
+      <mat-menu #columnsMenu="matMenu" class="reporting-columns-menu" (closed)="$event">
+        <button mat-menu-item type="button" (click)="showAllColumns(); $event.stopPropagation()">
+          <i-tabler name="select-all" class="icon-18 mr-8"></i-tabler>
+          <span>Show all</span>
+        </button>
+        <ng-container *ngFor="let c of displayColumns; trackBy: trackByColKey">
+          <button
+            mat-menu-item
+            type="button"
+            (click)="toggleColumnVisibility(c.key); $event.stopPropagation()"
+          >
+            <i-tabler [name]="isColumnVisible(c.key) ? 'eye' : 'eye-off'" class="icon-18 mr-8"></i-tabler>
+            <span>{{ c.label }}</span>
+          </button>
+        </ng-container>
+      </mat-menu>
+
+      <button mat-stroked-button color="primary" type="button" (click)="runGenerate()" [disabled]="loading">
+        <i-tabler name="refresh" class="icon-18 mr-4"></i-tabler>
+        <span>Generate</span>
+      </button>
+      <button mat-stroked-button type="button" (click)="resetFilters()" [disabled]="loading">
+        <i-tabler name="filter-off" class="icon-18 mr-4"></i-tabler>
+        <span>Reset filters</span>
+      </button>
+      <button
+        mat-flat-button
+        color="accent"
+        type="button"
+        [matMenuTriggerFor]="exportMenu"
+        [disabled]="loadingExport || !(page && page.items && page.items.length)"
+      >
+        <i-tabler name="download" class="icon-18 mr-4"></i-tabler>
+        <span>Export</span>
+        <i-tabler name="chevron-down" class="icon-16 ml-4"></i-tabler>
+      </button>
+      <mat-menu #exportMenu="matMenu">
+        <button mat-menu-item type="button" (click)="exportTo('csv')">
+          <i-tabler name="file-type-csv" class="icon-18 mr-8"></i-tabler>
+          <span>CSV</span>
+        </button>
+        <button mat-menu-item type="button" (click)="exportTo('xlsx')">
+          <i-tabler name="file-spreadsheet" class="icon-18 mr-8"></i-tabler>
+          <span>Excel (.xlsx)</span>
+        </button>
+        <button mat-menu-item type="button" (click)="exportTo('pdf')">
+          <i-tabler name="file-type-pdf" class="icon-18 mr-8"></i-tabler>
+          <span>PDF</span>
+        </button>
+      </mat-menu>
+    </div>
+  </header>
+
+  <section class="reporting-card" *ngIf="meta?.filters && meta?.filters?.length">
+    <header class="reporting-card__head">
+      <h3 class="reporting-card__title">Filters</h3>
+    </header>
+    <div class="reporting-filters">
+      <ng-container *ngFor="let f of meta?.filters; trackBy: trackByFilterKey">
+        <!-- Date range with mat-datepicker -->
+        <div class="reporting-filter" *ngIf="f.type === 'DATE_RANGE'">
+          <label class="reporting-filter__label">{{ f.label }}</label>
+          <div class="reporting-filter__range">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>From</mat-label>
+              <input
+                matInput
+                [matDatepicker]="rangeFromPicker"
+                [value]="getDateRangeFrom(f.key)"
+                (dateChange)="setDateRangeFrom(f.key, $event.value)"
+              />
+              <mat-datepicker-toggle matSuffix [for]="rangeFromPicker"></mat-datepicker-toggle>
+              <mat-datepicker #rangeFromPicker></mat-datepicker>
+            </mat-form-field>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+              <mat-label>To</mat-label>
+              <input
+                matInput
+                [matDatepicker]="rangeToPicker"
+                [value]="getDateRangeTo(f.key)"
+                (dateChange)="setDateRangeTo(f.key, $event.value)"
+              />
+              <mat-datepicker-toggle matSuffix [for]="rangeToPicker"></mat-datepicker-toggle>
+              <mat-datepicker #rangeToPicker></mat-datepicker>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Single date -->
+        <mat-form-field
+          *ngIf="f.type === 'DATE'"
+          appearance="outline"
+          subscriptSizing="dynamic"
+          class="reporting-filter reporting-filter--single"
+        >
+          <mat-label>{{ f.label }}</mat-label>
+          <input
+            matInput
+            [matDatepicker]="singleDatePicker"
+            [value]="getDateValue(f.key)"
+            (dateChange)="setDateValue(f.key, $event.value)"
+          />
+          <mat-datepicker-toggle matSuffix [for]="singleDatePicker"></mat-datepicker-toggle>
+          <mat-datepicker #singleDatePicker></mat-datepicker>
+        </mat-form-field>
+
+        <!-- Text / user -->
+        <mat-form-field
+          *ngIf="f.type === 'TEXT' || f.type === 'USER'"
+          appearance="outline"
+          subscriptSizing="dynamic"
+          class="reporting-filter reporting-filter--single"
+        >
+          <mat-label>{{ f.label }}</mat-label>
+          <input
+            matInput
+            type="text"
+            [value]="getTextValue(f.key)"
+            (input)="setTextValue(f.key, $any($event.target).value)"
+            [placeholder]="f.placeholder || ''"
+          />
+          <i-tabler matSuffix name="search" class="icon-18 text-muted"></i-tabler>
+        </mat-form-field>
+
+        <!-- Number -->
+        <mat-form-field
+          *ngIf="f.type === 'NUMBER'"
+          appearance="outline"
+          subscriptSizing="dynamic"
+          class="reporting-filter reporting-filter--single"
+        >
+          <mat-label>{{ f.label }}</mat-label>
+          <input
+            matInput
+            type="number"
+            [value]="getNumberValue(f.key)"
+            (input)="setNumberValue(f.key, $any($event.target).valueAsNumber)"
+          />
+        </mat-form-field>
+
+        <!-- Select -->
+        <mat-form-field
+          *ngIf="f.type === 'SELECT'"
+          appearance="outline"
+          subscriptSizing="dynamic"
+          class="reporting-filter reporting-filter--single"
+        >
+          <mat-label>{{ f.label }}</mat-label>
+          <mat-select
+            [value]="getSelectValue(f.key)"
+            (selectionChange)="setSelectValue(f.key, $event.value)"
+          >
+            <mat-option [value]="''">Any</mat-option>
+            <mat-option *ngFor="let opt of f.options" [value]="opt.value">{{ opt.label }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </ng-container>
+    </div>
+  </section>
+
+  <section class="reporting-card reporting-card--results">
+    <header class="reporting-card__head reporting-card__head--results">
+      <div>
+        <h3 class="reporting-card__title">Results</h3>
+        <p class="reporting-card__sub text-muted f-s-13" *ngIf="page && page.totalCount > 0">
+          {{ page.totalCount | number }} rows · page {{ page.pageNumber + 1 }} of {{ page.totalPages || 1 }} · generated
+          {{ page.generatedAt | date: 'medium' }}
+        </p>
+        <p class="reporting-card__sub text-muted f-s-13" *ngIf="page && page.totalCount === 0 && !loading">
+          No data — adjust your filters and try again.
+        </p>
+      </div>
+      <div class="reporting-card__head-spinner" *ngIf="loading || loadingExport">
+        <mat-progress-spinner mode="indeterminate" diameter="22"></mat-progress-spinner>
+        <span class="text-muted f-s-12">
+          {{ loadingExport ? 'Preparing export…' : 'Loading…' }}
+        </span>
+      </div>
+    </header>
+
+    <div class="reporting-error" *ngIf="errorMessage">
+      <i-tabler name="alert-triangle" class="icon-18 mr-8"></i-tabler>
+      <span>{{ errorMessage }}</span>
+    </div>
+
+    <div class="reporting-table-wrap" *ngIf="!loading && !errorMessage">
+      <ng-container *ngIf="!page || !page.items || !page.items.length">
+        <div class="reporting-empty">
+          <i-tabler name="database-off" class="icon-48 text-muted"></i-tabler>
+          <h4>No results yet</h4>
+          <p class="text-muted f-s-13">
+            Adjust the filters above and click <strong>Generate</strong> to run the report.
+          </p>
+        </div>
+      </ng-container>
+
+      <table
+        mat-table
+        *ngIf="page && page.items && page.items.length"
+        [dataSource]="page.items"
+        class="reporting-table"
+        [trackBy]="trackByRowIndex"
+      >
+        <ng-container
+          *ngFor="let col of visibleColumns; trackBy: trackByColKey"
+          [matColumnDef]="col.key"
+        >
+          <th
+            mat-header-cell
+            *matHeaderCellDef
+            [class.is-sortable]="col.sortable"
+            (click)="toggleSort(col)"
+          >
+            <div class="reporting-th">
+              <span>{{ col.label }}</span>
+              <i-tabler *ngIf="col.sortable" [name]="sortIcon(col)" class="icon-16 ml-4"></i-tabler>
+            </div>
+          </th>
+          <td mat-cell *matCellDef="let row">{{ renderCell(row, col) }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="visibleColumnKeys; sticky: true"></tr>
+        <tr mat-row *matRowDef="let row; columns: visibleColumnKeys"></tr>
+      </table>
+    </div>
+
+    <div class="reporting-loading" *ngIf="loading">
+      <mat-progress-spinner mode="indeterminate" diameter="36"></mat-progress-spinner>
+      <span class="text-muted f-s-13">Generating report…</span>
+    </div>
+
+    <mat-paginator
+      *ngIf="page && page.totalCount > 0"
+      [length]="page.totalCount"
+      [pageIndex]="page.pageNumber"
+      [pageSize]="page.pageSize"
+      [pageSizeOptions]="pageSizeOptions"
+      (page)="onPageChange($event)"
+      showFirstLastButtons
+    >
+    </mat-paginator>
+  </section>
+</section>

@@ -1,266 +1,311 @@
-<mat-toolbar class="topbar">
-  <!-- Mobile Menu -->
-  <button mat-icon-button (click)="toggleMobileNav.emit()" *ngIf="!showToggle">
+<mat-toolbar class="topbar bizly-topbar">
+  <!-- Mobile hamburger ------------------------------------------------------ -->
+  <button mat-icon-button (click)="toggleMobileNav.emit()" *ngIf="!showToggle" aria-label="Open menu">
     <i-tabler name="menu-2" class="icon-20 d-flex"></i-tabler>
   </button>
 
-  <!-- Menus + Sub Menus -->
-
-  <div class="d-none d-lg-flex">
-    <ng-container *ngFor="let item of menuItems">
-      <ng-container *ngIf="!item.route && item.isActive">
-        <button
-          mat-button
-          [matMenuTriggerFor]="appsMenu"
-          [attr.aria-label]="item.name"
-          class="mat-mdc-menu-trigger mdc-button mat-mdc-button mat-unthemed mat-mdc-button-base"
-          mat-ripple-loader-class-name="mat-mdc-button-ripple"
-          aria-haspopup="true"
-          aria-expanded="false"
-        >
-          <span class="mdc-button__label">
-            <div class="d-flex align-items-center">
-              {{ item.name }}
-              <i-tabler
-                *ngIf="item.icon"
-                [name]="item.icon"
-                class="icon-16 m-l-4"
-              ></i-tabler>
-            </div>
-            <!-- chevron-down -->
-          </span>
-          <span class="mat-mdc-focus-indicator"></span>
-          <span class="mat-mdc-button-touch-target"></span>
-          <span class="mat-ripple mat-mdc-button-ripple"></span>
-        </button>
-      </ng-container>
-
-      <ng-container *ngIf="item.route && item.isActive">
-        <a
-          mat-button
-          mat-ripple-loader-class-name="mat-mdc-button-ripple"
-          class="mdc-button mat-mdc-button mat-unthemed mat-mdc-button-base"
-          (click)="onMenuClick(item.route)"
-        >
-          <span class="mdc-button__label">{{ item.name }}</span>
-          <span class="mat-mdc-focus-indicator"></span>
-          <span class="mat-mdc-button-touch-target"></span>
-          <span class="mat-ripple mat-mdc-button-ripple"></span>
-        </a>
-      </ng-container>
-
-      <!-- <mat-menu #appsMenu="matMenu" class="apps-dd cardWithShadow mat-elevation-z8 mat-menu-after mat-menu-below large-menu">
-    <div class="row">
-      <div class="col-sm-8 b-r-1 p-r-0">
-        <div class="p-32 p-b-0">
-          <div class="row">
-            <div class="col-sm-6 text-hover-primary" *ngFor="let app of item.menus">
-              <a class="d-flex align-items-center text-decoration-none m-b-24" (click)="onMenuClick(app.route)">
-                <span class="text-primary bg-light-primary rounded icon-40 d-flex align-items-center justify-content-center">
-                  <img width="20" [src]="app.icon" />
-                </span>
-                <div class="m-l-16">
-                  <h5 class="f-s-14 f-w-600 m-0 textprimary mat-subtitle-1 hover-text">
-                    {{ app.name }}
-                  </h5>
-                  <span class="mat-body-1 f-s-12">{{ app.description }}</span>
-                </div>
-              </a>
-            </div>
-          </div>
-        </div> -->
-      <!-- Quick Links Section -->
-      <!-- <div class="b-t-1 p-24 d-none d-lg-flex align-items-center justify-content-between">
-          <span class="d-flex align-items-center mat-subtitle-1 f-s-16 f-w-500">
-            <i-tabler name="help" class="icon-20 m-r-8"></i-tabler> Frequently Asked Questions
-          </span>
-          <a mat-flat-button color="primary" class="mdc-button mdc-button--unelevated mat-mdc-unelevated-button mat-primary mat-mdc-button-base" href="/theme-pages/faq">
-            <span class="mdc-button__label">Check</span>
-          </a>
-        </div> -->
-      <!-- </div> -->
-      <!-- Quick Links Column -->
-      <!-- <div class="col-sm-4">
-        <div class="p-x-16 p-y-32">
-          <h4 class="f-s-18 f-w-600 mat-subtitle-1 m-b-16">Quick Links</h4>
-          <div class="text-hover-primary" *ngFor="let link of quickLinks">
-            <a class="hover-text text-decoration-none mat-body-1 f-w-600 d-block p-y-8" [href]="link.url">{{ link.label }}</a>
-          </div>
-        </div>
-      </div> -->
-      <!-- </div>
-  </mat-menu> -->
-
-      <mat-menu #appsMenu="matMenu" class="simple-menu mat-elevation-z4">
-        <div class="menu-content">
-          <div *ngFor="let app of item.menus" class="menu-item">
-            <a (click)="onMenuClick(app.route)" class="menu-link">
-              <img [src]="app.icon" alt="{{ app.name }}" class="menu-icon" />
-              <span class="menu-name">{{ app.name }}</span>
-            </a>
-          </div>
-        </div>
-      </mat-menu>
-    </ng-container>
+  <!-- Quick menu search (autocomplete, permission-filtered) -----------------
+       Visibility is controlled by `.header-search` in SCSS using a media
+       query — the project's utility generator doesn't emit responsive
+       breakpoint classes like `d-md-flex`, so relying on Bootstrap-style
+       utilities here would silently hide the input. ----------------------- -->
+  <div class="header-search">
+    <i-tabler name="search" class="icon-16 header-search-icon"></i-tabler>
+    <input
+      type="text"
+      class="header-search-input"
+      placeholder="Jump to screen…"
+      [formControl]="searchControl"
+      [matAutocomplete]="menuSearchAuto"
+      aria-label="Search menus and screens"
+    />
+    <mat-autocomplete
+      #menuSearchAuto="matAutocomplete"
+      class="header-search-panel"
+      [displayWith]="displaySearchOption"
+      (optionSelected)="onSearchSelected($event)"
+    >
+      <mat-option
+        *ngFor="let m of filteredMenus$ | async; trackBy: trackMenuByRoute"
+        [value]="m"
+        class="header-search-option"
+      >
+        <i-tabler [name]="searchOptionIcon(m)" class="icon-16 header-search-option-icon"></i-tabler>
+        <span class="header-search-option-text">
+          <span class="header-search-option-name">{{ m.name }}</span>
+          <span class="header-search-option-meta" *ngIf="m.groupName">{{ m.groupName }}</span>
+        </span>
+        <i-tabler name="arrow-narrow-right" class="icon-14 header-search-option-go"></i-tabler>
+      </mat-option>
+      <mat-option *ngIf="(filteredMenus$ | async)?.length === 0" disabled class="header-search-empty">
+        <span>No matching screens</span>
+      </mat-option>
+    </mat-autocomplete>
   </div>
-  <!-- --------------------------------------------------------------- -->
 
-  <!-- --------------------------------------------------------------- -->
-  <!-- Notification Dropdown -->
-  <!-- --------------------------------------------------------------- -->
+  <!-- KPI ticker (responsive: collapses below 768px via SCSS media query).
+       Each tile is permission-gated so removing a role's access also removes its KPI from the bar. -->
+  <div class="pulse-ticker" *ngIf="pulse && showPulseTicker()">
+    <div
+      class="pulse-tile"
+      matTooltip="Appointments scheduled today"
+      *hasPermission="routeAppointments; action: 'view'"
+    >
+      <i-tabler name="calendar-event" class="icon-16 pulse-icon"></i-tabler>
+      <span class="pulse-value">{{ pulse.appointmentsToday ?? 0 }}</span>
+      <span class="pulse-label">today</span>
+    </div>
+    <div
+      class="pulse-tile"
+      matTooltip="Pending / confirmed in the next 24h"
+      *hasPermission="routeAppointments; action: 'view'"
+    >
+      <i-tabler name="clock-hour-4" class="icon-16 pulse-icon"></i-tabler>
+      <span class="pulse-value">{{ pulse.appointmentsUpcoming24h ?? 0 }}</span>
+      <span class="pulse-label">next 24h</span>
+    </div>
+    <div
+      class="pulse-tile"
+      matTooltip="Sales total today"
+      *hasPermission="routesSalesAny; action: 'view'; mode: 'any'"
+    >
+      <i-tabler name="cash" class="icon-16 pulse-icon"></i-tabler>
+      <span class="pulse-value">{{ formatMoney(pulse.salesAmountToday) }}</span>
+      <span class="pulse-label">sales today</span>
+    </div>
+  </div>
 
   <span class="flex-1-auto"></span>
 
-  <!-- --------------------------------------------------------------- -->
-  <!-- profile Dropdown -->
-  <!-- --------------------------------------------------------------- -->
+  <!-- 0. Global business context switcher (SUPER_ADMIN only). --------------- -->
+  <app-global-context-switcher></app-global-context-switcher>
 
-  <!-- <a
-    mat-flat-button
-    color="primary"
-    href=""
-    target="_blank"
-    class="d-flex justify-content-center"
+  <!-- 1. Active-role chip --------------------------------------------------- -->
+  <button
+    type="button"
+    class="header-pill role-chip"
+    [class.role-chip-multi]="hasMultipleRoles()"
+    [matMenuTriggerFor]="hasMultipleRoles() ? roleMenu : null"
+    [disabled]="!hasMultipleRoles()"
+    [attr.aria-haspopup]="hasMultipleRoles() ? 'true' : null"
+    [attr.title]="hasMultipleRoles() ? 'Switch active role' : 'Active role'"
   >
-    Marcelino
-  </a> -->
+    <i-tabler name="shield-check" class="icon-14 role-chip-icon"></i-tabler>
+    <span class="role-chip-label">{{ activeRoleSummary() }}</span>
+    <i-tabler *ngIf="hasMultipleRoles()" name="chevron-down" class="icon-14 role-chip-caret"></i-tabler>
+  </button>
+
+  <mat-menu #roleMenu="matMenu" class="role-menu mat-elevation-z4">
+    <div class="role-menu-header">Switch active role</div>
+    <button mat-menu-item (click)="switchRole(null)">
+      <i-tabler name="users" class="icon-16 m-r-8"></i-tabler>
+      <span>All roles (union)</span>
+    </button>
+    <mat-divider></mat-divider>
+    <button mat-menu-item *ngFor="let r of roleChoices()" (click)="switchRole(r)">
+      <i-tabler name="user-shield" class="icon-16 m-r-8"></i-tabler>
+      <span>{{ displayRoleLabel(r) }}</span>
+    </button>
+  </mat-menu>
+
+  <!-- 2. Notifications bell (deliberately AFTER the role chip) ------------- -->
+  <button
+    type="button"
+    class="header-pill notif-bell"
+    [class.notif-bell-active]="notifUnread > 0"
+    aria-label="Notifications"
+    [matMenuTriggerFor]="notificationMenu"
+    (menuOpened)="onBellOpened()"
+    [attr.title]="notifUnread > 0 ? (notifUnread + ' new notification' + (notifUnread === 1 ? '' : 's')) : 'Notifications'"
+  >
+    <span class="notif-bell-icon-wrap">
+      <i-tabler class="d-flex icon-18" name="bell"></i-tabler>
+      <span class="notif-bell-badge" *ngIf="notifUnread > 0">{{ notifBadgeText() }}</span>
+      <span class="notif-bell-pulse" *ngIf="notifUnread > 0" aria-hidden="true"></span>
+    </span>
+  </button>
+
+  <mat-menu #notificationMenu="matMenu" class="notif-menu mat-elevation-z4">
+    <div class="notif-menu-header" (click)="$event.stopPropagation()">
+      <div class="notif-menu-title">
+        Notifications
+        <span class="notif-menu-count" *ngIf="notifUnread > 0">{{ notifUnread }} new</span>
+      </div>
+      <button
+        type="button"
+        class="notif-menu-clear"
+        *ngIf="notifUnread > 0"
+        (click)="onMarkAllRead($event)"
+      >
+        Mark all read
+      </button>
+    </div>
+    <mat-divider></mat-divider>
+
+    <div
+      class="notif-list"
+      (click)="$event.stopPropagation()"
+      (scroll)="onNotifListScroll($event)"
+    >
+      <ng-container *ngIf="notifications.length; else emptyState">
+        <button
+          mat-menu-item
+          *ngFor="let n of notifications; trackBy: trackNotifById"
+          class="notif-item"
+          [class.notif-unread]="n.unread"
+          [ngClass]="severityClass(n.severity)"
+          (click)="onNotificationClick(n)"
+        >
+          <span class="notif-stripe"></span>
+          <div class="notif-icon-wrap">
+            <i-tabler [name]="notifIcon(n.severity)" class="icon-18"></i-tabler>
+          </div>
+          <div class="notif-body">
+            <div class="notif-title">{{ n.title }}</div>
+            <div class="notif-text" *ngIf="n.body">{{ n.body }}</div>
+            <div class="notif-meta">{{ formatRelative(n.createdAt) }}</div>
+          </div>
+          <span class="notif-dot" *ngIf="n.unread" aria-hidden="true"></span>
+        </button>
+
+        <!-- Footer: loading spinner, manual fallback, or "you've reached the end" -->
+        <div class="notif-list-footer" (click)="$event.stopPropagation()">
+          <div class="notif-loading" *ngIf="notifLoadingMore">
+            <mat-progress-spinner mode="indeterminate" diameter="18"></mat-progress-spinner>
+            <span class="notif-loading-text">Loading more…</span>
+          </div>
+          <button
+            type="button"
+            class="notif-loadmore"
+            *ngIf="!notifLoadingMore && notifHasMore"
+            (click)="onLoadMoreClick($event)"
+          >
+            Load more
+          </button>
+          <div class="notif-end" *ngIf="!notifLoadingMore && !notifHasMore">
+            <i-tabler name="check" class="icon-14 m-r-4"></i-tabler>
+            <span>You've reached the end</span>
+          </div>
+        </div>
+      </ng-container>
+
+      <ng-template #emptyState>
+        <div class="notif-empty">
+          <i-tabler name="inbox" class="icon-32 notif-empty-icon"></i-tabler>
+          <div class="notif-empty-title">You're all caught up</div>
+          <div class="notif-empty-sub">New activity will land here.</div>
+          <button type="button" class="notif-empty-test" (click)="onSendTestNotification($event)">
+            <i-tabler name="zap" class="icon-14 m-r-4"></i-tabler>
+            Send test notification
+          </button>
+        </div>
+      </ng-template>
+    </div>
+  </mat-menu>
+
+  <!-- Profile -------------------------------------------------------------- -->
   <button
     mat-icon-button
-    aria-label="Notifications"
-    class="d-flex justify-content-center" [matMenuTriggerFor]="notificationMenu" 
+    type="button"
+    [matMenuTriggerFor]="profileMenu"
+    aria-label="Profile"
+    class="header-profile-trigger"
   >
-    <i-tabler
-      class="d-flex"
-      name="bell"
-      matBadge="1"
-      matBadgeColor="primary"
-    ></i-tabler>
-  </button>
-
-
-<!-- Profile Button (Triggers the Menu) -->
-<button mat-icon-button [matMenuTriggerFor]="profileMenu" aria-label="Profile">
-  <img
-    [src]="headerProf?.avatarUrl || '/assets/images/profile/user-1.jpg'"
-    class="rounded-circle object-cover profile-img"
-    width="40"
-    alt=""
-  />
-</button>
-
-<!-- Profile Dropdown Menu -->
-<mat-menu #profileMenu="matMenu" class="profile-menu mat-elevation-z4">
-  <!-- User Info -->
-  <div class="profile-header">
     <img
       [src]="headerProf?.avatarUrl || '/assets/images/profile/user-1.jpg'"
-      class="profile-avatar"
+      class="rounded-circle object-cover profile-img header-profile-thumb"
       alt=""
     />
-    <div class="profile-info">
-      <div class="profile-name">{{ headerProf?.displayName || 'User' }}</div>
-      <div class="profile-email">{{ headerProf?.subtitle || '' }}</div>
+  </button>
+
+  <mat-menu #profileMenu="matMenu" class="profile-menu mat-elevation-z4">
+    <div class="profile-header">
+      <img
+        [src]="headerProf?.avatarUrl || '/assets/images/profile/user-1.jpg'"
+        class="profile-avatar"
+        alt=""
+      />
+      <div class="profile-info">
+        <div class="profile-name">{{ headerProf?.displayName || 'User' }}</div>
+        <div class="profile-email">{{ headerProf?.subtitle || '' }}</div>
+      </div>
     </div>
-  </div>
-  <mat-divider></mat-divider>
+    <mat-divider></mat-divider>
 
-  <div class="p-x-16 p-y-8">
-    <div class="mat-caption text-muted m-b-8">Active role ({{ activeRoleSummary() }})</div>
-    <div class="mat-body-2 text-muted m-b-8" *ngIf="roleChoices().length <= 1">
-      {{ roleChoices().length === 1 ? 'One role assigned' : 'No role profile' }}
-    </div>
-    <ng-container *ngIf="roleChoices().length > 1">
-      <button mat-menu-item (click)="switchRole(null)">
-        <span>All roles (union)</span>
-      </button>
-      <button mat-menu-item *ngFor="let r of roleChoices()" (click)="switchRole(r)">
-        <span>{{ displayRoleLabel(r) }}</span>
-      </button>
-    </ng-container>
-  </div>
+    <!-- Favorites section -------------------------------------------------- -->
+    <div class="profile-section profile-favorites" (click)="$event.stopPropagation()">
+      <div class="profile-section-header">
+        <i-tabler name="star" class="icon-14"></i-tabler>
+        <span>Favorites</span>
+        <span class="profile-section-spacer"></span>
+        <span class="profile-section-hint" *ngIf="defaultFavRoute">
+          <i-tabler name="home" class="icon-12"></i-tabler>
+          default set
+        </span>
+      </div>
 
-  <mat-divider></mat-divider>
+      <div class="favorites-empty" *ngIf="favorites.length === 0">
+        <span class="favorites-empty-text">No starred screens yet.</span>
+      </div>
 
-  <!-- Sign Out Button -->
-  <button mat-menu-item (click)="onSignOut()">
-    <mat-icon class="d-flex align-items-center">
-      <i-tabler name="logout" class="icon-18 d-flex"></i-tabler>
-    </mat-icon>
-    Sign Out
-  </button>
-</mat-menu>
+      <div class="favorites-list" *ngIf="favorites.length > 0">
+        <div
+          class="favorite-row"
+          *ngFor="let f of favorites; trackBy: trackFavByRoute"
+          [class.favorite-default]="f.isDefault"
+          [class.favorite-disabled]="!f.accessible"
+        >
+          <button
+            type="button"
+            class="favorite-go"
+            (click)="goFavorite(f, $event)"
+            [disabled]="!f.accessible"
+            [matTooltip]="f.accessible ? f.route : 'No longer accessible with current role'"
+          >
+            <i-tabler [name]="f.icon || 'star'" class="icon-16 favorite-icon"></i-tabler>
+            <span class="favorite-name">{{ f.name }}</span>
+            <span class="favorite-default-mark" *ngIf="f.isDefault" matTooltip="Default landing screen on login">
+              <i-tabler name="home" class="icon-12"></i-tabler>
+            </span>
+          </button>
+          <button
+            type="button"
+            class="favorite-action favorite-action-default"
+            (click)="toggleDefaultFavorite(f, $event)"
+            [disabled]="!f.accessible"
+            [matTooltip]="f.isDefault ? 'Unset default' : 'Set as default on login'"
+          >
+            <i-tabler [name]="f.isDefault ? 'pinned-off' : 'pin'" class="icon-14"></i-tabler>
+          </button>
+          <button
+            type="button"
+            class="favorite-action favorite-action-remove"
+            (click)="removeFavorite(f, $event)"
+            matTooltip="Remove from favorites"
+          >
+            <i-tabler name="x" class="icon-14"></i-tabler>
+          </button>
+        </div>
+      </div>
 
-<!-- notification menu -->
-<!-- Profile Dropdown Menu -->
-<mat-menu #notificationMenu="matMenu" class="profile-menu mat-elevation-z4">
-  <!-- Sign Out Button -->
-  <button mat-menu-item (click)="onSignOut()">
-    <mat-icon class="d-flex align-items-center">
-      <i-tabler name="logout" class="icon-18 d-flex"></i-tabler>
-    </mat-icon>
-   notification one 
-  </button>
-  <button mat-menu-item (click)="onSignOut()">
-    <mat-icon class="d-flex align-items-center">
-      <i-tabler name="logout" class="icon-18 d-flex"></i-tabler>
-    </mat-icon>
-   notification one 
-  </button>
-  <button mat-menu-item (click)="onSignOut()">
-    <mat-icon class="d-flex align-items-center">
-      <i-tabler name="logout" class="icon-18 d-flex"></i-tabler>
-    </mat-icon>
-   notification one 
-  </button>
-  <button mat-menu-item (click)="onSignOut()">
-    <mat-icon class="d-flex align-items-center">
-      <i-tabler name="logout" class="icon-18 d-flex"></i-tabler>
-    </mat-icon>
-   notification one 
-  </button>
-</mat-menu>
-  
-
-  <!-- <button
-    mat-icon-button
-    [matMenuTriggerFor]="profilemenu"
-    aria-label="Profile"
-  >
-    <img
-      src="/assets/images/profile/user-1.jpg"
-      class="rounded-circle object-cover"
-      width="55"
-      style="z-index: 99"
-    />
-  </button>
-  <mat-menu #profilemenu="matMenu" class="topbar-dd cardWithShadow small-menu">
-    <button mat-menu-item>
-      <mat-icon class="d-flex align-items-center"
-        ><i-tabler name="user" class="icon-18 d-flex"></i-tabler></mat-icon
-      >My Profile
-    </button>
-    <button mat-menu-item>
-      <mat-icon class="d-flex align-items-center"
-        ><i-tabler name="mail" class="icon-18 d-flex"></i-tabler></mat-icon
-      >My Account
-    </button>
-    <button mat-menu-item>
-      <mat-icon class="d-flex align-items-center"
-        ><i-tabler
-          name="list-check"
-          class="icon-18 d-flex"
-        ></i-tabler></mat-icon
-      >My Task
-    </button>
-
-    <div class="p-x-12 m-t-12">
-      <a
-        [routerLink]="['/authentication/login']"
-        mat-stroked-button
-        color="primary"
-        class="w-100"
-        >Logout</a
+      <button
+        type="button"
+        class="favorites-star-current"
+        *ngIf="canStarCurrent()"
+        (click)="onStarCurrent($event)"
       >
+        <i-tabler name="star" class="icon-14 m-r-6"></i-tabler>
+        <span>Star "{{ currentMenuLabel() }}"</span>
+      </button>
     </div>
-  </mat-menu> -->
+
+    <mat-divider></mat-divider>
+
+    <button mat-menu-item (click)="onSignOut()">
+      <mat-icon class="d-flex align-items-center">
+        <i-tabler name="logout" class="icon-18 d-flex"></i-tabler>
+      </mat-icon>
+      Sign Out
+    </button>
+  </mat-menu>
 </mat-toolbar>

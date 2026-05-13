@@ -1,6 +1,187 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.flex-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+// Scrollable when there are more items than the viewport — needed now that
+// the synthetic Reports section can grow with user-defined reports.
+.sidebar-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.18);
+    border-radius: 999px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.32);
+  }
+}
+
+:host-context(.dark-theme) .sidebar-list,
+:host-context(.dark-blue_theme) .sidebar-list {
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.18);
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.32);
+  }
+}
+
+.sidebar-profile-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--borderColor);
+  background: var(--light-accent) !important;
+  box-shadow: var(--cardshadow);
+  transition:
+    padding 0.22s ease,
+    gap 0.22s ease,
+    box-shadow 0.22s ease;
+}
+
+.sidebar-profile__avatar {
+  flex-shrink: 0;
+}
+
 .sidebar-profile-img {
-  width: 40px;
-  height: 40px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   object-fit: cover;
+  border: 2px solid rgba(var(--primary-rgb), 0.22);
+  display: block;
+}
+
+.sidebar-profile__meta {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sidebar-profile__name {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: var(--textPrimary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-profile__email {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--labelText);
+  opacity: 0.88;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.sidebar-profile__logout {
+  flex-shrink: 0;
+  margin-right: -4px;
+
+  .logout-icon {
+    width: 24px;
+    height: 24px;
+    opacity: 0.85;
+    vertical-align: middle;
+  }
+
+  &:hover .logout-icon {
+    opacity: 1;
+  }
+}
+
+/* ——— Expanded sidebar: full card ——— */
+:host-context(.sidebarNav-full) .sidebar-profile__meta,
+:host-context(.sidebarNav-full) .sidebar-profile__logout {
+  display: flex;
+}
+
+:host-context(.sidebarNav-full) .sidebar-profile__meta {
+  flex-direction: column;
+}
+
+/* ——— Mini rail: avatar-only; expand on sidenav hover (matches width expansion) ——— */
+/* Collapsed: no card panel — only the circle — avoids tinted box overlapping the menu / content */
+:host-context(.sidebarNav-mini) .sidebar-profile-card {
+  grid-template-columns: 1fr;
+  justify-items: center;
+  align-content: center;
+  padding: 6px 2px 10px;
+  gap: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  background: transparent !important;
+  border: none;
+  box-shadow: none;
+}
+
+:host-context(.sidebarNav-mini) .sidebar-profile-img {
+  width: 38px;
+  height: 38px;
+  border-width: 2px;
+}
+
+:host-context(.sidebarNav-mini) .sidebar-profile__avatar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+:host-context(.sidebarNav-mini) .sidebar-profile__meta,
+:host-context(.sidebarNav-mini) .sidebar-profile__logout {
+  display: none !important;
+}
+
+/* Hover-expand rail (parent mat-sidenav.sidebarNav:hover) */
+:host-context(.sidebarNav-mini .sidebarNav:hover) .sidebar-profile-card {
+  grid-template-columns: auto 1fr auto;
+  justify-items: stretch;
+  padding: 14px 16px;
+  gap: 14px;
+  background: var(--light-accent) !important;
+  border: 1px solid var(--borderColor);
+  box-shadow: var(--cardshadow);
+}
+
+:host-context(.sidebarNav-mini .sidebarNav:hover) .sidebar-profile-img {
+  width: 52px;
+  height: 52px;
+}
+
+:host-context(.sidebarNav-mini .sidebarNav:hover) .sidebar-profile__meta {
+  display: flex !important;
+  flex-direction: column;
+}
+
+:host-context(.sidebarNav-mini .sidebarNav:hover) .sidebar-profile__logout {
+  display: inline-flex !important;
 }

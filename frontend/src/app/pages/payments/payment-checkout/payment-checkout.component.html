@@ -20,91 +20,162 @@
     </mat-card-content>
   </mat-card>
 
-  <div class="checkout-layout-inner">
-    <div class="cards-grid checkout-product-grid">
-      <mat-card *ngFor="let p of products; trackBy: trackByProductId" class="item-card">
-        <img
-          *ngIf="productImageUrl(p) as imgSrc"
-          mat-card-image
-          class="checkout-card-image"
-          [src]="imgSrc"
-          [alt]="p.name"
-        />
-        <div *ngIf="!productImageUrl(p)" class="checkout-card-image-placeholder">No image</div>
+  <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start" class="checkout-tabs m-b-16">
+    <mat-tab label="Products" *hasPermission="routeProducts; action: 'view'">
+      <div class="checkout-layout-inner m-t-16">
+        <div class="cards-grid checkout-product-grid">
+          <mat-card *ngFor="let p of products; trackBy: trackByProductId" class="item-card">
+            <img
+              *ngIf="productImageUrl(p) as imgSrc"
+              mat-card-image
+              class="checkout-card-image"
+              [src]="imgSrc"
+              [alt]="p.name"
+            />
+            <div *ngIf="!productImageUrl(p)" class="checkout-card-image-placeholder">No image</div>
 
-        <mat-card-header class="checkout-card-header">
-          <mat-card-title class="mat-mdc-card-title">{{ p.name }}</mat-card-title>
-          <div class="category-badge">{{ unitPrice(p) | currency }}</div>
-        </mat-card-header>
+            <mat-card-header class="checkout-card-header">
+              <mat-card-title class="mat-mdc-card-title">{{ p.name }}</mat-card-title>
+              <div class="category-badge">{{ unitPrice(p) | currency }}</div>
+            </mat-card-header>
 
-        <mat-card-content>
-          <p class="stock-line">{{ stockBadgeLabel(p) }}</p>
-          <div class="details-grid">
-            <div class="detail-item">
-              <span class="label">In cart</span>
-              <span class="value">{{ qty(p.id) }}</span>
+            <mat-card-content>
+              <p class="stock-line">{{ stockBadgeLabel(p) }}</p>
+              <div class="details-grid">
+                <div class="detail-item">
+                  <span class="label">In cart</span>
+                  <span class="value">{{ qty(p.id) }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Line total</span>
+                  <span class="value price">{{ lineTotal(p) | currency }}</span>
+                </div>
+              </div>
+            </mat-card-content>
+
+            <mat-card-actions class="checkout-card-actions">
+              <div class="qty-control-strip">
+                <button
+                  mat-stroked-button
+                  type="button"
+                  class="qty-side-btn"
+                  (click)="removeProduct(p.id)"
+                  [disabled]="qty(p.id) < 1"
+                  aria-label="Remove one"
+                >
+                  <mat-icon>remove</mat-icon>
+                </button>
+                <span class="qty-big">{{ qty(p.id) }}</span>
+                <button
+                  mat-flat-button
+                  color="primary"
+                  type="button"
+                  class="qty-side-btn qty-add"
+                  (click)="addProduct(p)"
+                  [disabled]="!canAddMore(p)"
+                  aria-label="Add one"
+                >
+                  <mat-icon>add</mat-icon>
+                </button>
+              </div>
+            </mat-card-actions>
+          </mat-card>
+        </div>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Services" *hasPermission="routeBmServices; action: 'view'">
+      <p class="tab-hint m-t-16 m-b-8">
+        Pay for BM catalog services (same checkout as products — lines stored as service sales).
+      </p>
+      <div class="checkout-layout-inner">
+        <div class="cards-grid checkout-product-grid">
+          <mat-card *ngFor="let s of services; trackBy: trackByServiceId" class="item-card service-card">
+            <div class="checkout-card-image-placeholder service-placeholder">
+              <mat-icon class="service-ico">design_services</mat-icon>
             </div>
-            <div class="detail-item">
-              <span class="label">Line total</span>
-              <span class="value price">{{ lineTotal(p) | currency }}</span>
-            </div>
-          </div>
-        </mat-card-content>
 
-        <mat-card-actions class="checkout-card-actions">
-          <div class="qty-control-strip">
-            <button
-              mat-stroked-button
-              type="button"
-              class="qty-side-btn"
-              (click)="removeProduct(p.id)"
-              [disabled]="qty(p.id) < 1"
-              aria-label="Remove one"
-            >
-              <mat-icon>remove</mat-icon>
-            </button>
-            <span class="qty-big">{{ qty(p.id) }}</span>
-            <button
-              mat-flat-button
-              color="primary"
-              type="button"
-              class="qty-side-btn qty-add"
-              (click)="addProduct(p)"
-              [disabled]="!canAddMore(p)"
-              aria-label="Add one"
-            >
-              <mat-icon>add</mat-icon>
-            </button>
-          </div>
-        </mat-card-actions>
-      </mat-card>
-    </div>
+            <mat-card-header class="checkout-card-header">
+              <mat-card-title class="mat-mdc-card-title">{{ s.name }}</mat-card-title>
+              <div class="category-badge">{{ unitPriceService(s) | currency }}</div>
+            </mat-card-header>
 
-    <mat-card class="mat-mdc-card mdc-card cardWithShadow theme-card cart-summary">
-      <mat-card-header>
-        <mat-card-title>Order summary</mat-card-title>
-      </mat-card-header>
-      <mat-card-content class="b-t-1">
-        <p class="m-b-8 d-flex justify-content-between gap-8" *ngFor="let p of cartProducts()">
-          <span>{{ p.name }} × {{ qty(p.id) }}</span>
-          <span>{{ lineTotal(p) | currency }}</span>
-        </p>
-        <mat-divider class="m-y-12"></mat-divider>
-        <p class="m-0 f-w-600 d-flex justify-content-between">
-          <span>Total</span>
-          <span>{{ cartTotal() | currency }}</span>
-        </p>
-        <button
-          mat-flat-button
-          color="primary"
-          class="w-100 m-t-16"
-          type="button"
-          (click)="checkout()"
-          [disabled]="!canCompletePayment"
-        >
-          Complete payment
-        </button>
-      </mat-card-content>
-    </mat-card>
-  </div>
+            <mat-card-content>
+              <p class="stock-line">
+                {{ s.durationMinutes }} min ·
+                <span *ngIf="s.active !== false" class="ok">Active</span>
+              </p>
+              <div class="details-grid">
+                <div class="detail-item">
+                  <span class="label">In cart</span>
+                  <span class="value">{{ qtyService(s.id) }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Line total</span>
+                  <span class="value price">{{ lineTotalService(s) | currency }}</span>
+                </div>
+              </div>
+            </mat-card-content>
+
+            <mat-card-actions class="checkout-card-actions">
+              <div class="qty-control-strip">
+                <button
+                  mat-stroked-button
+                  type="button"
+                  class="qty-side-btn"
+                  (click)="removeService(s.id)"
+                  [disabled]="qtyService(s.id) < 1"
+                  aria-label="Remove one"
+                >
+                  <mat-icon>remove</mat-icon>
+                </button>
+                <span class="qty-big">{{ qtyService(s.id) }}</span>
+                <button
+                  mat-flat-button
+                  color="primary"
+                  type="button"
+                  class="qty-side-btn qty-add"
+                  (click)="addService(s)"
+                  aria-label="Add one"
+                >
+                  <mat-icon>add</mat-icon>
+                </button>
+              </div>
+            </mat-card-actions>
+          </mat-card>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+
+  <mat-card class="mat-mdc-card mdc-card cardWithShadow theme-card cart-summary">
+    <mat-card-header>
+      <mat-card-title>Order summary</mat-card-title>
+    </mat-card-header>
+    <mat-card-content class="b-t-1">
+      <p class="m-b-8 d-flex justify-content-between gap-8" *ngFor="let p of cartProducts()">
+        <span>{{ p.name }} × {{ qty(p.id) }}</span>
+        <span>{{ lineTotal(p) | currency }}</span>
+      </p>
+      <p class="m-b-8 d-flex justify-content-between gap-8 text-muted" *ngFor="let s of cartServices()">
+        <span>Service: {{ s.name }} × {{ qtyService(s.id) }}</span>
+        <span>{{ lineTotalService(s) | currency }}</span>
+      </p>
+      <mat-divider class="m-y-12"></mat-divider>
+      <p class="m-0 f-w-600 d-flex justify-content-between">
+        <span>Total</span>
+        <span>{{ cartTotal() | currency }}</span>
+      </p>
+      <button
+        mat-flat-button
+        color="primary"
+        class="w-100 m-t-16"
+        type="button"
+        (click)="checkout()"
+        [disabled]="!canCompletePayment"
+      >
+        Complete payment
+      </button>
+    </mat-card-content>
+  </mat-card>
 </div>

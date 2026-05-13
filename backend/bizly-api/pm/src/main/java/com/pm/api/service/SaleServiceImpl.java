@@ -27,14 +27,27 @@ import com.pm.api.dto.sale.SaleSummaryResponse;
 import com.pm.api.model.CustomerSale;
 import com.pm.api.model.CustomerSaleLine;
 import com.pm.api.model.Product;
+import com.pm.api.model.ServiceItem;
 import com.pm.api.repository.CustomerSaleRepository;
 import com.pm.api.repository.ProductRepository;
+import com.pm.api.repository.ServiceItemRepository;
 import com.pm.common.ApiMessages;
 import com.pm.common.PageResponse;
 import com.pm.exception.ServiceException;
+import com.pm.security.BusinessContextHolder;
 
+/**
+ * Unified product + service checkout. Lines are validated, priced, and persisted to
+ * {@code pm_customer_sale} / {@code pm_customer_sale_line}. Service lines are looked up against BM's
+ * {@code bm_service_item} table via the read-only {@link ServiceItemRepository}, so the {@code /pm/sale/*}
+ * endpoints can serve every kind of cart the payments screen submits — there is no longer a need to
+ * fan out to the BM sale controller.
+ */
 @Service
 public class SaleServiceImpl implements ISaleService {
+
+	private static final String LINE_PRODUCT = "PRODUCT";
+	private static final String LINE_SERVICE = "SERVICE";
 
 	@Autowired
 	private CustomerSaleRepository saleRepository;
@@ -42,19 +55,45 @@ public class SaleServiceImpl implements ISaleService {
 	@Autowired
 	private ProductRepository productRepository;
 
+	@Autowired
+	private ServiceItemRepository serviceItemRepository;
+
 	@Override
 	@Transactional
 	public CheckoutResponse checkout(CheckoutRequest request) {
-		Map<Long, Integer> mergedQty = new LinkedHashMap<>();
+		Long businessId = BusinessContextHolder.requireBusinessId();
+		Map<Long, Integer> mergedProductQty = new LinkedHashMap<>();
+		Map<Long, Integer> mergedServiceQty = new LinkedHashMap<>();
+
 		for (CheckoutLineRequest line : request.getLines()) {
 			if (line.getQuantity() == null || line.getQuantity() < 1) {
 				throw new ServiceException(ApiMessages.CHECKOUT_INVALID, HttpStatus.BAD_REQUEST);
 			}
-			mergedQty.merge(line.getProductId(), line.getQuantity(), Integer::sum);
+			Long pid = line.getProductId();
+			Long sid = line.getServiceId();
+			boolean hasProduct = pid != null;
+			boolean hasService = sid != null;
+			if (hasProduct == hasService) {
+				throw new ServiceException("Each line must have exactly one of productId or serviceId",
+						HttpStatus.BAD_REQUEST);
+			}
+			if (hasProduct) {
+				if (pid <= 0L) {
+					throw new ServiceException(ApiMessages.CHECKOUT_INVALID, HttpStatus.BAD_REQUEST);
+				}
+				mergedProductQty.merge(pid, line.getQuantity(), Integer::sum);
+			} else {
+				if (sid <= 0L) {
+					throw new ServiceException(ApiMessages.CHECKOUT_INVALID, HttpStatus.BAD_REQUEST);
+				}
+				mergedServiceQty.merge(sid, line.getQuantity(), Integer::sum);
+			}
 		}
 
-		for (Map.Entry<Long, Integer> e : mergedQty.entrySet()) {
-			Product p = productRepository.findById(e.getKey())
+		// Validate stock for product lines up front so we fail the whole cart cleanly if any line
+		// would oversell.
+		for (Map.Entry<Long, Integer> e : mergedProductQty.entrySet()) {
+			Product p = productRepository.findByIdAndBusinessId(e.getKey(), businessId)
 					.orElseThrow(() -> new ServiceException(ApiMessages.PRODUCT_NOT_FOUND, HttpStatus.BAD_REQUEST));
 			Integer stock = p.getStockQuantity();
 			int qty = e.getValue();
@@ -63,8 +102,19 @@ public class SaleServiceImpl implements ISaleService {
 			}
 		}
 
+		// Validate service items exist and are active.
+		for (Long serviceId : mergedServiceQty.keySet()) {
+			ServiceItem s = serviceItemRepository.findByIdAndBusinessId(serviceId, businessId)
+					.orElseThrow(() -> new ServiceException(ApiMessages.SERVICE_ITEM_NOT_FOUND,
+							HttpStatus.BAD_REQUEST));
+			if (!Boolean.TRUE.equals(s.getActive())) {
+				throw new ServiceException(ApiMessages.SERVICE_ITEM_INACTIVE, HttpStatus.BAD_REQUEST);
+			}
+		}
+
 		double total = 0d;
 		CustomerSale sale = new CustomerSale();
+		sale.setBusinessId(businessId);
 		sale.setCustomerId(request.getCustomerId());
 		if (request.getCustomerDisplayName() != null) {
 			String label = request.getCustomerDisplayName().trim();
@@ -74,8 +124,8 @@ public class SaleServiceImpl implements ISaleService {
 		sale.setCreatedAt(LocalDateTime.now());
 		sale.setLines(new ArrayList<>());
 
-		for (Map.Entry<Long, Integer> e : mergedQty.entrySet()) {
-			Product p = productRepository.findById(e.getKey()).orElseThrow(
+		for (Map.Entry<Long, Integer> e : mergedProductQty.entrySet()) {
+			Product p = productRepository.findByIdAndBusinessId(e.getKey(), businessId).orElseThrow(
 					() -> new ServiceException(ApiMessages.PRODUCT_NOT_FOUND, HttpStatus.BAD_REQUEST));
 			int qty = e.getValue();
 			double unit = p.getPrice() != null ? p.getPrice() : 0d;
@@ -84,8 +134,31 @@ public class SaleServiceImpl implements ISaleService {
 
 			CustomerSaleLine sl = new CustomerSaleLine();
 			sl.setSale(sale);
+			sl.setBusinessId(businessId);
+			sl.setLineType(LINE_PRODUCT);
 			sl.setProductId(p.getId());
+			sl.setServiceId(null);
 			sl.setProductName(p.getName());
+			sl.setQuantity(qty);
+			sl.setUnitPrice(unit);
+			sale.getLines().add(sl);
+		}
+
+		for (Map.Entry<Long, Integer> e : mergedServiceQty.entrySet()) {
+			ServiceItem s = serviceItemRepository.findByIdAndBusinessId(e.getKey(), businessId).orElseThrow(
+					() -> new ServiceException(ApiMessages.SERVICE_ITEM_NOT_FOUND, HttpStatus.BAD_REQUEST));
+			int qty = e.getValue();
+			double unit = s.getPrice() != null ? s.getPrice() : 0d;
+			double lineTotal = unit * qty;
+			total += lineTotal;
+
+			CustomerSaleLine sl = new CustomerSaleLine();
+			sl.setSale(sale);
+			sl.setBusinessId(businessId);
+			sl.setLineType(LINE_SERVICE);
+			sl.setProductId(null);
+			sl.setServiceId(s.getId());
+			sl.setProductName(s.getName());
 			sl.setQuantity(qty);
 			sl.setUnitPrice(unit);
 			sale.getLines().add(sl);
@@ -94,8 +167,10 @@ public class SaleServiceImpl implements ISaleService {
 		sale.setTotalAmount(total);
 		saleRepository.save(sale);
 
-		for (Map.Entry<Long, Integer> e : mergedQty.entrySet()) {
-			Product p = productRepository.findById(e.getKey()).orElseThrow(
+		// Decrement stock only after the sale row has persisted — keeps the inventory write inside
+		// the same transaction so a downstream failure rolls everything back together.
+		for (Map.Entry<Long, Integer> e : mergedProductQty.entrySet()) {
+			Product p = productRepository.findByIdAndBusinessId(e.getKey(), businessId).orElseThrow(
 					() -> new ServiceException(ApiMessages.PRODUCT_NOT_FOUND, HttpStatus.BAD_REQUEST));
 			Integer stock = p.getStockQuantity();
 			if (stock != null) {
@@ -113,7 +188,11 @@ public class SaleServiceImpl implements ISaleService {
 	@Override
 	@Transactional(readOnly = true)
 	public GetSaleResponse get(GetSaleRequest request) {
-		CustomerSale sale = saleRepository.findById(request.getId())
+		if (request.getId() == null) {
+			throw new ServiceException(ApiMessages.SALE_ID_REQUIRED, HttpStatus.BAD_REQUEST);
+		}
+		Long businessId = BusinessContextHolder.requireBusinessId();
+		CustomerSale sale = saleRepository.findByIdAndBusinessId(request.getId(), businessId)
 				.orElseThrow(() -> new ServiceException(ApiMessages.SALE_NOT_FOUND, HttpStatus.NOT_FOUND));
 		sale.getLines().size();
 
@@ -130,7 +209,9 @@ public class SaleServiceImpl implements ISaleService {
 
 	private SaleLineResponse toLineResponse(CustomerSaleLine l) {
 		SaleLineResponse r = new SaleLineResponse();
+		r.setLineType(l.getLineType());
 		r.setProductId(l.getProductId());
+		r.setServiceId(l.getServiceId());
 		r.setProductName(l.getProductName());
 		r.setQuantity(l.getQuantity());
 		r.setUnitPrice(l.getUnitPrice());
@@ -143,13 +224,15 @@ public class SaleServiceImpl implements ISaleService {
 	@Override
 	@Transactional(readOnly = true)
 	public PageResponse<SaleSummaryResponse> gets(GetsSalesRequest request) {
+		Long businessId = BusinessContextHolder.requireBusinessId();
 		Pageable pageable = PageRequest.of(request.getPageNumber(), request.getPageSize(),
 				Sort.by(Sort.Direction.DESC, "createdAt"));
 		Page<CustomerSale> page;
 		if (request.getCustomerId() != null) {
-			page = saleRepository.findByCustomerIdOrderByCreatedAtDesc(request.getCustomerId(), pageable);
+			page = saleRepository.findByBusinessIdAndCustomerIdOrderByCreatedAtDesc(businessId, request.getCustomerId(),
+					pageable);
 		} else {
-			page = saleRepository.findAll(pageable);
+			page = saleRepository.findAllByBusinessId(businessId, pageable);
 		}
 		List<SaleSummaryResponse> items = page.getContent().stream().map(s -> {
 			SaleSummaryResponse r = new SaleSummaryResponse();

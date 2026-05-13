@@ -39,8 +39,18 @@ public class Product {
 	@Column(name = "stock_quantity")
 	private Integer stockQuantity;
 
+	/**
+	 * Tenant scope. Every read/write of this entity must filter or set this column.
+	 * The repository's tenant-scoped finders enforce that automatically.
+	 */
+	@Column(name = "business_id")
+	private Long businessId;
+
 	@OneToMany(mappedBy = "product", cascade = CascadeType.ALL)
 	private List<ProductItem> productItems;
+
+	public Long getBusinessId() { return businessId; }
+	public void setBusinessId(Long businessId) { this.businessId = businessId; }
 
 	public Long getId() {
 		return id;

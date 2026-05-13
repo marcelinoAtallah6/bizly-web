@@ -4,6 +4,7 @@ import { BlankComponent } from './layouts/blank/blank.component';
 import { FullComponent } from './layouts/full/full.component';
 import { AuthGuard } from './guards/auth.guard';
 import { GuestGuard } from './guards/guest.guard';
+import { OnboardingGuard } from './guards/onboarding.guard';
 
 const routes: Routes = [
   {
@@ -14,8 +15,13 @@ const routes: Routes = [
   {
     path: '',
     component: FullComponent,
-    canActivate: [AuthGuard],
-    canActivateChild: [AuthGuard],
+    /*
+     * Auth + onboarding gating: AuthGuard checks "is the user logged in?" first; OnboardingGuard
+     * then checks "did they finish welcome + business registration?" and redirects to those
+     * screens when not. The order matters — AuthGuard must be first.
+     */
+    canActivate: [AuthGuard, OnboardingGuard],
+    canActivateChild: [AuthGuard, OnboardingGuard],
     children: [
       {
         path: '',
@@ -47,6 +53,11 @@ const routes: Routes = [
           import('./pages/pm/pm.module').then((m) => m.PmModule),
       },
       {
+        path: 'bm',
+        loadChildren: () =>
+          import('./pages/bm/bm.module').then((m) => m.BmModule),
+      },
+      {
         path: 'users',
         redirectTo: '/um/user',
         pathMatch: 'full',
@@ -57,11 +68,14 @@ const routes: Routes = [
           import('./pages/um/um.module').then((m) => m.UmModule),
       },
       {
-        path: 'apt',
+        path: 'broadcast',
         loadChildren: () =>
-          import('./pages/appointment/appointment.module').then(
-            (m) => m.AppointmentModule
-          ),
+          import('./pages/broadcast/broadcast.module').then((m) => m.BroadcastModule),
+      },
+      {
+        path: 'apt',
+        redirectTo: 'bm/appointments',
+        pathMatch: 'full',
       },
       {
         path: 'pay',
@@ -85,13 +99,6 @@ const routes: Routes = [
           ),
       },
       {
-        path: 'rpt',
-        loadChildren: () =>
-          import('./pages/setup-application/reportbuilder/reportbuilder.module').then(
-            (m) => m.ReportbuilderModule
-          ),
-      },
-      {
         path: 'api',
         loadChildren: () =>
           import('./pages/setup-application/apibuilder/apibuilder.module').then(
@@ -110,6 +117,15 @@ const routes: Routes = [
         loadChildren: () =>
           import('./pages/setup-application/usermanagement/usermanagement.module').then(
             (m) => m.UsermanagementModule
+          ),
+      },
+      {
+        // Dynamic reporting screen — filters, paginated grid, CSV/Excel/PDF export.
+        // Backed by /settings/reporting/* (provider-based engine).
+        path: 'reporting',
+        loadChildren: () =>
+          import('./pages/setup-application/reporting/reporting.module').then(
+            (m) => m.ReportingModule
           ),
       },
       {

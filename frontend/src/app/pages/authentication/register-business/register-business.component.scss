@@ -1,0 +1,156 @@
+.register-business {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f4f6fb 0%, #e6eaf8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+.register-business__panel {
+  width: 100%;
+  max-width: 720px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 24px 60px rgba(20, 30, 60, 0.12);
+  padding: 40px;
+}
+
+.register-business__header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.register-business__logo img {
+  height: 36px;
+}
+
+.register-business__title {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 16px 0 8px;
+  color: #1a2240;
+}
+
+.register-business__subtitle {
+  font-size: 14px;
+  color: #5b657f;
+  margin: 0 auto;
+  max-width: 480px;
+  line-height: 1.5;
+}
+
+.register-business__form {
+  margin-top: 8px;
+}
+
+.register-business__label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #1a2240;
+  display: block;
+  margin: 16px 0 8px;
+}
+
+.register-business__types {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.register-business__type {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1.5px solid #dde2f1;
+  background: #ffffff;
+  cursor: pointer;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+  text-align: left;
+  width: 100%;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.register-business__type:hover {
+  border-color: #6690ff;
+  transform: translateY(-1px);
+}
+
+.register-business__type.is-selected {
+  border-color: #6690ff;
+  box-shadow: 0 0 0 3px rgba(102, 144, 255, 0.18);
+}
+
+.register-business__type-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(102, 144, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2f5fff;
+  flex-shrink: 0;
+}
+
+.register-business__type-icon i-tabler {
+  width: 22px;
+  height: 22px;
+}
+
+.register-business__type-label {
+  font-weight: 600;
+  color: #1a2240;
+}
+
+.register-business__role {
+  margin-top: 24px;
+  padding: 16px 18px;
+  background: linear-gradient(135deg, rgba(102, 144, 255, 0.08), rgba(181, 107, 255, 0.06));
+  border-radius: 12px;
+  border: 1px solid rgba(102, 144, 255, 0.15);
+}
+
+.register-business__role-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.register-business__role-row i-tabler {
+  width: 24px;
+  height: 24px;
+  color: #2f5fff;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.register-business__role-name {
+  font-weight: 600;
+  color: #1a2240;
+  margin-bottom: 4px;
+}
+
+.register-business__role-hint {
+  font-size: 13px;
+  color: #5b657f;
+  line-height: 1.5;
+}
+
+.register-business__error {
+  color: #d3322a;
+  font-size: 13px;
+  margin: 8px 0 0;
+}
+
+.register-business__submit {
+  width: 100%;
+  margin-top: 28px;
+  padding: 12px 0;
+  font-weight: 600;
+  font-size: 15px;
+}

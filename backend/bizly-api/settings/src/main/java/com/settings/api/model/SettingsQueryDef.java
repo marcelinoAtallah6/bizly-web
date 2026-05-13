@@ -22,6 +22,10 @@ public class SettingsQueryDef {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	/** Tenant scope. NULL means a global / admin-defined query template. */
+	@Column(name = "business_id")
+	private Long businessId;
+
 	@Column(nullable = false, length = 200)
 	private String name;
 
@@ -122,4 +126,7 @@ public class SettingsQueryDef {
 	public void setCreatedBy(String createdBy) {
 		this.createdBy = createdBy;
 	}
+
+	public Long getBusinessId() { return businessId; }
+	public void setBusinessId(Long businessId) { this.businessId = businessId; }
 }

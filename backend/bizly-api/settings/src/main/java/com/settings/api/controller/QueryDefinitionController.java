@@ -42,7 +42,10 @@ public class QueryDefinitionController {
 	@PostMapping("/gets")
 	public ResponseEntity<ApiResponse<PageResponse<QueryDefResponse>>> gets(
 			@RequestBody @Valid QueryDefGetsRequest request) {
-		return ResponseEntity.ok(ApiResponse.success(queryDefService.listPage(request), ApiMessages.SUCCESS));
+		PageResponse<QueryDefResponse> body = queryDefService.listPage(request,
+				SettingsSecuritySupport.currentUsername(),
+				SettingsSecuritySupport.currentAuthorities());
+		return ResponseEntity.ok(ApiResponse.success(body, ApiMessages.SUCCESS));
 	}
 
 	@PostMapping("/get")

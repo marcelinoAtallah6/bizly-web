@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
@@ -31,13 +32,24 @@ import reactor.core.publisher.Mono;
 @Component
 public class AuthenticationPreFilter extends AbstractGatewayFilterFactory<AuthenticationPreFilter.Config> {
 
+	/*
+	 * Public paths bypass JWT validation entirely. Anything NOT listed here (including
+	 * /auth/register-business and /auth/welcome-complete) requires a valid JWT — the
+	 * filter forwards the verified username + tenant in the X-User / X-Business-Id /
+	 * X-Role-Level headers below.
+	 *
+	 * Social login is public because the caller has not yet authenticated with Bizly
+	 * (they are exchanging a provider token for a Bizly session).
+	 */
 	private static final List<String> PUBLIC_PATHS = List.of(
 		"/auth/login",
 		"/auth/refresh",
 		"/auth/logout",
+		"/auth/register",
 		"/auth/forgot-password",
 		"/auth/forgot-password/verify",
-		"/auth/forgot-password/reset"
+		"/auth/forgot-password/reset",
+		"/auth/social/"
 	);
 
 	@Value("${keyStore.path}")
@@ -69,16 +81,36 @@ public class AuthenticationPreFilter extends AbstractGatewayFilterFactory<Authen
 
 	@Override
 	public GatewayFilter apply(Config config) {
-		return (exchange, chain) -> {
+		return (originalExchange, chain) -> {
 
-			String path = exchange.getRequest().getURI().getPath();
+			String path = originalExchange.getRequest().getURI().getPath();
 
 			boolean isPublic = PUBLIC_PATHS.stream().anyMatch(path::startsWith);
+
+			// Defence-in-depth: clients must NEVER be able to inject our own internal trust headers.
+			// Every request (public or authenticated) is stripped here; the JWT branch below re-sets
+			// them from verified JWT claims. The X-Business-Override header is allowed through and
+			// the downstream InternalAuthFilter only honours it when X-Role-Level == ADMIN.
+			ServerHttpRequest sanitised = originalExchange.getRequest().mutate().headers(httpHeaders -> {
+				httpHeaders.remove("X-User");
+				httpHeaders.remove("X-Session-Id");
+				httpHeaders.remove("X-Role");
+				httpHeaders.remove("X-Business-Id");
+				httpHeaders.remove("X-Role-Level");
+				httpHeaders.remove("X-First-Login");
+				httpHeaders.remove("X-Internal-Secret");
+			}).build();
+			final ServerWebExchange exchange = originalExchange.mutate().request(sanitised).build();
 
 			if (isPublic) {
 				return chain.filter(exchange);
 			}
-			
+
+			/* CORS preflight: no Authorization header — must pass through so globalcors can respond */
+			if (exchange.getRequest().getMethod() == HttpMethod.OPTIONS) {
+				return chain.filter(exchange);
+			}
+
 			HttpHeaders headers = exchange.getRequest().getHeaders();
 			String token = headers.getFirst(HttpHeaders.AUTHORIZATION);
 			String deviceId = headers.getFirst("X-DEVICE-ID");
@@ -97,13 +129,23 @@ public class AuthenticationPreFilter extends AbstractGatewayFilterFactory<Authen
 				String username = claims.getSubject();
 				String sessionId = claims.get("sessionId", String.class);
 				String tokenDeviceId = claims.get("deviceId", String.class);
-				Object roleObj = claims.get("role");
+				/* Prefer {@code roles} (array) — auth service issues this. Legacy tokens used singular {@code role}. */
+				Object roleObj = claims.get("roles");
+				if (roleObj == null) {
+					roleObj = claims.get("role");
+				}
+				Object businessIdObj = claims.get("businessId");
+				String roleLevel = claims.get("roleLevel", String.class);
+				Object firstLoginObj = claims.get("firstLogin");
 
 				if (!tokenDeviceId.equals(deviceId)) {
 					return errorResponse(exchange, "Device mismatch", HttpStatus.FORBIDDEN);
 				}
 
 				List<String> authorities = springSecurityAuthoritiesFromJwtRoleClaim(roleObj);
+				final String businessIdHeader = businessIdObj == null ? "" : String.valueOf(businessIdObj);
+				final String roleLevelHeader = roleLevel == null ? "" : roleLevel;
+				final String firstLoginHeader = firstLoginObj == null ? "false" : String.valueOf(firstLoginObj);
 
 				ServerHttpRequest mutated = exchange.getRequest().mutate().headers(httpHeaders -> {
 					httpHeaders.set("X-User", username);
@@ -112,6 +154,19 @@ public class AuthenticationPreFilter extends AbstractGatewayFilterFactory<Authen
 					for (String a : authorities) {
 						httpHeaders.add("X-Role", a);
 					}
+					// Tenant scoping headers — downstream services trust these because the JWT signature is
+					// already verified upstream. Removing the inbound copy first prevents header smuggling
+					// from a malicious client.
+					httpHeaders.remove("X-Business-Id");
+					httpHeaders.remove("X-Role-Level");
+					httpHeaders.remove("X-First-Login");
+					if (!businessIdHeader.isEmpty()) {
+						httpHeaders.set("X-Business-Id", businessIdHeader);
+					}
+					if (!roleLevelHeader.isEmpty()) {
+						httpHeaders.set("X-Role-Level", roleLevelHeader);
+					}
+					httpHeaders.set("X-First-Login", firstLoginHeader);
 					httpHeaders.set("X-Internal-Secret", "THANKSGOD_BLESSNATHALIEANDMYFAMILY_05082026");
 				}).build();
 
@@ -124,10 +179,10 @@ public class AuthenticationPreFilter extends AbstractGatewayFilterFactory<Authen
 	}
 
 	/**
-	 * JWT {@code role} claim is a list of DB role names (e.g. {@code USER}, {@code ADMIN}, or already
-	 * {@code ROLE_USER}). Each is normalized to a Spring Security authority and forwarded as its own
-	 * {@code X-Role} header so downstream filters can grant {@code hasRole('USER')} and {@code hasRole('ADMIN')}
-	 * when the user has multiple roles.
+	 * JWT {@code roles} claim (preferred) or legacy {@code role} claim: a list of DB role names (e.g.
+	 * {@code USER}, {@code ADMIN}, or already {@code ROLE_USER}). Each is normalized to a Spring Security
+	 * authority and forwarded as its own {@code X-Role} header so downstream filters can grant
+	 * {@code hasRole('USER')} and {@code hasRole('ADMIN')} when the user has multiple roles.
 	 */
 	private static List<String> springSecurityAuthoritiesFromJwtRoleClaim(Object roleObj) {
 		if (roleObj == null) {

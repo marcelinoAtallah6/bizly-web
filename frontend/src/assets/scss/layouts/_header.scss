@@ -3,8 +3,24 @@ html .topbar {
   position: sticky;
   top: 0;
   z-index: 9;
-  // height: $header-height;
-  height: 47px !important;
+  min-height: var(--header-height) !important;
+  height: auto !important;
+  align-items: center;
+}
+
+/* Toolbar profile chip — larger avatar + touch target */
+.header-profile-trigger {
+  width: 52px !important;
+  height: 52px !important;
+  padding: 4px !important;
+}
+
+.header-profile-thumb,
+.profile-img.header-profile-thumb {
+  width: 44px;
+  height: 44px;
+  border: 2px solid rgba(var(--primary-rgb), 0.28);
+  box-sizing: border-box;
 }
 
 .topbar-dd {
@@ -100,7 +116,12 @@ html .topbar {
 //profile 
 
 .profile-menu {
-  width: 260px !important;
+  /*
+   * Bumped from 260px so the favorites section can fit a name + the two
+   * action buttons (set-default / remove) on one row without clipping.
+   */
+  width: 320px !important;
+  max-width: 360px !important;
   padding: 10px 0;
   margin: 5px 10px;
   background-color: var(--cardbg) !important;
@@ -109,28 +130,37 @@ html .topbar {
 .profile-header {
   display: flex;
   align-items: center;
-  padding: 12px 16px;
+  padding: 16px 18px;
+  gap: 4px;
 }
 
 .profile-avatar {
-  width: 50px;
-  height: 50px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
   object-fit: cover;
+  border: 2px solid rgba(var(--primary-rgb), 0.22);
+  flex-shrink: 0;
 }
 
 .profile-info {
-  margin-left: 12px;
+  margin-left: 14px;
+  min-width: 0;
 }
 
 .profile-name {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
+  line-height: 1.3;
 }
 
 .profile-email {
-  font-size: 12px;
-  color: gray;
+  font-size: 13px;
+  color: var(--labelText);
+  opacity: 0.9;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .profile-img {
@@ -138,5 +168,876 @@ html .topbar {
 }
 
 .profile-img:hover {
-  transform: scale(1.1);
+  transform: scale(1.06);
+}
+
+/* =============================================================================
+ * Bizly header v2: role chip · KPI ticker · notifications bell
+ *
+ * Layout order from left to right after the spacer:
+ *   1. .role-chip            (order: 10)
+ *   2. .notif-bell           (order: 20)
+ *   3. .header-profile-trigger (order: 30)
+ * Forced via flex `order:` so future markup changes can't accidentally
+ * shuffle them.
+ * --------------------------------------------------------------------------- */
+
+.bizly-topbar {
+  gap: 6px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+}
+
+.bizly-topbar .header-search      { order: 2; }
+.bizly-topbar .pulse-ticker       { order: 3; }
+.bizly-topbar .flex-1-auto        { order: 4; }
+.bizly-topbar .role-chip          { order: 10; }
+.bizly-topbar .notif-bell         { order: 20; }
+.bizly-topbar .header-profile-trigger { order: 30; }
+
+/* Shared pill geometry for role-chip + notif-bell so they line up perfectly. */
+.header-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  min-width: 36px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--borderColor, rgba(255, 255, 255, 0.12));
+  background: var(--cardbg, rgba(255, 255, 255, 0.04));
+  color: var(--textPrimary, inherit);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:hover {
+    background: rgba(var(--primary-rgb, 99 102 241), 0.12);
+    border-color: rgba(var(--primary-rgb, 99 102 241), 0.45);
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.85;
+    transform: none;
+    background: var(--cardbg, rgba(255, 255, 255, 0.04));
+    border-color: var(--borderColor, rgba(255, 255, 255, 0.12));
+  }
+}
+
+/* ---- KPI ticker ----------------------------------------------------------- */
+.pulse-ticker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+  padding: 4px 6px;
+  border-radius: 10px;
+  background: var(--hoverBg, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--borderColor, rgba(255, 255, 255, 0.06));
+  max-width: 480px;
+  overflow: hidden;
+
+  /* Collapse on narrow viewports so the toolbar can breathe. */
+  @media (max-width: 991px) {
+    display: none;
+  }
+}
+
+.pulse-tile {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--textPrimary, inherit);
+  white-space: nowrap;
+  transition: background 0.15s ease, transform 0.15s ease;
+
+  &:hover {
+    background: rgba(var(--primary-rgb, 99 102 241), 0.08);
+  }
+
+  &:not(:last-child)::after {
+    content: '';
+    margin-left: 6px;
+    width: 1px;
+    height: 14px;
+    background: var(--borderColor, rgba(255, 255, 255, 0.08));
+  }
+}
+
+.pulse-icon {
+  color: rgba(var(--primary-rgb, 99 102 241), 0.95);
+  flex-shrink: 0;
+}
+
+.pulse-value {
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: -0.2px;
+}
+
+.pulse-label {
+  font-size: 11px;
+  opacity: 0.72;
+  text-transform: lowercase;
+}
+
+/* ---- Active-role chip (uses .header-pill base) ---------------------------- */
+.role-chip {
+  padding: 0 12px;
+
+  /* Single-role users see a static chip — no hover/lift. */
+  &:not(.role-chip-multi) {
+    cursor: default;
+
+    &:hover {
+      background: var(--cardbg, rgba(255, 255, 255, 0.04));
+      border-color: var(--borderColor, rgba(255, 255, 255, 0.12));
+      transform: none;
+    }
+  }
+}
+
+.role-chip-icon {
+  color: rgba(var(--primary-rgb, 99 102 241), 0.95);
+}
+
+.role-chip-label {
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.role-chip-caret {
+  opacity: 0.7;
+}
+
+.role-menu {
+  min-width: 220px !important;
+  background: var(--cardbg) !important;
+  border: 1px solid var(--borderColor);
+  padding: 6px 0;
+}
+
+.role-menu-header {
+  padding: 6px 16px 8px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--labelText, rgba(255, 255, 255, 0.5));
+}
+
+/* ---- Notifications bell (uses .header-pill base) -------------------------- */
+.notif-bell {
+  padding: 0 10px;
+  min-width: 40px;
+
+  /* Active state when there are unread items — primary tinted background. */
+  &.notif-bell-active {
+    background: rgba(var(--primary-rgb, 99 102 241), 0.14);
+    border-color: rgba(var(--primary-rgb, 99 102 241), 0.45);
+    color: rgba(var(--primary-rgb, 99 102 241), 1);
+
+    .notif-bell-icon-wrap > i-tabler {
+      animation: notif-bell-shake 1.6s ease-in-out 1;
+    }
+  }
+}
+
+.notif-bell-icon-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+}
+
+.notif-bell-badge {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--toolbar, var(--cardbg, #1a1f37));
+  letter-spacing: 0;
+}
+
+.notif-bell-pulse {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.55);
+  animation: notif-bell-pulse 1.8s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes notif-bell-pulse {
+  0%   { transform: scale(1);   opacity: 0.6; }
+  70%  { transform: scale(2.4); opacity: 0;   }
+  100% { transform: scale(2.4); opacity: 0;   }
+}
+
+@keyframes notif-bell-shake {
+  0%, 100%        { transform: rotate(0); }
+  15%             { transform: rotate(12deg); }
+  30%             { transform: rotate(-10deg); }
+  45%             { transform: rotate(8deg); }
+  60%             { transform: rotate(-6deg); }
+  75%             { transform: rotate(3deg); }
+}
+
+.notif-menu {
+  width: 380px !important;
+  max-width: 92vw !important;
+  background: var(--cardbg) !important;
+  border: 1px solid var(--borderColor);
+  padding: 0 !important;
+  overflow: hidden;
+
+  .mat-mdc-menu-content {
+    padding: 0 !important;
+  }
+}
+
+.notif-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  gap: 8px;
+}
+
+.notif-menu-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--textPrimary, inherit);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notif-menu-count {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(var(--primary-rgb, 99 102 241), 0.18);
+  color: rgba(var(--primary-rgb, 99 102 241), 1);
+  letter-spacing: 0.3px;
+}
+
+.notif-menu-clear {
+  background: transparent;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: rgba(var(--primary-rgb, 99 102 241), 1);
+  padding: 4px 6px;
+  border-radius: 6px;
+
+  &:hover {
+    background: rgba(var(--primary-rgb, 99 102 241), 0.12);
+  }
+}
+
+.notif-list {
+  max-height: 480px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--primary-rgb, 99 102 241), 0.4) transparent;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(var(--primary-rgb, 99 102 241), 0.28);
+    border-radius: 999px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(var(--primary-rgb, 99 102 241), 0.55);
+  }
+}
+
+/* ---- Pagination footer (loading / load-more / end-of-list) ---------------- */
+.notif-list-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  min-height: 44px;
+  border-top: 1px solid var(--borderColor, rgba(255, 255, 255, 0.05));
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(var(--primary-rgb, 99 102 241), 0.03) 100%
+  );
+}
+
+.notif-loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--labelText, rgba(255, 255, 255, 0.7));
+
+  /* Force the spinner accent colour to match the theme primary */
+  ::ng-deep .mat-mdc-progress-spinner circle {
+    stroke: rgba(var(--primary-rgb, 99 102 241), 1) !important;
+  }
+}
+
+.notif-loading-text {
+  letter-spacing: 0.2px;
+}
+
+.notif-loadmore {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--primary-rgb, 99 102 241), 0.4);
+  background: transparent;
+  color: rgba(var(--primary-rgb, 99 102 241), 1);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+
+  &:hover {
+    background: rgba(var(--primary-rgb, 99 102 241), 0.14);
+    border-color: rgba(var(--primary-rgb, 99 102 241), 0.85);
+    transform: translateY(-1px);
+  }
+}
+
+.notif-end {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  color: var(--labelText, rgba(255, 255, 255, 0.55));
+  opacity: 0.85;
+}
+
+.notif-item {
+  position: relative;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 10px;
+  padding: 12px 14px 12px 18px !important;
+  border-radius: 0 !important;
+  height: auto !important;
+  line-height: 1.35 !important;
+  white-space: normal !important;
+  text-align: left;
+  width: 100%;
+  border-bottom: 1px solid var(--borderColor, rgba(255, 255, 255, 0.05));
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .mat-mdc-menu-item-text {
+    display: flex !important;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+  }
+}
+
+.notif-stripe {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: transparent;
+}
+
+.notif-item.sev-info .notif-stripe,
+.notif-item.sev-info .notif-icon-wrap {
+  background: rgba(96, 165, 250, 0.18);
+  color: #60a5fa;
+}
+.notif-item.sev-success .notif-stripe,
+.notif-item.sev-success .notif-icon-wrap {
+  background: rgba(52, 211, 153, 0.18);
+  color: #34d399;
+}
+.notif-item.sev-warn .notif-stripe,
+.notif-item.sev-warn .notif-icon-wrap {
+  background: rgba(250, 204, 21, 0.20);
+  color: #facc15;
+}
+.notif-item.sev-error .notif-stripe,
+.notif-item.sev-error .notif-icon-wrap {
+  background: rgba(248, 113, 113, 0.22);
+  color: #f87171;
+}
+
+.notif-item .notif-stripe {
+  background: currentColor;
+  opacity: 0.6;
+}
+
+.notif-icon-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  margin-top: 2px;
+}
+
+.notif-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.notif-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--textPrimary, inherit);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notif-item.notif-unread .notif-title {
+  font-weight: 700;
+}
+
+.notif-text {
+  font-size: 12px;
+  color: var(--labelText, rgba(255, 255, 255, 0.7));
+  margin-top: 2px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notif-meta {
+  font-size: 11px;
+  color: var(--labelText, rgba(255, 255, 255, 0.55));
+  margin-top: 4px;
+}
+
+.notif-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(var(--primary-rgb, 99 102 241), 1);
+  align-self: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 4px rgba(var(--primary-rgb, 99 102 241), 0.18);
+}
+
+/* Empty state ----------------- */
+.notif-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 36px 18px;
+  gap: 6px;
+  color: var(--labelText, rgba(255, 255, 255, 0.55));
+}
+
+.notif-empty-icon {
+  opacity: 0.55;
+  margin-bottom: 4px;
+}
+
+.notif-empty-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--textPrimary);
+}
+
+.notif-empty-sub {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.notif-empty-test {
+  margin-top: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px dashed rgba(var(--primary-rgb, 99 102 241), 0.5);
+  background: transparent;
+  color: rgba(var(--primary-rgb, 99 102 241), 1);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    background: rgba(var(--primary-rgb, 99 102 241), 0.12);
+    border-color: rgba(var(--primary-rgb, 99 102 241), 0.9);
+    border-style: solid;
+  }
+}
+
+/* =============================================================================
+ * Header quick-search (mat-autocomplete)
+ *
+ * Sits between the hamburger and the KPI ticker. Always visible on tablets
+ * and up; on narrow phones we collapse it to keep the toolbar uncluttered.
+ *
+ * NB. don't use Bootstrap-style `d-md-flex` here — the project's utility
+ * generator only emits the base `.d-*` classes (no responsive breakpoint
+ * variants), so a Bootstrap-style modifier silently degrades to `display:none`.
+ * --------------------------------------------------------------------------- */
+.header-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 220px;
+  max-width: 320px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 18px;
+  background: rgba(var(--primary-rgb, 99 102 241), 0.08);
+  border: 1px solid rgba(var(--primary-rgb, 99 102 241), 0.18);
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:focus-within {
+    background: rgba(var(--primary-rgb, 99 102 241), 0.14);
+    border-color: rgba(var(--primary-rgb, 99 102 241), 0.55);
+    box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 99 102 241), 0.16);
+  }
+}
+
+/* Below 768px the toolbar gets crowded — hide the box and surface the
+   sidebar's menu list via the hamburger instead. */
+@media (max-width: 767px) {
+  .header-search { display: none; }
+}
+
+.header-search-icon {
+  flex-shrink: 0;
+  opacity: 0.78;
+  color: var(--textPrimary);
+}
+
+.header-search-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--textPrimary);
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+
+  &::placeholder {
+    color: var(--labelText);
+    opacity: 0.7;
+    font-weight: 500;
+  }
+}
+
+/* mat-autocomplete panel styling. */
+.mat-mdc-autocomplete-panel.header-search-panel {
+  background-color: var(--cardbg) !important;
+  border: 1px solid var(--borderColor);
+  border-radius: 10px !important;
+  margin-top: 6px;
+  padding: 4px 0 !important;
+  max-height: 360px;
+}
+
+.header-search-option {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px;
+  min-height: 44px !important;
+  padding: 6px 14px !important;
+  color: var(--textPrimary) !important;
+}
+
+.header-search-option-icon {
+  flex-shrink: 0;
+  opacity: 0.85;
+  color: rgba(var(--primary-rgb, 99 102 241), 0.95);
+}
+
+.header-search-option-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.header-search-option-name {
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.header-search-option-meta {
+  font-size: 11px;
+  color: var(--labelText);
+  opacity: 0.85;
+  margin-top: 2px;
+}
+
+.header-search-option-go {
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  transform: translateX(-4px);
+}
+
+.header-search-option:hover .header-search-option-go,
+.header-search-option.mdc-list-item--selected .header-search-option-go {
+  opacity: 0.9;
+  transform: translateX(0);
+}
+
+.header-search-empty {
+  font-size: 12px;
+  color: var(--labelText);
+  opacity: 0.8;
+  padding: 10px 14px !important;
+  pointer-events: none;
+}
+
+/* =============================================================================
+ * Profile-menu : Favorites section
+ *
+ * Each row has the menu-name (button — clicking navigates), a "set as default"
+ * toggle, and a remove button. The default favorite gets a subtle highlight +
+ * a home-icon mark so the user knows which screen will open at next login.
+ * --------------------------------------------------------------------------- */
+.profile-section {
+  padding: 10px 12px 6px 14px;
+}
+
+.profile-section-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--labelText);
+  margin-bottom: 6px;
+
+  i-tabler {
+    opacity: 0.9;
+  }
+}
+
+.profile-section-spacer {
+  flex: 1 1 auto;
+}
+
+.profile-section-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: rgba(var(--primary-rgb, 99 102 241), 0.95);
+  background: rgba(var(--primary-rgb, 99 102 241), 0.12);
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+
+.favorites-empty {
+  font-size: 12px;
+  color: var(--labelText);
+  padding: 6px 4px 4px;
+  opacity: 0.85;
+}
+
+.favorites-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.favorite-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 8px;
+  transition: background 0.12s ease;
+
+  &:hover {
+    background: rgba(var(--primary-rgb, 99 102 241), 0.07);
+  }
+
+  &.favorite-default {
+    background: rgba(var(--primary-rgb, 99 102 241), 0.10);
+
+    .favorite-icon {
+      color: rgba(var(--primary-rgb, 99 102 241), 1);
+    }
+  }
+
+  &.favorite-disabled .favorite-go,
+  &.favorite-disabled .favorite-action {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.favorite-go {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  padding: 6px 8px;
+  color: var(--textPrimary);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 8px;
+
+  &:focus-visible {
+    outline: 2px solid rgba(var(--primary-rgb, 99 102 241), 0.6);
+    outline-offset: -2px;
+  }
+}
+
+.favorite-icon {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.favorite-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.favorite-default-mark {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: rgba(var(--primary-rgb, 99 102 241), 1);
+  background: rgba(var(--primary-rgb, 99 102 241), 0.16);
+  border-radius: 999px;
+  padding: 2px 4px;
+}
+
+.favorite-action {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--labelText);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+
+  &:hover {
+    background: rgba(var(--primary-rgb, 99 102 241), 0.14);
+    color: var(--textPrimary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(var(--primary-rgb, 99 102 241), 0.6);
+    outline-offset: -2px;
+  }
+
+  &.favorite-action-remove:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.12);
+  }
+}
+
+.favorite-row.favorite-default .favorite-action-default {
+  color: rgba(var(--primary-rgb, 99 102 241), 1);
+}
+
+.favorites-star-current {
+  margin-top: 8px;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px dashed rgba(var(--primary-rgb, 99 102 241), 0.5);
+  background: transparent;
+  color: rgba(var(--primary-rgb, 99 102 241), 1);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s ease, border-style 0.12s ease;
+
+  &:hover {
+    background: rgba(var(--primary-rgb, 99 102 241), 0.12);
+    border-style: solid;
+  }
+}
+
+/* Scrollbar for the favorites list (matches the notif list look). */
+.favorites-list::-webkit-scrollbar {
+  width: 6px;
+}
+.favorites-list::-webkit-scrollbar-thumb {
+  background: rgba(var(--primary-rgb, 99 102 241), 0.25);
+  border-radius: 999px;
+}
+.favorites-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--primary-rgb, 99 102 241), 0.45);
 }

@@ -15,6 +15,7 @@ import { debounceTime, filter } from 'rxjs/operators';
 import { DashboardDetailDto, QueryDefDto, WidgetDetailDto, WidgetSaveDto } from 'src/app/core/models/settings.models';
 import { SettingsApiService } from 'src/app/services/settings-api.service';
 import { DashboardContextService } from 'src/app/services/dashboard-context.service';
+import { MenuPermissionService } from 'src/app/services/menu-permission.service';
 
 /** Parse JDBC/Oracle numbers that may arrive as strings (with commas / NBSP). */
 function parseNumericLoose(v: unknown): number {
@@ -110,8 +111,27 @@ export class DynamicDashboardViewComponent implements OnInit, OnChanges, OnDestr
 
   constructor(
     private readonly ctx: DashboardContextService,
-    private readonly settingsApi: SettingsApiService
+    private readonly settingsApi: SettingsApiService,
+    private readonly menuPerm: MenuPermissionService
   ) {}
+
+  /**
+   * Filters out quick-action shortcuts pointing to routes the current role can't view. Builder
+   * preview keeps every shortcut so the author can still see what they're editing — the runtime
+   * pass (and only the runtime pass) hides links the JWT matrix forbids.
+   */
+  private filterAccessibleActions<T extends { route?: string | null }>(actions: T[]): T[] {
+    if (this.previewMode) {
+      return actions;
+    }
+    return (actions ?? []).filter((a) => {
+      const r = (a?.route ?? '').toString().trim();
+      if (!r) {
+        return false;
+      }
+      return this.menuPerm.can(r, 'view');
+    });
+  }
 
   /** Runtime dashboard uses `detail`; builder preview uses `previewDetail`. */
   get effectiveDetail(): DashboardDetailDto | null {
@@ -348,7 +368,7 @@ export class DynamicDashboardViewComponent implements OnInit, OnChanges, OnDestr
     }
     try {
       const cfg = JSON.parse(raw) as { actions?: { label: string; route: string }[] };
-      return cfg.actions ?? [];
+      return this.filterAccessibleActions(cfg.actions ?? []);
     } catch {
       return [];
     }
@@ -360,7 +380,7 @@ export class DynamicDashboardViewComponent implements OnInit, OnChanges, OnDestr
     }
     try {
       const cfg = JSON.parse(configJson) as { actions?: { label: string; route: string }[] };
-      this.quickActions = cfg.actions ?? [];
+      this.quickActions = this.filterAccessibleActions(cfg.actions ?? []);
     } catch {
       this.quickActions = [];
     }

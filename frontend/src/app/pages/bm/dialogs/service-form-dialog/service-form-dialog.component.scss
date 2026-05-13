@@ -1,0 +1,19 @@
+.svc-dialog {
+  min-width: min(92vw, 480px);
+  padding-top: 0.25rem;
+}
+
+.full {
+  width: 100%;
+}
+
+.row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.m-b-12 {
+  margin-bottom: 12px;
+  display: block;
+}

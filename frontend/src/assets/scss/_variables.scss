@@ -44,7 +44,7 @@ $font-family: 'Plus Jakarta Sans', sans-serif;
   /* Layout */
   --sidenav-desktop: 270px;
   --sidenav-mini: 80px;
-  --header-height: 70px;
+  --header-height: 64px;
   --boxedWidth: 1500px;
   --direction :ltr;
 
@@ -54,6 +54,44 @@ $font-family: 'Plus Jakarta Sans', sans-serif;
     --mdc-form-field-label-text-color: var(--labelText) !important;
     --mdc-radio-unselected-hover-icon-color:var(--iconColor) !important;
     --mdc-radio-unselected-icon-color:var(--iconColor) !important;
+}
+
+/*
+ * "White" theme — pure white surfaces with a beige (#E8D2B0) accent. Replaces the
+ * previous "Light Blue" preset; the customizer still toggles {@code .white-mode} on
+ * the body so the override below kicks in. {@code --primary} is left as the existing
+ * blue palette because filled buttons depend on a saturated colour; if you want every
+ * accent (link hover, focus ring, tab underline, etc.) to match the beige you can set
+ * {@code --primary: #E8D2B0} but expect lower contrast on white buttons. We instead
+ * route beige through {@code --accent} / {@code --hoverBgColor} / borders so it shows
+ * up on hover and chrome without breaking primary CTAs.
+ */
+body.white-mode {
+  --sidebarbg: #ffffff;
+  --background: #ffffff;
+  --toolbar: #ffffff;
+  --cardbg: #ffffff;
+  --cardshadow: rgba(232, 210, 176, 0.35) 0px 0px 2px 0px,
+    rgba(232, 210, 176, 0.18) 0px 12px 24px -4px;
+  --hoverBgColor: #faf3e8;
+  --textPrimary: #2a3547;
+  --labelText: #2a3547;
+  --iconColor: #2a3547;
+
+  --accent: #E8D2B0;
+  --accent-rgb: 232, 210, 176;
+
+  --light-primary: #faf3e8;
+  --light-accent: #faf3e8;
+
+  --borderColor: #E8D2B0;
+  --borderformColor: #E8D2B0;
+
+  /////Material colors Udjustment///////////
+  --mdc-outlined-text-field-input-text-placeholder-color: var(--labelText) !important;
+  --mdc-form-field-label-text-color: var(--labelText) !important;
+  --mdc-radio-unselected-hover-icon-color: var(--iconColor) !important;
+  --mdc-radio-unselected-icon-color: var(--iconColor) !important;
 }
 
 body.dark-blue-mode {

@@ -13,7 +13,11 @@ spring:
             allowedOrigins:
             - http://localhost:4200
             allowedMethods:
+            - GET
             - POST
+            - PUT
+            - DELETE
+            - OPTIONS
             allowedHeaders: '*'
             allowCredentials: true
       default-filters:
@@ -58,6 +62,21 @@ spring:
         - AuthenticationPreFilter
         - StripPrefix=1
 
+      - id: bm
+        uri: lb://bm
+        predicates:
+        - Path=/bm/**
+        filters:
+        - AuthenticationPreFilter
+        - StripPrefix=1
+
+      - id: broadcast
+        uri: lb://broadcast
+        predicates:
+        - Path=/broadcast/**
+        filters:
+        - AuthenticationPreFilter
+        - StripPrefix=1
 eureka:
   client:
     service-url:

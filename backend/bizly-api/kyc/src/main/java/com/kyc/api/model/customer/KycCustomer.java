@@ -20,6 +20,10 @@ public class KycCustomer {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	/** Tenant scope. Every read/write must filter or set this column. */
+	@Column(name = "business_id")
+	private Long businessId;
+
 	private String firstName;
 	private String lastName;
 	private String fullName;
@@ -49,6 +53,12 @@ public class KycCustomer {
 
 	@Column(name = "customer_status")
 	private String customerStatus;
+
+	@Column(name = "notif_welcome_flag")
+	private Integer notifWelcomeFlag = 0;
+
+	@Column(name = "notif_welcome_status")
+	private Integer notifWelcomeStatus = 0;
 
 	private LocalDateTime createdAt;
 
@@ -171,5 +181,24 @@ public class KycCustomer {
 	public void setCreatedAt(LocalDateTime createdAt) {
 		this.createdAt = createdAt;
 	}
+
+	public Integer getNotifWelcomeFlag() {
+		return notifWelcomeFlag;
+	}
+
+	public void setNotifWelcomeFlag(Integer notifWelcomeFlag) {
+		this.notifWelcomeFlag = notifWelcomeFlag;
+	}
+
+	public Integer getNotifWelcomeStatus() {
+		return notifWelcomeStatus;
+	}
+
+	public void setNotifWelcomeStatus(Integer notifWelcomeStatus) {
+		this.notifWelcomeStatus = notifWelcomeStatus;
+	}
+
+	public Long getBusinessId() { return businessId; }
+	public void setBusinessId(Long businessId) { this.businessId = businessId; }
 
 }

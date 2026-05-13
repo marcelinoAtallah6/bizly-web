@@ -1,0 +1,167 @@
+.gcs {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-right: 12px;
+  /*
+   * `isolation: isolate` gives the trigger its own stacking context so the focus ring
+   * and any inner z-indexes are scoped here — the floating panel is `position: fixed`
+   * so it intentionally escapes this context.
+   */
+  isolation: isolate;
+}
+
+.gcs-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(47, 95, 255, 0.08);
+  color: #1a2240;
+  font-weight: 600;
+  font-size: 13px;
+  border: 1px solid rgba(47, 95, 255, 0.15);
+  cursor: pointer;
+  transition: background 180ms ease, border-color 180ms ease;
+}
+
+.gcs-trigger:hover {
+  background: rgba(47, 95, 255, 0.14);
+}
+
+.gcs-trigger.is-active {
+  background: linear-gradient(135deg, #2f5fff, #6690ff);
+  border-color: transparent;
+  color: #ffffff;
+}
+
+.gcs-trigger.is-active i-tabler {
+  color: #ffffff;
+}
+
+.gcs-label {
+  max-width: 180px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.gcs-panel {
+  /*
+   * `position: fixed` with JS-computed `top` + `left` + `width` so the panel clears the
+   * left `mat-sidenav` (right-only anchoring left the panel edge under the drawer).
+   * z-index above Material drawer / backdrop stacks (typically under 1000).
+   */
+  position: fixed;
+  max-width: calc(100vw - 16px);
+  max-height: min(420px, calc(100vh - 88px));
+  display: flex;
+  flex-direction: column;
+  background: var(--cardbg, #ffffff);
+  color: var(--textPrimary, #1a2240);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(20, 30, 60, 0.18);
+  border: 1px solid var(--borderColor, #eef0f7);
+  z-index: 10001;
+  overflow: hidden;
+}
+
+@media (max-width: 600px) {
+  .gcs-panel {
+    max-height: min(60vh, calc(100vh - 72px));
+  }
+}
+
+.gcs-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  font-weight: 700;
+  color: var(--textPrimary, #1a2240);
+  font-size: 14px;
+  border-bottom: 1px solid var(--borderColor, #eef0f7);
+}
+
+.gcs-clear {
+  background: transparent;
+  border: 0;
+  color: #2f5fff;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+.gcs-clear:hover {
+  background: rgba(47, 95, 255, 0.08);
+}
+
+.gcs-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--borderColor, #eef0f7);
+}
+
+.gcs-search i-tabler {
+  color: var(--bodytext, #6d7794);
+}
+
+.gcs-search input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 13.5px;
+  color: var(--textPrimary, #1a2240);
+}
+
+.gcs-list {
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.gcs-item {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.gcs-item:hover {
+  background: rgba(47, 95, 255, 0.08);
+}
+
+.gcs-item.is-selected {
+  background: rgba(47, 95, 255, 0.14);
+}
+
+.gcs-item-name {
+  font-weight: 600;
+  color: var(--textPrimary, #1a2240);
+  font-size: 14px;
+}
+
+.gcs-item-meta {
+  font-size: 12px;
+  color: var(--bodytext, #6d7794);
+}
+
+.gcs-hint,
+.gcs-empty,
+.gcs-loading {
+  padding: 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--bodytext, #6d7794);
+}

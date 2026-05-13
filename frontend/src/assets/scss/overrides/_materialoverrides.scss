@@ -10,6 +10,11 @@ html {
   @import "./checkbox";
 }
 
+/* Overlay surfaces (tooltips, menus, datepickers, chart tooltips) live at
+ * <body> level via cdk-overlay-container, so they must be themed outside the
+ * `html { … }` block above. */
+@import "./overlays";
+
 .topbar {
   background-color: var(--toolbar);
   // position: fixed !important;

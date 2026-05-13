@@ -366,6 +366,11 @@ export class DashboardbuilderComponent implements OnInit, OnDestroy, AfterViewIn
     return a === b;
   }
 
+  /** mat-select multiple compares selected strings to mat-option values */
+  compareGrantRoleVal(a: string, b: string): boolean {
+    return (a ?? '').trim().toLowerCase() === (b ?? '').trim().toLowerCase();
+  }
+
   compareQueryDefId(o1: number | null | undefined, o2: number | null | undefined): boolean {
     return (o1 ?? null) === (o2 ?? null);
   }
@@ -507,12 +512,34 @@ export class DashboardbuilderComponent implements OnInit, OnDestroy, AfterViewIn
   }
 
   onUserPicked(event: MatAutocompleteSelectedEvent): void {
-    const u = event.option.value as GetUserResponse;
-    if (u?.username && !this.selectedUsernames.includes(u.username)) {
-      this.selectedUsernames = [...this.selectedUsernames, u.username];
+    const raw = event.option?.value;
+    const username = typeof raw === 'string' ? raw.trim() : (raw as GetUserResponse | undefined)?.username?.trim();
+    if (username && !this.selectedUsernames.includes(username)) {
+      this.selectedUsernames = [...this.selectedUsernames, username];
     }
     this.userSearchTerm = '';
     this.applyUserFilter();
+  }
+
+  /** Show label in the input after picking a user (avoids "[object Object]"). */
+  displayPickedUser = (value: string | null): string => {
+    if (value == null || value === '') {
+      return '';
+    }
+    const u = this.userCatalog.find((x) => x.username === value);
+    return u ? `${u.username} — ${u.email ?? ''}` : value;
+  };
+
+  /** Strip Spring-style ROLE_ prefix so mat-select matches UM role names. */
+  private normalizeRoleNameForSelect(raw: string | null | undefined): string {
+    if (raw == null) {
+      return '';
+    }
+    let t = String(raw).trim();
+    if (t.length > 5 && t.toUpperCase().startsWith('ROLE_')) {
+      t = t.substring(5);
+    }
+    return t;
   }
 
   removeUsername(name: string): void {
@@ -611,7 +638,7 @@ export class DashboardbuilderComponent implements OnInit, OnDestroy, AfterViewIn
   private mergeUnknownRoles(grants: string[]): void {
     const known = new Set(this.allRoles.map((r) => r.name.toUpperCase()));
     for (const g of grants) {
-      const gn = (g || '').trim();
+      const gn = this.normalizeRoleNameForSelect(g);
       if (!gn) {
         continue;
       }
@@ -630,7 +657,7 @@ export class DashboardbuilderComponent implements OnInit, OnDestroy, AfterViewIn
     this.slug = d.slug;
     this.description = d.description ?? '';
     this.builtin = !!d.builtin;
-    this.selectedGrantRoles = [...(d.grantRoles ?? [])];
+    this.selectedGrantRoles = (d.grantRoles ?? []).map((g) => this.normalizeRoleNameForSelect(g)).filter(Boolean);
     this.selectedUsernames = [...(d.grantUsernames ?? [])];
     this.widgets =
       d.widgets?.map((w, i) => ({

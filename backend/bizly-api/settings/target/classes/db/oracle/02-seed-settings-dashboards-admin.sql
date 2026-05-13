@@ -95,6 +95,8 @@ DECLARE
   d_audit            NUMBER;
   d_quick            NUMBER;
 
+  v_admin_type       NUMBER;
+
   PROCEDURE ins_query(p_name VARCHAR2, p_desc VARCHAR2, p_sql CLOB, p_id OUT NUMBER) IS
   BEGIN
     INSERT INTO UM.SETTINGS_QUERY_DEF (NAME, DESCRIPTION, SQL_TEXT)
@@ -125,6 +127,18 @@ DECLARE
   END;
 
 BEGIN
+  /* Resolve the role_type for ADMIN once; grants are keyed on role_type (stable across renames). */
+  BEGIN
+    SELECT ROLE_TYPE INTO v_admin_type
+      FROM UM.UM_ROLE
+     WHERE UPPER(TRIM(NAME)) = 'ADMIN'
+       AND ROLE_TYPE IS NOT NULL
+       AND ROWNUM = 1;
+  EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+      RAISE_APPLICATION_ERROR(-20001, 'Seed aborted: no UM_ROLE named ADMIN with a ROLE_TYPE configured.');
+  END;
+
   /* ---------- Queries: Customer ---------- */
   ins_query(
     'SEED_Q_CUST_TOTAL',
@@ -455,7 +469,7 @@ BEGIN
   ins_widget(d_cust, 'TABLE', 'Customer acquisition trend', q_cust_growth, NULL, 4, 1, 4, 2, 5);
   ins_widget(d_cust, 'TABLE', 'Top 10 customers by purchases', q_cust_top10, NULL, 0, 3, 8, 2, 6);
 
-  INSERT INTO UM.SETTINGS_DASH_ROLE_GRANT (DASHBOARD_ID, ROLE_NAME) VALUES (d_cust, 'ADMIN');
+  INSERT INTO UM.SETTINGS_DASH_ROLE_GRANT (DASHBOARD_ID, ROLE_TYPE) VALUES (d_cust, v_admin_type);
 
   /* ---------- Dashboard 2: Payment & sales ---------- */
   INSERT INTO UM.SETTINGS_DASHBOARD (NAME, SLUG, DESCRIPTION, IS_BUILTIN)
@@ -476,7 +490,7 @@ BEGIN
   ins_widget(d_pay, 'TABLE', 'Top selling products', q_top_products, NULL, 0, 3, 4, 2, 7);
   ins_widget(d_pay, 'TABLE', 'Weekly revenue (heatmap substitute)', q_sales_weekly, NULL, 4, 3, 4, 2, 8);
 
-  INSERT INTO UM.SETTINGS_DASH_ROLE_GRANT (DASHBOARD_ID, ROLE_NAME) VALUES (d_pay, 'ADMIN');
+  INSERT INTO UM.SETTINGS_DASH_ROLE_GRANT (DASHBOARD_ID, ROLE_TYPE) VALUES (d_pay, v_admin_type);
 
   /* ---------- Dashboard 3: Stock ---------- */
   INSERT INTO UM.SETTINGS_DASHBOARD (NAME, SLUG, DESCRIPTION, IS_BUILTIN)
@@ -495,7 +509,7 @@ BEGIN
   ins_widget(d_stock, 'TABLE', 'Slow / no movement (90d)', q_slow_moving, NULL, 4, 3, 4, 2, 5);
   ins_widget(d_stock, 'TABLE', 'Category distribution (placeholder)', q_cat_dist, NULL, 0, 5, 8, 2, 6);
 
-  INSERT INTO UM.SETTINGS_DASH_ROLE_GRANT (DASHBOARD_ID, ROLE_NAME) VALUES (d_stock, 'ADMIN');
+  INSERT INTO UM.SETTINGS_DASH_ROLE_GRANT (DASHBOARD_ID, ROLE_TYPE) VALUES (d_stock, v_admin_type);
 
   /* ---------- Dashboard 4: UM activity ---------- */
   INSERT INTO UM.SETTINGS_DASHBOARD (NAME, SLUG, DESCRIPTION, IS_BUILTIN)
@@ -514,7 +528,7 @@ BEGIN
   ins_widget(d_um, 'TABLE', 'Role distribution', q_roles_dist, NULL, 0, 1, 4, 2, 5);
   ins_widget(d_um, 'TABLE', 'Login / audit activity by hour', q_login_hours, NULL, 4, 1, 4, 2, 6);
 
-  INSERT INTO UM.SETTINGS_DASH_ROLE_GRANT (DASHBOARD_ID, ROLE_NAME) VALUES (d_um, 'ADMIN');
+  INSERT INTO UM.SETTINGS_DASH_ROLE_GRANT (DASHBOARD_ID, ROLE_TYPE) VALUES (d_um, v_admin_type);
 
   /* ---------- Dashboard 5: Audit & security ---------- */
   INSERT INTO UM.SETTINGS_DASHBOARD (NAME, SLUG, DESCRIPTION, IS_BUILTIN)
@@ -532,7 +546,7 @@ BEGIN
   ins_widget(d_audit, 'TABLE', 'Most active users', q_audit_user_rank, NULL, 4, 3, 4, 2, 4);
   ins_widget(d_audit, 'TABLE', 'Audit timeline (hour × day)', q_audit_hourly, NULL, 0, 5, 8, 2, 5);
 
-  INSERT INTO UM.SETTINGS_DASH_ROLE_GRANT (DASHBOARD_ID, ROLE_NAME) VALUES (d_audit, 'ADMIN');
+  INSERT INTO UM.SETTINGS_DASH_ROLE_GRANT (DASHBOARD_ID, ROLE_TYPE) VALUES (d_audit, v_admin_type);
 
   /* ---------- Dashboard 6: Quick actions ---------- */
   INSERT INTO UM.SETTINGS_DASHBOARD (NAME, SLUG, DESCRIPTION, IS_BUILTIN)
@@ -556,7 +570,7 @@ BEGIN
     0
   );
 
-  INSERT INTO UM.SETTINGS_DASH_ROLE_GRANT (DASHBOARD_ID, ROLE_NAME) VALUES (d_quick, 'ADMIN');
+  INSERT INTO UM.SETTINGS_DASH_ROLE_GRANT (DASHBOARD_ID, ROLE_TYPE) VALUES (d_quick, v_admin_type);
 
   COMMIT;
 END;

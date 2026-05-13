@@ -11,6 +11,8 @@ public interface SettingsDashboardUserGrantRepository extends JpaRepository<Sett
 
 	List<SettingsDashboardUserGrant> findByIdDashboardId(Long dashboardId);
 
+	long countByIdDashboardId(Long dashboardId);
+
 	void deleteByIdDashboardId(Long dashboardId);
 
 	List<SettingsDashboardUserGrant> findByIdUsernameIgnoreCase(String username);

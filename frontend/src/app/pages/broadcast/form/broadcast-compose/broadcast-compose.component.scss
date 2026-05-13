@@ -1,0 +1,157 @@
+:host {
+  display: block;
+  color: var(--textPrimary);
+}
+
+.broadcast-page {
+  padding: 24px;
+}
+
+.broadcast-card__content {
+  padding: 16px;
+}
+
+.broadcast-form__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.broadcast-form__full {
+  grid-column: 1 / -1;
+}
+
+.broadcast-form__col {
+  grid-column: 1 / -1;
+}
+
+.broadcast-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+
+.broadcast-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.broadcast-body__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.broadcast-body__label {
+  font-weight: 600;
+  color: var(--textPrimary);
+}
+
+.broadcast-body__hint {
+  color: var(--textPrimary);
+  opacity: 0.72;
+}
+
+.broadcast-body__hint code {
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  background: var(--hoverBgColor);
+  border: 1px solid var(--borderColor);
+  color: var(--textPrimary);
+}
+
+.broadcast-body__editor {
+  background: var(--cardbg);
+  border: 1px solid var(--borderColor);
+  border-radius: 10px;
+  box-shadow: var(--cardshadow);
+  overflow: hidden;
+}
+
+.broadcast-body__error {
+  color: var(--error);
+  font-size: 12px;
+}
+
+/* CKEditor 4 chrome: follow app shell (light / dark / dark-blue). */
+:host ::ng-deep .broadcast-editor .cke_chrome {
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+:host ::ng-deep .broadcast-editor .cke_inner {
+  background: var(--cardbg);
+}
+
+:host ::ng-deep .broadcast-editor .cke_top {
+  border: none;
+  border-bottom: 1px solid var(--borderColor);
+  border-radius: 0;
+  background: var(--hoverBgColor);
+}
+
+:host ::ng-deep .broadcast-editor .cke_bottom {
+  border: none;
+  background: var(--hoverBgColor);
+}
+
+:host ::ng-deep .broadcast-editor .cke_contents {
+  font-size: 16px;
+  line-height: 1.6;
+  background: var(--cardbg);
+}
+
+/* iframe / inline editing surface — inner document sets its own bg via contentsCss + body class */
+:host ::ng-deep .broadcast-editor .cke_wysiwyg_frame,
+:host ::ng-deep .broadcast-editor .cke_wysiwyg_div {
+  background: transparent;
+}
+
+/* Default moono-lisa icons are dark; lift contrast on dark toolbars */
+body.dark-mode :host ::ng-deep .broadcast-editor .cke_button_icon,
+body.dark-blue-mode :host ::ng-deep .broadcast-editor .cke_button_icon {
+  filter: brightness(1.35) contrast(1.05);
+}
+
+body.dark-mode :host ::ng-deep .broadcast-editor .cke_combo_button,
+body.dark-blue-mode :host ::ng-deep .broadcast-editor .cke_combo_button {
+  filter: brightness(1.2);
+}
+
+@media (max-width: 600px) {
+  :host ::ng-deep .broadcast-editor .cke_contents {
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 900px) {
+  .broadcast-form__grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 16px;
+  }
+  .broadcast-form__col {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 600px) {
+  .broadcast-page {
+    padding: 12px;
+  }
+  .broadcast-card__content {
+    padding: 12px;
+  }
+  .broadcast-form__actions {
+    justify-content: stretch;
+  }
+  .broadcast-form__actions > button {
+    flex: 1 1 auto;
+  }
+}

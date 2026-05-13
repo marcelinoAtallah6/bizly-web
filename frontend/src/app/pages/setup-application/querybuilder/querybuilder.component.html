@@ -34,6 +34,54 @@
             <div #monacoCreateContainer class="monaco-host"></div>
           </div>
 
+          <!-- Visibility: who can see / use this query (mirrors Dashboard & Report Builders). -->
+          <div class="qb-visibility">
+            <div class="qb-section-label d-flex align-items-center justify-content-between">
+              <span>Visibility</span>
+              <span class="text-muted f-s-12">
+                Empty = global to your business. Granting roles / users restricts who can use this
+                query (admins always bypass).
+              </span>
+            </div>
+
+            <mat-form-field appearance="outline" class="w-100 m-t-8">
+              <mat-label>Grant roles</mat-label>
+              <mat-select multiple [(ngModel)]="selectedGrantRoles" placeholder="Select roles">
+                <mat-option *ngFor="let r of allRoles" [value]="r.name">{{ r.name }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-100 m-t-8">
+              <mat-label>Grant specific users</mat-label>
+              <input
+                matInput
+                [(ngModel)]="userSearchTerm"
+                (ngModelChange)="onUserSearchChange($event)"
+                [matAutocomplete]="qbAutoUsers"
+                placeholder="Type username, email, or name"
+              />
+              <mat-autocomplete #qbAutoUsers="matAutocomplete" (optionSelected)="onUserPicked($event)">
+                <mat-option *ngFor="let u of filteredUsersForPick" [value]="u">
+                  {{ u.username }} — {{ u.email }}
+                </mat-option>
+              </mat-autocomplete>
+              <mat-hint *ngIf="loadingUsers">Loading users…</mat-hint>
+              <mat-hint *ngIf="!loadingUsers">{{ userCatalog.length }} users available for search.</mat-hint>
+            </mat-form-field>
+
+            <div class="qb-grants m-t-8" *ngIf="selectedUsernames.length">
+              <span class="text-muted f-s-12 m-r-8">Granted users:</span>
+              <mat-chip-set>
+                <mat-chip-row *ngFor="let name of selectedUsernames" (removed)="removeUsername(name)">
+                  {{ name }}
+                  <button matChipRemove [attr.aria-label]="'Remove ' + name">
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                </mat-chip-row>
+              </mat-chip-set>
+            </div>
+          </div>
+
           <div class="qb-actions">
             <button
               mat-stroked-button

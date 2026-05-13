@@ -30,6 +30,26 @@ public class Role {
 	@Column(name = "created_at")
 	private LocalDateTime createdAt;
 
+	@Column(name = "role_level_id")
+	private Long roleLevelId;
+
+	@Column(name = "is_default_for_registration")
+	private Integer isDefaultForRegistration;
+
+	@Column(name = "is_system_restricted")
+	private Integer isSystemRestricted;
+
+	public Long getRoleLevelId() { return roleLevelId; }
+	public void setRoleLevelId(Long roleLevelId) { this.roleLevelId = roleLevelId; }
+
+	public Integer getIsDefaultForRegistration() { return isDefaultForRegistration; }
+	public void setIsDefaultForRegistration(Integer v) { this.isDefaultForRegistration = v; }
+	public boolean isDefaultForRegistration() { return isDefaultForRegistration != null && isDefaultForRegistration == 1; }
+
+	public Integer getIsSystemRestricted() { return isSystemRestricted; }
+	public void setIsSystemRestricted(Integer v) { this.isSystemRestricted = v; }
+	public boolean isSystemRestricted() { return isSystemRestricted != null && isSystemRestricted == 1; }
+
 	public Long getId() {
 		return id;
 	}

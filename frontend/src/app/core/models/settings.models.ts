@@ -42,6 +42,10 @@ export interface QueryDefDto {
   description?: string;
   sqlText: string;
   parametersJson?: string | null;
+  /** Role names granted access; empty = open to anyone in the tenant. */
+  grantRoles?: string[];
+  /** Specific usernames granted access; empty = open to anyone in the tenant. */
+  grantUsernames?: string[];
 }
 
 /** Matches backend DashboardSaveRequest / WidgetDto */

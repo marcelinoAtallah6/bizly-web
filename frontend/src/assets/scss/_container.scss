@@ -51,7 +51,7 @@ html .mat-drawer-container {
 
 .pageWrapper {
   // padding: 15px;
-  min-height: calc(100vh - 70px); /* Adjusts the height to account for the fixed topbar */
+  min-height: calc(100vh - var(--header-height)); /* Toolbar / header band */
   margin: 0 auto;
   // max-width: var(--boxedWidth);
   // margin-top: 70px; /* Ensures the content starts below the topbar */

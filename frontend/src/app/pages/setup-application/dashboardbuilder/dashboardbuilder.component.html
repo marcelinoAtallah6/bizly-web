@@ -47,7 +47,12 @@
 
     <mat-form-field appearance="outline" class="w-100 m-t-16">
       <mat-label>Grant roles</mat-label>
-      <mat-select multiple [(ngModel)]="selectedGrantRoles" placeholder="Select roles">
+      <mat-select
+        multiple
+        [(ngModel)]="selectedGrantRoles"
+        [compareWith]="compareGrantRoleVal"
+        placeholder="Select roles"
+      >
         <mat-option *ngFor="let r of allRoles" [value]="r.name">{{ r.name }}</mat-option>
       </mat-select>
       <mat-hint>Roles from User Management (full catalog loaded).</mat-hint>
@@ -62,8 +67,12 @@
         [matAutocomplete]="autoUsers"
         placeholder="Type username, email, or name"
       />
-      <mat-autocomplete #autoUsers="matAutocomplete" (optionSelected)="onUserPicked($event)">
-        <mat-option *ngFor="let u of filteredUsersForPick" [value]="u">{{ u.username }} — {{ u.email }}</mat-option>
+      <mat-autocomplete
+        #autoUsers="matAutocomplete"
+        [displayWith]="displayPickedUser"
+        (optionSelected)="onUserPicked($event)"
+      >
+        <mat-option *ngFor="let u of filteredUsersForPick" [value]="u.username">{{ u.username }} — {{ u.email }}</mat-option>
       </mat-autocomplete>
       <mat-hint *ngIf="loadingUsers">Loading users…</mat-hint>
       <mat-hint *ngIf="!loadingUsers">{{ userCatalog.length }} users prefetched for search (paged from UM).</mat-hint>

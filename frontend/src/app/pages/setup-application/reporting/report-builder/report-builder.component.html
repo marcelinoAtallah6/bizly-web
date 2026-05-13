@@ -1,0 +1,387 @@
+<section class="rb-page">
+  <header class="rb-page__head">
+    <div>
+      <h2 class="rb-page__title">Report Builder</h2>
+      <p class="rb-page__intro text-muted f-s-14">
+        Build reports on top of saved Query Builder queries. Each report exposes
+        filters mapped to the query's named parameters and shows up in the
+        sidebar's <strong>Reports</strong> section once you save it as active.
+      </p>
+    </div>
+  </header>
+
+  <div class="rb-page__layout">
+    <!-- Left: form -->
+    <mat-card class="rb-panel rb-panel--editor">
+      <mat-card-header class="rb-panel__header">
+        <mat-card-title>{{ editingId ? 'Edit report' : 'New report' }}</mat-card-title>
+        <button mat-button type="button" (click)="resetForm()" *ngIf="editingId">
+          <i-tabler name="plus" class="icon-16 mr-4"></i-tabler>
+          New report
+        </button>
+      </mat-card-header>
+
+      <mat-card-content class="rb-panel__content">
+        <div class="rb-grid">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Name</mat-label>
+            <input matInput [(ngModel)]="name" maxlength="200" placeholder="e.g. Sales summary" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Code (slug — auto-generated)</mat-label>
+            <input matInput [(ngModel)]="code" maxlength="120" placeholder="sales-summary" />
+            <mat-hint>Leave blank to derive from the name.</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-label>Description</mat-label>
+          <textarea matInput [(ngModel)]="description" rows="2" maxlength="500"></textarea>
+        </mat-form-field>
+
+        <div class="rb-grid">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Linked query</mat-label>
+            <mat-select [(ngModel)]="queryDefId" required>
+              <mat-option *ngIf="loadingQueries" disabled>Loading queries…</mat-option>
+              <mat-option *ngFor="let q of queries" [value]="q.id">{{ q.name }}</mat-option>
+            </mat-select>
+            <mat-hint>Pick from saved queries in Query Builder.</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Icon</mat-label>
+            <mat-select [(ngModel)]="icon">
+              <mat-option *ngFor="let i of availableIcons" [value]="i">
+                <span class="rb-icon-row">
+                  <i-tabler [name]="i" class="icon-18 mr-8"></i-tabler>
+                  <span>{{ i }}</span>
+                </span>
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="rb-grid rb-grid--3">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Status</mat-label>
+            <mat-select [(ngModel)]="status">
+              <mat-option value="ACTIVE">Active</mat-option>
+              <mat-option value="INACTIVE">Inactive</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Sort order (sidebar)</mat-label>
+            <input matInput type="number" [(ngModel)]="sortOrder" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Default sort direction</mat-label>
+            <mat-select [(ngModel)]="defaultSortDir">
+              <mat-option value="DESC">Descending</mat-option>
+              <mat-option value="ASC">Ascending</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-label>Default sort column (use a column name from the query)</mat-label>
+          <input matInput [(ngModel)]="defaultSortKey" placeholder="e.g. CREATED_AT" />
+        </mat-form-field>
+
+        <!-- Filters editor -->
+        <div class="rb-section">
+          <div class="rb-section__head">
+            <h4>Filters</h4>
+            <button mat-stroked-button type="button" (click)="addFilter()">
+              <i-tabler name="plus" class="icon-16 mr-4"></i-tabler>
+              Add filter
+            </button>
+          </div>
+
+          <p class="text-muted f-s-12" *ngIf="!filters.length">
+            No filters yet. Each filter binds to one (or two, for date ranges) named
+            placeholders in the linked SQL, e.g. <code>:fromDate</code>. Use
+            <code>(:param IS NULL OR col = :param)</code> for optional filters.
+          </p>
+
+          <div
+            class="rb-filter"
+            *ngFor="let f of filters; let i = index; trackBy: trackByFilterIndex"
+          >
+            <div class="rb-filter__row">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="rb-filter__cell">
+                <mat-label>Key (UI)</mat-label>
+                <input matInput [(ngModel)]="f.key" maxlength="80" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="rb-filter__cell">
+                <mat-label>Label</mat-label>
+                <input matInput [(ngModel)]="f.label" maxlength="120" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="rb-filter__cell">
+                <mat-label>Type</mat-label>
+                <mat-select [(ngModel)]="f.type" (selectionChange)="onFilterTypeChange(f)">
+                  <mat-option *ngFor="let t of filterTypes" [value]="t">{{ t }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <div class="rb-filter__actions">
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Move up"
+                  (click)="moveFilter(i, -1)"
+                  [disabled]="i === 0"
+                >
+                  <i-tabler name="chevron-up" class="icon-18"></i-tabler>
+                </button>
+                <button
+                  mat-icon-button
+                  type="button"
+                  matTooltip="Move down"
+                  (click)="moveFilter(i, 1)"
+                  [disabled]="i === filters.length - 1"
+                >
+                  <i-tabler name="chevron-down" class="icon-18"></i-tabler>
+                </button>
+                <button
+                  mat-icon-button
+                  color="warn"
+                  type="button"
+                  matTooltip="Remove"
+                  (click)="removeFilter(i)"
+                >
+                  <i-tabler name="trash" class="icon-18"></i-tabler>
+                </button>
+              </div>
+            </div>
+
+            <div class="rb-filter__row" *ngIf="f.type === 'DATE_RANGE'">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="rb-filter__cell">
+                <mat-label>From param name</mat-label>
+                <input matInput [(ngModel)]="f.fromParamName" placeholder=":fromDate" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="rb-filter__cell">
+                <mat-label>To param name</mat-label>
+                <input matInput [(ngModel)]="f.toParamName" placeholder=":toDate" />
+              </mat-form-field>
+            </div>
+
+            <div class="rb-filter__row" *ngIf="f.type !== 'DATE_RANGE'">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="rb-filter__cell">
+                <mat-label>Param name (binds to :{{ f.paramName || 'name' }})</mat-label>
+                <input matInput [(ngModel)]="f.paramName" placeholder="username" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic" class="rb-filter__cell">
+                <mat-label>Placeholder (optional)</mat-label>
+                <input matInput [(ngModel)]="f.placeholder" maxlength="160" />
+              </mat-form-field>
+            </div>
+
+            <div class="rb-options" *ngIf="f.type === 'SELECT'">
+              <div class="rb-options__head">
+                <span class="text-muted f-s-12">Options</span>
+                <button mat-button type="button" (click)="addOption(f)">
+                  <i-tabler name="plus" class="icon-16 mr-4"></i-tabler>
+                  Add option
+                </button>
+              </div>
+              <div
+                class="rb-option-row"
+                *ngFor="let opt of f.options; let oi = index; trackBy: trackByOptionIndex"
+              >
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                  <mat-label>Value</mat-label>
+                  <input matInput [(ngModel)]="opt.value" />
+                </mat-form-field>
+                <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                  <mat-label>Label</mat-label>
+                  <input matInput [(ngModel)]="opt.label" />
+                </mat-form-field>
+                <button mat-icon-button color="warn" type="button" (click)="removeOption(f, oi)">
+                  <i-tabler name="trash" class="icon-18"></i-tabler>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Columns -->
+        <div class="rb-section">
+          <div class="rb-section__head">
+            <h4>Columns</h4>
+            <mat-checkbox [(ngModel)]="autoDetectColumns">
+              Auto-detect from the linked query on save
+            </mat-checkbox>
+          </div>
+          <p class="text-muted f-s-12" *ngIf="!detectedColumns.length">
+            Columns will be detected when you save (the server runs your query
+            with NULL binds and reads the result-set metadata).
+          </p>
+          <div class="rb-cols" *ngIf="detectedColumns.length">
+            <span class="rb-col-chip" *ngFor="let c of detectedColumns">
+              <i-tabler name="columns" class="icon-14 mr-4"></i-tabler>
+              <span>{{ c.label }}</span>
+              <small class="text-muted">{{ c.key }}</small>
+            </span>
+          </div>
+        </div>
+
+        <!-- Visibility — who can see this report (role/user grants) -->
+        <div class="rb-section">
+          <div class="rb-section__head">
+            <h4>Visibility</h4>
+            <span class="text-muted f-s-12">
+              Leave both empty for "Global" (everyone in your business). Granting roles or users
+              restricts the report to the listed recipients (admins always see everything).
+            </span>
+          </div>
+
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Grant roles</mat-label>
+            <mat-select multiple [(ngModel)]="selectedGrantRoles" placeholder="Select roles">
+              <mat-option *ngFor="let r of allRoles" [value]="r.name">{{ r.name }}</mat-option>
+            </mat-select>
+            <mat-hint>Anyone with one of these roles will see this report.</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-100 m-t-8">
+            <mat-label>Grant specific users</mat-label>
+            <input
+              matInput
+              [(ngModel)]="userSearchTerm"
+              (ngModelChange)="onUserSearchChange($event)"
+              [matAutocomplete]="rbAutoUsers"
+              placeholder="Type username, email, or name"
+            />
+            <mat-autocomplete #rbAutoUsers="matAutocomplete" (optionSelected)="onUserPicked($event)">
+              <mat-option *ngFor="let u of filteredUsersForPick" [value]="u">
+                {{ u.username }} — {{ u.email }}
+              </mat-option>
+            </mat-autocomplete>
+            <mat-hint *ngIf="loadingUsers">Loading users…</mat-hint>
+            <mat-hint *ngIf="!loadingUsers">{{ userCatalog.length }} users prefetched for search.</mat-hint>
+          </mat-form-field>
+
+          <div class="rb-grants" *ngIf="selectedUsernames.length">
+            <span class="text-muted f-s-12 mr-8">Granted users:</span>
+            <mat-chip-set>
+              <mat-chip-row *ngFor="let name of selectedUsernames" (removed)="removeUsername(name)">
+                {{ name }}
+                <button matChipRemove [attr.aria-label]="'Remove ' + name">
+                  <i-tabler name="x" class="icon-14"></i-tabler>
+                </button>
+              </mat-chip-row>
+            </mat-chip-set>
+          </div>
+        </div>
+      </mat-card-content>
+
+      <mat-card-actions class="rb-panel__actions">
+        <button
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="save()"
+          [disabled]="!canSave()"
+        >
+          <i-tabler name="device-floppy" class="icon-18 mr-4"></i-tabler>
+          {{ editingId ? 'Update report' : 'Save report' }}
+        </button>
+        <button mat-stroked-button type="button" (click)="resetForm()" *ngIf="editingId">
+          Cancel
+        </button>
+        <button
+          mat-stroked-button
+          color="accent"
+          type="button"
+          (click)="openRunnerForEditing()"
+          *ngIf="editingId"
+        >
+          <i-tabler name="player-play" class="icon-18 mr-4"></i-tabler>
+          Run this report
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <!-- Right: saved list -->
+    <mat-card class="rb-panel rb-panel--list">
+      <mat-card-header class="rb-panel__header">
+        <mat-card-title>Saved reports</mat-card-title>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="rb-search">
+          <mat-label>Search by name</mat-label>
+          <input matInput [formControl]="nameSearchCtrl" placeholder="filter…" />
+          <i-tabler matSuffix name="search" class="icon-18 text-muted"></i-tabler>
+        </mat-form-field>
+      </mat-card-header>
+
+      <mat-card-content class="rb-panel__content rb-list">
+        <div class="rb-list__loading" *ngIf="loadingReports">
+          <mat-progress-spinner mode="indeterminate" diameter="32"></mat-progress-spinner>
+        </div>
+
+        <ng-container *ngIf="!loadingReports">
+          <div class="rb-empty" *ngIf="!reports.length">
+            <i-tabler name="report-off" class="icon-48 text-muted"></i-tabler>
+            <p class="text-muted f-s-13">No reports yet — use the form on the left to create one.</p>
+          </div>
+
+          <div class="rb-row" *ngFor="let r of reports; trackBy: trackByReportId">
+            <div class="rb-row__icon">
+              <i-tabler [name]="r.icon || 'report'"></i-tabler>
+            </div>
+            <div class="rb-row__meta">
+              <div class="rb-row__title">
+                <span>{{ r.name }}</span>
+                <span class="rb-status" [class.is-inactive]="r.status === 'INACTIVE'">
+                  {{ r.status }}
+                </span>
+              </div>
+              <div class="rb-row__sub text-muted f-s-12">
+                <span *ngIf="r.queryDefName">Query: <strong>{{ r.queryDefName }}</strong></span>
+                <span *ngIf="r.code"> · code: {{ r.code }}</span>
+                <span *ngIf="(r.filters?.length || 0) > 0"> · {{ r.filters?.length }} filter(s)</span>
+                <span *ngIf="!(r.grantRoles?.length || r.grantUsernames?.length)"> · visibility: <strong>Global</strong></span>
+                <span *ngIf="(r.grantRoles?.length || 0) > 0"> · roles: <strong>{{ r.grantRoles?.length }}</strong></span>
+                <span *ngIf="(r.grantUsernames?.length || 0) > 0"> · users: <strong>{{ r.grantUsernames?.length }}</strong></span>
+              </div>
+            </div>
+            <div class="rb-row__actions">
+              <button mat-icon-button type="button" matTooltip="Run" (click)="openRunner(r)">
+                <i-tabler name="player-play" class="icon-18"></i-tabler>
+              </button>
+              <button mat-icon-button type="button" matTooltip="Edit" (click)="edit(r)">
+                <i-tabler name="edit" class="icon-18"></i-tabler>
+              </button>
+              <button
+                mat-icon-button
+                color="warn"
+                type="button"
+                matTooltip="Delete"
+                (click)="remove(r)"
+                [disabled]="removing"
+              >
+                <i-tabler name="trash" class="icon-18"></i-tabler>
+              </button>
+            </div>
+          </div>
+        </ng-container>
+
+        <mat-paginator
+          *ngIf="reportsTotal > 0"
+          [length]="reportsTotal"
+          [pageIndex]="reportsPageNumber"
+          [pageSize]="reportsPageSize"
+          [pageSizeOptions]="reportsPageSizeOptions"
+          (page)="onReportsPageChange($event)"
+          showFirstLastButtons
+        >
+        </mat-paginator>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</section>

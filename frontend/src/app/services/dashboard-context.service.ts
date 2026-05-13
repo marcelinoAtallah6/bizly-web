@@ -51,6 +51,14 @@ export class DashboardContextService {
   }
 
   /**
+   * Fetches the user's last-opened dashboard id from the server (server already validates that the
+   * id still exists and is accessible). Returns `null` when nothing is saved.
+   */
+  async loadSavedSelection(): Promise<number | null> {
+    return this.settingsApi.getLastDashboardId();
+  }
+
+  /**
    * Persist drag-and-drop order (dashboard ids only).
    */
   setDashboardOrder(orderedIds: number[]): void {
@@ -89,6 +97,13 @@ export class DashboardContextService {
         if (!segments.includes('dashboard')) {
           await this.router.navigate(['/dashboard']);
         }
+      }
+      /*
+       * Fire-and-forget: remember this as the user's last opened dashboard so future logins (and
+       * page reloads) land here instead of always defaulting to the first list entry.
+       */
+      if (detail) {
+        void this.settingsApi.setLastDashboardId(id);
       }
     } finally {
       this.loadingSubject.next(false);

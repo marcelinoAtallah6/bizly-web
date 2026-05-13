@@ -63,9 +63,10 @@ export interface UpdateProductResponse {}
 /** com.pm.api.dto.delete.DeleteProductResponse */
 export interface DeleteProductResponse {}
 
-/** Sale / checkout */
+/** Sale / checkout — exactly one of productId or serviceId */
 export interface CheckoutLineRequest {
-  productId: number;
+  productId?: number;
+  serviceId?: number;
   quantity: number;
 }
 
@@ -86,7 +87,9 @@ export interface GetSaleRequest {
 }
 
 export interface SaleLineResponse {
-  productId: number;
+  lineType?: 'PRODUCT' | 'SERVICE';
+  productId?: number;
+  serviceId?: number;
   productName?: string;
   quantity: number;
   unitPrice: number;

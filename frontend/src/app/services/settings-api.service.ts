@@ -39,6 +39,41 @@ export class SettingsApiService {
     }
   }
 
+  /**
+   * Fetches the dashboard the user opened last. Returns `null` when no preference is stored or the
+   * saved dashboard is no longer reachable (server already gates by access).
+   */
+  async getLastDashboardId(): Promise<number | null> {
+    try {
+      const res = await firstValueFrom(
+        this.api.postEnvelope<{ dashboardId: number | null }>(
+          GlobalConstants.API_ENDPOINTS.settings.dashboardRuntime.lastDashboardGet,
+          {},
+          'silent'
+        )
+      );
+      const id = res?.dashboardId;
+      return typeof id === 'number' && id > 0 ? id : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** Fire-and-forget save of the user's currently selected dashboard. */
+  async setLastDashboardId(id: number | null): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.api.postEnvelope<void>(
+          GlobalConstants.API_ENDPOINTS.settings.dashboardRuntime.lastDashboardSet,
+          { id },
+          'silent'
+        )
+      );
+    } catch {
+      // Persistence is best-effort; never block the UI on a failed preference write.
+    }
+  }
+
   async widgetData(widgetId: number): Promise<Record<string, unknown>[]> {
     const x = await firstValueFrom(
       this.api.postEnvelope<Record<string, unknown>[]>(

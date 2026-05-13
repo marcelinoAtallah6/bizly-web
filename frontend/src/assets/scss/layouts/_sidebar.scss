@@ -1,69 +1,23 @@
-.profile-box {
-  display: none; /* Make sure the profile box is visible */
-  padding: 24px;
+/* Vertical sidenav user profile shell only — card UI lives in sidebar.component.scss */
+.sidebarNav .profile-box {
+  display: block;
+  flex-shrink: 0;
+  padding: 0 12px 16px;
   margin-top: auto;
 }
 
-.profile-box-content {
-  background-color: #f0f0f0; /* Light accent color */
-  display: flex;
-  align-items: center;
-  border-radius: 8px;
-  padding: 16px;
-}
-
-.profile-box-content img {
-  width: 40px;
-  height: 40px; /* Ensure the image is a circle */
-  border-radius: 50%;
-}
-
-.profile-box-content .profile-info {
-  margin-left: 16px;
-}
-
-.profile-box-content .profile-info h5 {
-  font-size: 16px; /* Adjust font size as needed */
-  font-weight: 600;
-  margin: 0;
-}
-
-.profile-box-content .profile-info span {
-  font-size: 12px; /* Smaller font size for the role */
-}
-
-.profile-box-content .profile-actions {
-  margin-left: auto; /* Push actions to the right */
-  display: flex;
-  align-items: center;
-}
-
-.profile-box-content .profile-actions a {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  // background-color: var(--cardbg); /* Button background color */
-  border-radius: 50%;
-  padding: 8px;
-  text-decoration: none;
-}
-
-.profile-box-content .profile-actions i {
-  font-size: 18px; /* Icon size */
-  color: var(--primary); /* Primary color */
-}
-
-.profile-box-content .profile-actions .logout-icon {
-  width: 25px; /* Adjust width as needed */
-  height: 25px; /* Adjust height as needed */
-  // filter: invert(20%) sepia(45%) saturate(1500%) hue-rotate(200deg) brightness(90%) contrast(95%);
-
+/* Narrow rail: keep profile inside ~50px strip so the avatar chip does not overlap neighbours */
+.sidebarNav-mini .sidebarNav .profile-box {
+  padding: 0 4px 10px;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 
 .sidebarNav-full + mat-sidenav-content {
-  margin-left: 250px; // Content shift when sidenav is expanded
-  width:270p  x !important;
+  /* Fixed typo `width:270p x` — was invalid CSS and broke main-area width next to the drawer. */
+  margin-left: 250px;
+  width: calc(100% - 250px) !important;
   flex-shrink: 0;
   transition: swift-ease-out(width);
   position: absolute;
@@ -93,9 +47,7 @@
 }
 
 .sidebarNav-mini .sidebarNav {
-  // width: 80px !important;
-  width : 50px !important;
-  // width: 80px !important;
+  width: 50px !important;
   flex-shrink: 0;
   transition: swift-ease-out(width);
   // position: absolute;  

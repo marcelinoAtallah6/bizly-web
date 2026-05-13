@@ -65,6 +65,38 @@ public class User {
 	@Column(name = "profile_image_data")
 	private byte[] profileImageData;
 
+	/** Tenant scope. NULL only for system-wide admin accounts. */
+	@Column(name = "business_id")
+	private Long businessId;
+
+	/** 1 = user has not yet finished the welcome wizard. */
+	@Column(name = "first_login")
+	private Integer firstLogin;
+
+	@Column(name = "welcome_completed_at")
+	private java.time.LocalDateTime welcomeCompletedAt;
+
+	@Column(name = "auth_provider", length = 20)
+	private String authProvider;
+
+	@Column(name = "provider_user_id", length = 200)
+	private String providerUserId;
+
+	public Long getBusinessId() { return businessId; }
+	public void setBusinessId(Long businessId) { this.businessId = businessId; }
+
+	public Integer getFirstLogin() { return firstLogin; }
+	public void setFirstLogin(Integer firstLogin) { this.firstLogin = firstLogin; }
+
+	public java.time.LocalDateTime getWelcomeCompletedAt() { return welcomeCompletedAt; }
+	public void setWelcomeCompletedAt(java.time.LocalDateTime welcomeCompletedAt) { this.welcomeCompletedAt = welcomeCompletedAt; }
+
+	public String getAuthProvider() { return authProvider; }
+	public void setAuthProvider(String authProvider) { this.authProvider = authProvider; }
+
+	public String getProviderUserId() { return providerUserId; }
+	public void setProviderUserId(String providerUserId) { this.providerUserId = providerUserId; }
+
 	public Long getId() {
 		return id;
 	}

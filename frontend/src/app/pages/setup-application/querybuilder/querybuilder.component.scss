@@ -182,13 +182,6 @@
   color: var(--textPrimary);
 }
 
-/* AG grids inside this page — reinforce theme tokens (inherits global ag-theme-quartz mapping) */
-.qb-preview-grid.ag-theme-quartz,
-.qb-list-grid.ag-theme-quartz {
-  --ag-background-color: var(--background);
-  --ag-foreground-color: var(--textPrimary);
-}
-
 /* Saved queries — icon actions */
 ::ng-deep .qb-grid-actions {
   display: flex;
