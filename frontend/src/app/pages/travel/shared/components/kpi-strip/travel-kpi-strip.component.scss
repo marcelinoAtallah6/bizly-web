@@ -1,0 +1,113 @@
+.travel-kpi-strip {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 14px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+
+  &::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--textPrimary, #000) 25%, transparent);
+  }
+
+  .travel-kpi-card {
+    flex: 0 0 auto;
+    min-width: 152px;
+    max-width: 220px;
+    scroll-snap-align: start;
+  }
+
+  /* Optional wrap layout when horizontal is explicitly disabled */
+  &:not(.travel-kpi-strip--horizontal) {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+    overflow: visible;
+    flex-wrap: wrap;
+
+    .travel-kpi-card {
+      flex: unset;
+      min-width: 0;
+      max-width: none;
+    }
+  }
+}
+
+.travel-kpi-card {
+  border-radius: 14px;
+  padding: 16px 18px;
+  background: var(--travel-surface, var(--cardbg, #fff));
+  border: 1px solid var(--travel-border, var(--borderColor, rgba(15, 23, 42, 0.08)));
+  box-shadow: var(--travel-shadow, 0 4px 14px rgba(15, 23, 42, 0.06));
+  color: var(--travel-text, var(--textPrimary));
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--textPrimary, #000) 12%, transparent);
+  }
+
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  &__icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    opacity: 0.75;
+    color: var(--travel-text, var(--textPrimary));
+  }
+
+  &__label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--travel-text-muted, color-mix(in srgb, var(--textPrimary) 70%, transparent));
+    margin: 0;
+  }
+
+  &__value {
+    font-size: 26px;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.15;
+  }
+
+  &__hint {
+    font-size: 11px;
+    color: var(--travel-text-muted, color-mix(in srgb, var(--textPrimary) 65%, transparent));
+    margin: 6px 0 0;
+  }
+
+  &--clients .travel-kpi-card__value {
+    color: var(--travel-kpi-clients, var(--primary, #1565c0));
+  }
+  &--packages .travel-kpi-card__value {
+    color: var(--travel-kpi-packages, #2e7d32);
+  }
+  &--bookings .travel-kpi-card__value {
+    color: var(--travel-kpi-bookings, #6a1b9a);
+  }
+  &--open .travel-kpi-card__value {
+    color: var(--travel-kpi-open, #ef6c00);
+  }
+  &--finance .travel-kpi-card__value {
+    color: var(--travel-kpi-finance, #00838f);
+  }
+}

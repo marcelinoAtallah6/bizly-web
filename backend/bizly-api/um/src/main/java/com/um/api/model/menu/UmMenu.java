@@ -12,6 +12,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -40,6 +41,7 @@ public class UmMenu {
 	@JsonBackReference
 	private UmMenu parentMenu;
 
+	@OrderBy("sortOrder ASC, name ASC")
 	@OneToMany(mappedBy = "parentMenu", fetch = FetchType.LAZY)
 	@JsonManagedReference
 	private List<UmMenu> menus;
@@ -55,6 +57,9 @@ public class UmMenu {
 
 	@Column(name = "is_active")
 	private Boolean isActive;
+
+	@Column(name = "sort_order")
+	private Integer sortOrder;
 
 	/** Comma-separated role names; empty = inherit / show for any granted role. */
 	@Column(name = "allowed_roles", length = 512)
@@ -131,6 +136,14 @@ public class UmMenu {
 
 	public void setIsActive(Boolean isActive) {
 		this.isActive = isActive;
+	}
+
+	public Integer getSortOrder() {
+		return sortOrder;
+	}
+
+	public void setSortOrder(Integer sortOrder) {
+		this.sortOrder = sortOrder;
 	}
 
 	public String getAllowedRoles() {

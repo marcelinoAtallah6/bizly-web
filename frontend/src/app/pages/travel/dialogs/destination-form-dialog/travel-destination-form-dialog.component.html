@@ -1,0 +1,61 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Edit destination' : 'New destination' }}</h2>
+<mat-dialog-content [formGroup]="form">
+  <mat-tab-group animationDuration="0ms">
+    <mat-tab label="Overview">
+      <div class="p-t-16">
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Destination name</mat-label>
+          <input matInput formControlName="name" />
+        </mat-form-field>
+        <app-travel-paginated-country-select formControlName="country" label="Country"></app-travel-paginated-country-select>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Region</mat-label>
+          <input matInput formControlName="region" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Risk level</mat-label>
+          <mat-select formControlName="riskLevel">
+            <mat-option *ngFor="let r of riskLevels" [value]="r">{{ r }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-slide-toggle formControlName="active">Active for packages</mat-slide-toggle>
+      </div>
+    </mat-tab>
+    <mat-tab label="Visa & health">
+      <div class="p-t-16">
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Visa requirements</mat-label>
+          <textarea matInput formControlName="visaRequirements" rows="4"></textarea>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Vaccination / health requirements</mat-label>
+          <textarea matInput formControlName="healthRequirements" rows="4"></textarea>
+        </mat-form-field>
+      </div>
+    </mat-tab>
+    <mat-tab label="Seasons & advisory">
+      <div class="p-t-16">
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>High season notes</mat-label>
+          <textarea matInput formControlName="highSeasonNotes" rows="3"></textarea>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Low season notes</mat-label>
+          <textarea matInput formControlName="lowSeasonNotes" rows="3"></textarea>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Travel warnings</mat-label>
+          <textarea matInput formControlName="travelWarnings" rows="2"></textarea>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Travel advisory</mat-label>
+          <textarea matInput formControlName="travelAdvisory" rows="3"></textarea>
+        </mat-form-field>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <button mat-flat-button color="primary" type="button" (click)="save()" [disabled]="saving">Save</button>
+</mat-dialog-actions>

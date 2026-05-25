@@ -13,6 +13,7 @@ public class NavMenuItemResponse {
 	private String icon;
 	private Boolean isActive;
 	private String route;
+	private Integer sortOrder;
 	private List<NavMenuItemResponse> menus;
 
 	/** Present when role-based menu matrix is configured for the signed-in role. */
@@ -67,6 +68,14 @@ public class NavMenuItemResponse {
 
 	public void setRoute(String route) {
 		this.route = route;
+	}
+
+	public Integer getSortOrder() {
+		return sortOrder;
+	}
+
+	public void setSortOrder(Integer sortOrder) {
+		this.sortOrder = sortOrder;
 	}
 
 	public List<NavMenuItemResponse> getMenus() {

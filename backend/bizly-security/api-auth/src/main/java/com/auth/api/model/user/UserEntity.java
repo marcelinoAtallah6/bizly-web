@@ -66,6 +66,35 @@ public class UserEntity {
 	@Column(name = "provider_user_id", length = 200)
 	private String providerUserId;
 
+	@Column(name = "mobile_number", length = 40)
+	private String mobileNumber;
+
+	/** Required by UM; Auth registration must set this (defaults to {@code ACTIVE}). */
+	@Column(name = "status", nullable = false, length = 50)
+	private String status;
+
+	@Column(name = "user_type", length = 30)
+	private String userType = "BUSINESS_OWNER";
+
+	@Column(name = "registration_source", length = 30)
+	private String registrationSource = "PUBLIC";
+
+	@Column(name = "email_verified_at")
+	private java.time.LocalDateTime emailVerifiedAt;
+
+	@Column(name = "expires_at")
+	private java.time.LocalDateTime expiresAt;
+
+	@Column(name = "is_business_owner")
+	private Integer isBusinessOwner = 0;
+
+	@Column(name = "last_login_at")
+	private java.time.LocalDateTime lastLoginAt;
+
+	public boolean isBusinessOwnerFlag() {
+		return isBusinessOwner != null && isBusinessOwner == 1;
+	}
+
 	public UserEntity() {
 	}
 
@@ -164,4 +193,33 @@ public class UserEntity {
 
 	public String getProviderUserId() { return providerUserId; }
 	public void setProviderUserId(String providerUserId) { this.providerUserId = providerUserId; }
+
+	public String getMobileNumber() {
+		return mobileNumber;
+	}
+
+	public void setMobileNumber(String mobileNumber) {
+		this.mobileNumber = mobileNumber;
+	}
+
+	public String getStatus() {
+		return status;
+	}
+
+	public void setStatus(String status) {
+		this.status = status;
+	}
+
+	public String getUserType() { return userType; }
+	public void setUserType(String userType) { this.userType = userType; }
+	public String getRegistrationSource() { return registrationSource; }
+	public void setRegistrationSource(String registrationSource) { this.registrationSource = registrationSource; }
+	public java.time.LocalDateTime getEmailVerifiedAt() { return emailVerifiedAt; }
+	public void setEmailVerifiedAt(java.time.LocalDateTime emailVerifiedAt) { this.emailVerifiedAt = emailVerifiedAt; }
+	public java.time.LocalDateTime getExpiresAt() { return expiresAt; }
+	public void setExpiresAt(java.time.LocalDateTime expiresAt) { this.expiresAt = expiresAt; }
+	public Integer getIsBusinessOwner() { return isBusinessOwner; }
+	public void setIsBusinessOwner(Integer isBusinessOwner) { this.isBusinessOwner = isBusinessOwner; }
+	public java.time.LocalDateTime getLastLoginAt() { return lastLoginAt; }
+	public void setLastLoginAt(java.time.LocalDateTime lastLoginAt) { this.lastLoginAt = lastLoginAt; }
 }

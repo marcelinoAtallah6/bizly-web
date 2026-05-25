@@ -33,24 +33,43 @@ import reactor.core.publisher.Mono;
 public class AuthenticationPreFilter extends AbstractGatewayFilterFactory<AuthenticationPreFilter.Config> {
 
 	/*
-	 * Public paths bypass JWT validation entirely. Anything NOT listed here (including
-	 * /auth/register-business and /auth/welcome-complete) requires a valid JWT — the
-	 * filter forwards the verified username + tenant in the X-User / X-Business-Id /
-	 * X-Role-Level headers below.
+	 * Public paths bypass JWT validation entirely. Authenticated onboarding
+	 * ({@code /auth/register-business}, {@code /auth/welcome-complete}, {@code /auth/me}, …)
+	 * requires a valid JWT — the filter forwards the verified username + tenant in the
+	 * X-User / X-Business-Id / X-Role-Level headers below.
+	 *
+	 * {@code /auth/register} is matched by equality only: a naive {@code startsWith("/auth/register")}
+	 * would incorrectly treat {@code /auth/register-business} as public and skip JWT
+	 * validation, leaving api-auth without X-User → 401 "Invalid session".
 	 *
 	 * Social login is public because the caller has not yet authenticated with Bizly
-	 * (they are exchanging a provider token for a Bizly session).
+	 * (they are exchanging a provider token for a Bizly session). The same applies to
+	 * /auth/business-types: the public "Create Account" page must fetch the catalog
+	 * before the user has any session at all.
 	 */
-	private static final List<String> PUBLIC_PATHS = List.of(
+	/**
+	 * Prefixes of paths that skip JWT; see class Javadoc for why {@code /auth/register} is not here.
+	 */
+	private static final List<String> PUBLIC_PATH_PREFIXES = List.of(
 		"/auth/login",
 		"/auth/refresh",
 		"/auth/logout",
-		"/auth/register",
+		"/auth/business-types",
 		"/auth/forgot-password",
 		"/auth/forgot-password/verify",
 		"/auth/forgot-password/reset",
 		"/auth/social/"
 	);
+
+	private static boolean isPublicAuthPath(String path) {
+		if (path == null) {
+			return false;
+		}
+		if (path.equals("/auth/register")) {
+			return true;
+		}
+		return PUBLIC_PATH_PREFIXES.stream().anyMatch(path::startsWith);
+	}
 
 	@Value("${keyStore.path}")
 	private String keyStorePath;
@@ -85,7 +104,7 @@ public class AuthenticationPreFilter extends AbstractGatewayFilterFactory<Authen
 
 			String path = originalExchange.getRequest().getURI().getPath();
 
-			boolean isPublic = PUBLIC_PATHS.stream().anyMatch(path::startsWith);
+			boolean isPublic = isPublicAuthPath(path);
 
 			// Defence-in-depth: clients must NEVER be able to inject our own internal trust headers.
 			// Every request (public or authenticated) is stripped here; the JWT branch below re-sets
@@ -136,6 +155,7 @@ public class AuthenticationPreFilter extends AbstractGatewayFilterFactory<Authen
 				}
 				Object businessIdObj = claims.get("businessId");
 				String roleLevel = claims.get("roleLevel", String.class);
+				Object tenantBypassObj = claims.get("tenantBypass");
 				Object firstLoginObj = claims.get("firstLogin");
 
 				if (!tokenDeviceId.equals(deviceId)) {
@@ -159,12 +179,16 @@ public class AuthenticationPreFilter extends AbstractGatewayFilterFactory<Authen
 					// from a malicious client.
 					httpHeaders.remove("X-Business-Id");
 					httpHeaders.remove("X-Role-Level");
+					httpHeaders.remove("X-Tenant-Bypass");
 					httpHeaders.remove("X-First-Login");
 					if (!businessIdHeader.isEmpty()) {
 						httpHeaders.set("X-Business-Id", businessIdHeader);
 					}
 					if (!roleLevelHeader.isEmpty()) {
 						httpHeaders.set("X-Role-Level", roleLevelHeader);
+					}
+					if (tenantBypassObj instanceof Boolean) {
+						httpHeaders.set("X-Tenant-Bypass", ((Boolean) tenantBypassObj) ? "true" : "false");
 					}
 					httpHeaders.set("X-First-Login", firstLoginHeader);
 					httpHeaders.set("X-Internal-Secret", "THANKSGOD_BLESSNATHALIEANDMYFAMILY_05082026");

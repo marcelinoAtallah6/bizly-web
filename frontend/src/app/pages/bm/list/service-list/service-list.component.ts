@@ -9,6 +9,7 @@ import {
   ServiceFormDialogComponent,
   ServiceFormDialogData,
 } from '../../dialogs/service-form-dialog/service-form-dialog.component';
+import { gridListPaginationMixin } from 'src/app/shared/ag-grid/ag-grid-list-pagination.mixin';
 import { BmServiceItemService } from '../../services/bm-service-item.service';
 
 @Component({
@@ -17,6 +18,7 @@ import { BmServiceItemService } from '../../services/bm-service-item.service';
   styleUrl: './service-list.component.scss',
 })
 export class ServiceListComponent implements OnInit {
+  readonly gridPagination = gridListPaginationMixin;
   rowData: GetServiceItemResponse[] = [];
   loading = false;
   includeInactive = false;

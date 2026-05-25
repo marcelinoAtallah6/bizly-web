@@ -67,11 +67,12 @@ public class SettingsQueryDefService {
 				Sort.by(Sort.Direction.ASC, "name"));
 		String fragment = req.getNameSearch() == null ? "" : req.getNameSearch().trim();
 
-		boolean adminBypass = BusinessContextHolder.canBypassTenant();
+		boolean rootBypass = BusinessContextHolder.canBypassTenant();
+		boolean crossTenantList = BusinessContextHolder.canListCrossTenantBuilderData();
 		Long businessId = BusinessContextHolder.currentBusinessId();
-		// Tenant scope: business callers see own + global query defs; admin sees everything.
+		// Tenant scope: business callers see own + global; portal admin (no business picked) sees all rows then visibility filter.
 		Page<SettingsQueryDef> page;
-		if (adminBypass) {
+		if (crossTenantList) {
 			page = fragment.isEmpty()
 					? queryDefRepository.findAll(pageable)
 					: queryDefRepository.findByNameContainingIgnoreCase(fragment, pageable);
@@ -83,11 +84,11 @@ public class SettingsQueryDefService {
 			page = Page.empty(pageable);
 		}
 
-		Set<Integer> userRoleTypes = adminBypass ? Collections.emptySet() : currentRoleTypes(authorities);
+		Set<Integer> userRoleTypes = rootBypass ? Collections.emptySet() : currentRoleTypes(authorities);
 
 		List<QueryDefResponse> items = new ArrayList<>();
 		for (SettingsQueryDef q : page.getContent()) {
-			if (adminBypass || canAccessQuery(q.getId(), username, userRoleTypes)) {
+			if (rootBypass || canAccessQuery(q.getId(), username, userRoleTypes)) {
 				items.add(toResponse(q));
 			}
 		}
@@ -134,7 +135,7 @@ public class SettingsQueryDefService {
 	}
 
 	private SettingsQueryDef loadQueryForCaller(Long id) {
-		if (BusinessContextHolder.canBypassTenant()) {
+		if (BusinessContextHolder.canListCrossTenantBuilderData()) {
 			return queryDefRepository.findById(id)
 					.orElseThrow(() -> new ServiceException(ApiMessages.SETTINGS_QUERY_NOT_FOUND, HttpStatus.NOT_FOUND));
 		}
@@ -155,6 +156,7 @@ public class SettingsQueryDefService {
 		 * curate global templates (business_id = NULL) when no override is in effect.
 		 */
 		boolean canBypass = BusinessContextHolder.canBypassTenant();
+		boolean portalAdmin = BusinessContextHolder.isPortalAdminRoleLevel();
 		Long businessId = BusinessContextHolder.currentBusinessId();
 
 		SettingsQueryDef entity;
@@ -162,7 +164,9 @@ public class SettingsQueryDefService {
 			entity = loadQueryForCaller(req.getId());
 		} else {
 			entity = new SettingsQueryDef();
-			if (!canBypass) {
+			if (!canBypass && !portalAdmin) {
+				entity.setBusinessId(businessId);
+			} else if (!canBypass && portalAdmin && businessId != null) {
 				entity.setBusinessId(businessId);
 			}
 			if (queryDefRepository.existsByNameIgnoreCase(req.getName())) {

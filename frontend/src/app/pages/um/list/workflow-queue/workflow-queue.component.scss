@@ -1,0 +1,45 @@
+@import '../../form/workflow-engine/workflow-engine-theme';
+
+:host {
+  @include wf-engine-tokens;
+  display: block;
+  color: var(--wf-text);
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+}
+
+.filter-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.f {
+  flex: 1 1 200px;
+  min-width: 160px;
+}
+
+.f.actions {
+  flex: 0 0 auto;
+  min-width: auto;
+}
+
+.wf-row-actions {
+  width: 100%;
+  max-width: 150px;
+  font: inherit;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--wf-border);
+  background: var(--wf-surface);
+  color: var(--wf-text);
+}
+
+.m-b-16 {
+  margin-bottom: 16px;
+}

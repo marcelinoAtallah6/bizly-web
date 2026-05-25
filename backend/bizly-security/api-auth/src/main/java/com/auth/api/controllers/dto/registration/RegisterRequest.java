@@ -4,14 +4,17 @@ package com.auth.api.controllers.dto.registration;
  * Public sign-up payload — collected from the multi-step "Create Account" wizard.
  *
  * <p>Step 1 of the wizard captures the {@code username / email / password /
- * firstName / lastName / mobile} fields; step 2 captures {@code businessName /
- * businessType}. The wizard submits both steps together so the backend can run
- * a single atomic transaction (user → business → user_role).</p>
+ * firstName / lastName / mobile} fields; step 2 captures {@code businessName}
+ * + the chosen {@code roleId} (= business type). The wizard submits both
+ * steps together so the backend can run a single atomic transaction
+ * (user → business → user_role).</p>
  *
- * <p>Security: the DTO intentionally has no {@code roleId} or {@code roleName}
- * field. The role assigned during registration is decided server-side
- * (the single role flagged {@code is_default_for_registration = 1}). Any
- * client-side attempt to inject roles is silently dropped by Jackson.</p>
+ * <p>Security model: the business-type list returned by
+ * {@code POST /auth/business-types} only includes BUSINESS-level, non-system
+ * roles flagged {@code is_business_type = 1}. The server re-validates the
+ * {@code roleId} sent here against the same predicates before assigning it —
+ * a client cannot promote itself to SUPER_ADMIN by tampering with the
+ * payload even if it knows the id.</p>
  */
 public class RegisterRequest {
 
@@ -24,6 +27,21 @@ public class RegisterRequest {
 	private String mobileNumber;
 
 	private String businessName;
+
+	/**
+	 * The chosen business-type role id (= row in {@code um_role}). Required.
+	 * The same id is assigned to the new user via {@code um_user_role} and
+	 * cached as {@code um_business.business_type = role.name} for reporting.
+	 */
+	private Long roleId;
+
+	/**
+	 * Legacy / optional. Older clients sent a free-form code (e.g.
+	 * {@code "RESTAURANT"}) here. The server now treats it as a fallback when
+	 * {@code roleId} is missing: it is resolved against {@code um_role.name}
+	 * and must match a BUSINESS-level row flagged {@code is_business_type=1}.
+	 * Tampered values that don't match such a row are rejected.
+	 */
 	private String businessType;
 
 	/**
@@ -58,6 +76,9 @@ public class RegisterRequest {
 
 	public String getBusinessName() { return businessName; }
 	public void setBusinessName(String businessName) { this.businessName = businessName; }
+
+	public Long getRoleId() { return roleId; }
+	public void setRoleId(Long roleId) { this.roleId = roleId; }
 
 	public String getBusinessType() { return businessType; }
 	public void setBusinessType(String businessType) { this.businessType = businessType; }

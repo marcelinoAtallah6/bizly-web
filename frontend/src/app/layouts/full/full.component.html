@@ -1,6 +1,10 @@
 <mat-sidenav-container
   class="mainWrapper blue_theme light-theme"
-  [ngClass]="{ 'sidebarNav-mini': isMini, 'sidebarNav-full': !isMini }"
+  [ngClass]="{
+    'sidebarNav-mini': isMini && !isMobileScreen,
+    'sidebarNav-full': !isMini && !isMobileScreen,
+    'mainWrapper--mobile': isMobileScreen
+  }"
   autosize
   autoFocus
 >
@@ -15,7 +19,7 @@
   <mat-sidenav *ngIf="isVertical"
     #leftsidenav
     [mode]="isOver ? 'over' : 'side'"
-    [opened]="!isOver || !isMini"
+    [opened]="isOver ? mobileNavOpen : true"
     (openedChange)="onSidenavOpenedChange($event)"
     (closedStart)="onSidenavClosedStart()"
     class="sidebarNav" (mouseenter)="onSidenavOpenedHoverEnter()" (mouseleave)="onSidenavOpenedHoverLeave()"
@@ -60,7 +64,7 @@
 
           <app-header
           [showToggle]="!isOver"
-
+          [showNavToggle]="false"
         ></app-header>
 
           <app-top-side-bar></app-top-side-bar>
@@ -71,8 +75,9 @@
        <div *ngIf="isVertical">
         
           <app-header
-          [showToggle]="isOver"
-          (toggleCollapsed)="toggleCollapsed()"
+          [showNavToggle]="true"
+          [isMobileView]="isOver"
+          (toggleCollapsed)="toggleSidenav()"
           (toggleMobileNav)="toggleSidenav()"
         ></app-header>
         

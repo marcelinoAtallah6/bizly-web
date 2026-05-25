@@ -1,12 +1,12 @@
 import { HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { environment } from 'src/environments/environment';
 
 @Injectable({
   providedIn: 'root'  // This makes the service available throughout the app
 })
 export class GlobalConstants {
-  // Base API URL from environment
-  private static readonly API_BASE_URL = "http://localhost:8080";
+  private static readonly API_BASE_URL = environment.apiBaseUrl;
 
   // Common headers as static readonly objects
   public static readonly JSON_HEADERS = new HttpHeaders({
@@ -37,8 +37,13 @@ export class GlobalConstants {
       /** Legacy: completes the business step for a user that already has an account. */
       registerBusiness: `${GlobalConstants.API_BASE_URL}/auth/register-business`,
       welcomeComplete: `${GlobalConstants.API_BASE_URL}/auth/welcome-complete`,
+      platformConfig: `${GlobalConstants.API_BASE_URL}/auth/platform-config`,
+      verifyEmailSetPassword: `${GlobalConstants.API_BASE_URL}/auth/verify-email/set-password`,
+      adminBusinessOnboard: `${GlobalConstants.API_BASE_URL}/auth/admin/business/onboard`,
       assignableRoles: `${GlobalConstants.API_BASE_URL}/auth/roles/assignable`,
-      social: (provider: 'google' | 'facebook' | 'apple') =>
+      /** Public catalogue of business types — each is a role flagged is_business_type=1. */
+      businessTypes: `${GlobalConstants.API_BASE_URL}/auth/business-types`,
+      social: (provider: 'google') =>
         `${GlobalConstants.API_BASE_URL}/auth/social/${provider}`,
       /** SUPER_ADMIN context switcher — must run as role-level ADMIN. */
       adminSearchBusinesses: `${GlobalConstants.API_BASE_URL}/auth/admin/businesses/search`,
@@ -107,6 +112,106 @@ export class GlobalConstants {
         get: `${GlobalConstants.API_BASE_URL}/bm/header-pulse/get`,
       },
     },
+    /** Gateway: Path=/travel/** StripPrefix=1 → Travel microservice */
+    travel: {
+      client: {
+        add: `${GlobalConstants.API_BASE_URL}/travel/client/add`,
+        update: `${GlobalConstants.API_BASE_URL}/travel/client/update`,
+        delete: `${GlobalConstants.API_BASE_URL}/travel/client/delete`,
+        get: `${GlobalConstants.API_BASE_URL}/travel/client/get`,
+        gets: `${GlobalConstants.API_BASE_URL}/travel/client/gets`,
+      },
+      package: {
+        add: `${GlobalConstants.API_BASE_URL}/travel/package/add`,
+        update: `${GlobalConstants.API_BASE_URL}/travel/package/update`,
+        delete: `${GlobalConstants.API_BASE_URL}/travel/package/delete`,
+        get: `${GlobalConstants.API_BASE_URL}/travel/package/get`,
+        gets: `${GlobalConstants.API_BASE_URL}/travel/package/gets`,
+      },
+      booking: {
+        add: `${GlobalConstants.API_BASE_URL}/travel/booking/add`,
+        update: `${GlobalConstants.API_BASE_URL}/travel/booking/update`,
+        delete: `${GlobalConstants.API_BASE_URL}/travel/booking/delete`,
+        get: `${GlobalConstants.API_BASE_URL}/travel/booking/get`,
+        gets: `${GlobalConstants.API_BASE_URL}/travel/booking/gets`,
+        availability: `${GlobalConstants.API_BASE_URL}/travel/booking/availability`,
+      },
+      visa: {
+        add: `${GlobalConstants.API_BASE_URL}/travel/visa/add`,
+        update: `${GlobalConstants.API_BASE_URL}/travel/visa/update`,
+        delete: `${GlobalConstants.API_BASE_URL}/travel/visa/delete`,
+        get: `${GlobalConstants.API_BASE_URL}/travel/visa/get`,
+        gets: `${GlobalConstants.API_BASE_URL}/travel/visa/gets`,
+      },
+      document: {
+        add: `${GlobalConstants.API_BASE_URL}/travel/document/add`,
+        update: `${GlobalConstants.API_BASE_URL}/travel/document/update`,
+        delete: `${GlobalConstants.API_BASE_URL}/travel/document/delete`,
+        get: `${GlobalConstants.API_BASE_URL}/travel/document/get`,
+        gets: `${GlobalConstants.API_BASE_URL}/travel/document/gets`,
+        download: `${GlobalConstants.API_BASE_URL}/travel/document/download`,
+        view: `${GlobalConstants.API_BASE_URL}/travel/document/view`,
+        upload: `${GlobalConstants.API_BASE_URL}/travel/document/upload`,
+        viewRef: `${GlobalConstants.API_BASE_URL}/travel/document/view-ref`,
+        downloadRef: `${GlobalConstants.API_BASE_URL}/travel/document/download-ref`,
+      },
+      supplier: {
+        add: `${GlobalConstants.API_BASE_URL}/travel/supplier/add`,
+        update: `${GlobalConstants.API_BASE_URL}/travel/supplier/update`,
+        delete: `${GlobalConstants.API_BASE_URL}/travel/supplier/delete`,
+        get: `${GlobalConstants.API_BASE_URL}/travel/supplier/get`,
+        gets: `${GlobalConstants.API_BASE_URL}/travel/supplier/gets`,
+      },
+      invoice: {
+        add: `${GlobalConstants.API_BASE_URL}/travel/invoice/add`,
+        update: `${GlobalConstants.API_BASE_URL}/travel/invoice/update`,
+        delete: `${GlobalConstants.API_BASE_URL}/travel/invoice/delete`,
+        get: `${GlobalConstants.API_BASE_URL}/travel/invoice/get`,
+        gets: `${GlobalConstants.API_BASE_URL}/travel/invoice/gets`,
+      },
+      payment: {
+        add: `${GlobalConstants.API_BASE_URL}/travel/payment/add`,
+        update: `${GlobalConstants.API_BASE_URL}/travel/payment/update`,
+        delete: `${GlobalConstants.API_BASE_URL}/travel/payment/delete`,
+        get: `${GlobalConstants.API_BASE_URL}/travel/payment/get`,
+        gets: `${GlobalConstants.API_BASE_URL}/travel/payment/gets`,
+      },
+      commissionRule: {
+        add: `${GlobalConstants.API_BASE_URL}/travel/commission-rule/add`,
+        update: `${GlobalConstants.API_BASE_URL}/travel/commission-rule/update`,
+        delete: `${GlobalConstants.API_BASE_URL}/travel/commission-rule/delete`,
+        get: `${GlobalConstants.API_BASE_URL}/travel/commission-rule/get`,
+        gets: `${GlobalConstants.API_BASE_URL}/travel/commission-rule/gets`,
+      },
+      followUp: {
+        add: `${GlobalConstants.API_BASE_URL}/travel/follow-up/add`,
+        update: `${GlobalConstants.API_BASE_URL}/travel/follow-up/update`,
+        delete: `${GlobalConstants.API_BASE_URL}/travel/follow-up/delete`,
+        get: `${GlobalConstants.API_BASE_URL}/travel/follow-up/get`,
+        gets: `${GlobalConstants.API_BASE_URL}/travel/follow-up/gets`,
+      },
+      destination: {
+        add: `${GlobalConstants.API_BASE_URL}/travel/destination/add`,
+        update: `${GlobalConstants.API_BASE_URL}/travel/destination/update`,
+        delete: `${GlobalConstants.API_BASE_URL}/travel/destination/delete`,
+        get: `${GlobalConstants.API_BASE_URL}/travel/destination/get`,
+        gets: `${GlobalConstants.API_BASE_URL}/travel/destination/gets`,
+      },
+      lookup: {
+        countriesGets: `${GlobalConstants.API_BASE_URL}/travel/lookup/countries/gets`,
+      },
+      tripRequest: {
+        add: `${GlobalConstants.API_BASE_URL}/travel/trip-request/add`,
+        update: `${GlobalConstants.API_BASE_URL}/travel/trip-request/update`,
+        delete: `${GlobalConstants.API_BASE_URL}/travel/trip-request/delete`,
+        get: `${GlobalConstants.API_BASE_URL}/travel/trip-request/get`,
+        gets: `${GlobalConstants.API_BASE_URL}/travel/trip-request/gets`,
+        quote: `${GlobalConstants.API_BASE_URL}/travel/trip-request/quote`,
+        accept: `${GlobalConstants.API_BASE_URL}/travel/trip-request/accept`,
+        reject: `${GlobalConstants.API_BASE_URL}/travel/trip-request/reject`,
+        convert: `${GlobalConstants.API_BASE_URL}/travel/trip-request/convert`,
+      },
+    },
     um: {
       user: {
         add: `${GlobalConstants.API_BASE_URL}/um/user/add`,
@@ -114,6 +219,42 @@ export class GlobalConstants {
         delete: `${GlobalConstants.API_BASE_URL}/um/user/delete`,
         get: `${GlobalConstants.API_BASE_URL}/um/user/get`,
         gets: `${GlobalConstants.API_BASE_URL}/um/user/gets`,
+        /** Self-service profile (JWT user only; no menu permission). */
+        updateProfile: `${GlobalConstants.API_BASE_URL}/um/user/update-profile`,
+      },
+      workflow: {
+        businessRegistrationRequest: `${GlobalConstants.API_BASE_URL}/um/workflow/instance/business-registration`,
+        queue: `${GlobalConstants.API_BASE_URL}/um/workflow/instance/queue`,
+        approve: `${GlobalConstants.API_BASE_URL}/um/workflow/instance/approve`,
+        reject: `${GlobalConstants.API_BASE_URL}/um/workflow/instance/reject`,
+        configList: `${GlobalConstants.API_BASE_URL}/um/workflow/config/list`,
+        configUpdate: `${GlobalConstants.API_BASE_URL}/um/workflow/config/update`,
+        configCatalog: `${GlobalConstants.API_BASE_URL}/um/workflow/config/catalog`,
+        /** Mutating gateway paths registered for workflow (ADD/EDIT/DELETE); labels from menu metadata. */
+        configEndpointCatalog: `${GlobalConstants.API_BASE_URL}/um/workflow/config/endpoint-catalog`,
+        configCreate: `${GlobalConstants.API_BASE_URL}/um/workflow/config/create`,
+        configDelete: `${GlobalConstants.API_BASE_URL}/um/workflow/config/delete`,
+        catalogMutatingActions: `${GlobalConstants.API_BASE_URL}/um/workflow/catalog/mutating-actions`,
+        /** Admin: DB-driven HTTP endpoint registry (match gateway paths to menu + action). */
+        gatewayEndpointsList: `${GlobalConstants.API_BASE_URL}/um/workflow/gateway/endpoints/list`,
+        gatewayEndpointsSync: `${GlobalConstants.API_BASE_URL}/um/workflow/gateway/endpoints/sync`,
+        gatewayEndpointsUpdate: `${GlobalConstants.API_BASE_URL}/um/workflow/gateway/endpoints/update`,
+        engineActionsList: `${GlobalConstants.API_BASE_URL}/um/workflow/engine/actions/list`,
+        engineTaskCatalog: `${GlobalConstants.API_BASE_URL}/um/workflow/engine/tasks/catalog`,
+        engineApplicationActionsList: `${GlobalConstants.API_BASE_URL}/um/workflow/engine/application-actions/list`,
+        engineTemplatesList: `${GlobalConstants.API_BASE_URL}/um/workflow/engine/templates/list`,
+        engineDefinitionsList: `${GlobalConstants.API_BASE_URL}/um/workflow/engine/definitions/list`,
+        engineDefinitionsGet: `${GlobalConstants.API_BASE_URL}/um/workflow/engine/definitions/get`,
+        engineDefinitionsCreate: `${GlobalConstants.API_BASE_URL}/um/workflow/engine/definitions/create`,
+        engineDefinitionsUpdate: `${GlobalConstants.API_BASE_URL}/um/workflow/engine/definitions/update`,
+        engineDefinitionsSaveSteps: `${GlobalConstants.API_BASE_URL}/um/workflow/engine/definitions/save-steps`,
+        engineDefinitionsPublish: `${GlobalConstants.API_BASE_URL}/um/workflow/engine/definitions/publish`,
+        engineDefinitionsDisable: `${GlobalConstants.API_BASE_URL}/um/workflow/engine/definitions/disable`,
+        engineDefinitionsDelete: `${GlobalConstants.API_BASE_URL}/um/workflow/engine/definitions/delete`,
+        engineTrigger: `${GlobalConstants.API_BASE_URL}/um/workflow/engine/trigger`,
+      },
+      roleLevel: {
+        list: `${GlobalConstants.API_BASE_URL}/um/role-level/list`,
       },
       role: {
         add: `${GlobalConstants.API_BASE_URL}/um/role/add`,
@@ -121,11 +262,30 @@ export class GlobalConstants {
         delete: `${GlobalConstants.API_BASE_URL}/um/role/delete`,
         get: `${GlobalConstants.API_BASE_URL}/um/role/get`,
         gets: `${GlobalConstants.API_BASE_URL}/um/role/gets`,
+        nextRoleType: `${GlobalConstants.API_BASE_URL}/um/role/next-role-type`,
         menuPermissionsGet: `${GlobalConstants.API_BASE_URL}/um/role/menu-permissions/get`,
         menuPermissionsSave: `${GlobalConstants.API_BASE_URL}/um/role/menu-permissions/save`,
       },
+      teamRole: {
+        list: `${GlobalConstants.API_BASE_URL}/um/business/team-role/list`,
+        listAssignable: `${GlobalConstants.API_BASE_URL}/um/business/team-role/list-assignable`,
+        parentOptions: `${GlobalConstants.API_BASE_URL}/um/business/team-role/parent-options`,
+        add: `${GlobalConstants.API_BASE_URL}/um/business/team-role/add`,
+        delete: `${GlobalConstants.API_BASE_URL}/um/business/team-role/delete`,
+      },
       audit: {
         gets: `${GlobalConstants.API_BASE_URL}/um/audit/gets`,
+      },
+      menu: {
+        permissionMetadata: `${GlobalConstants.API_BASE_URL}/um/menu/permission-metadata`,
+      },
+      applicationCatalog: {
+        catalog: `${GlobalConstants.API_BASE_URL}/um/application-catalog/catalog`,
+        applicationSave: `${GlobalConstants.API_BASE_URL}/um/application-catalog/application/save`,
+        applicationDelete: `${GlobalConstants.API_BASE_URL}/um/application-catalog/application/delete`,
+        menuSave: `${GlobalConstants.API_BASE_URL}/um/application-catalog/menu/save`,
+        menuDelete: `${GlobalConstants.API_BASE_URL}/um/application-catalog/menu/delete`,
+        reorder: `${GlobalConstants.API_BASE_URL}/um/application-catalog/reorder`,
       },
     },
     /** Broadcast microservice (gateway path prefix `/broadcast`). */
@@ -168,6 +328,10 @@ export class GlobalConstants {
         getTypes: `${GlobalConstants.API_BASE_URL}/settings/reporting/getTypes`,
         generate: `${GlobalConstants.API_BASE_URL}/settings/reporting/generate`,
         export: `${GlobalConstants.API_BASE_URL}/settings/reporting/export`,
+        /** End-user Reports screen only (role/user grants). No CRUD. */
+        viewer: {
+          list: `${GlobalConstants.API_BASE_URL}/settings/reporting/viewer/list`,
+        },
         builder: {
           list: `${GlobalConstants.API_BASE_URL}/settings/reporting/builder/list`,
           get: `${GlobalConstants.API_BASE_URL}/settings/reporting/builder/get`,

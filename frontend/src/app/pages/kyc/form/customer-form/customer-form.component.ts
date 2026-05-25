@@ -3,6 +3,8 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { ToolbarButton } from 'src/app/pages/ui-components/button/toolbar/toolbar.component';
+import { isWorkflowDeferredResult } from 'src/app/services/business-api.service';
+import { WorkflowDeferralUiService } from 'src/app/services/workflow-deferral-ui.service';
 import { KycCustomerService } from '../../services/kyc-customer.service';
 
 @Component({
@@ -29,7 +31,8 @@ export class CustomerFormComponent implements OnInit {
     private readonly fb: FormBuilder,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
-    private readonly kycCustomerService: KycCustomerService
+    private readonly kycCustomerService: KycCustomerService,
+    private readonly workflowDeferralUi: WorkflowDeferralUiService
   ) {}
 
   ngOnInit(): void {
@@ -96,11 +99,15 @@ export class CustomerFormComponent implements OnInit {
 
     this.saving = true;
     if (this.mode === 'create') {
+      this.workflowDeferralUi.setPendingNavigate(['/kyc/customers']);
       this.kycCustomerService
         .add(base)
         .pipe(finalize(() => (this.saving = false)))
         .subscribe({
           next: (res) => {
+            if (isWorkflowDeferredResult(res)) {
+              return;
+            }
             this.router.navigate(['/kyc/customers', res.id]);
           },
           error: () => {},

@@ -1,0 +1,56 @@
+<article class="travel-passport" [ngStyle]="accentVars">
+  <header class="travel-passport__top">
+    <div class="travel-passport__seal"></div>
+    <div class="travel-passport__authority">
+      <p class="travel-passport__title">{{ title }}</p>
+      <p class="travel-passport__subtitle">{{ subtitle }}</p>
+    </div>
+  </header>
+  <section class="travel-passport__body">
+    <div class="travel-passport__photo">
+      <img *ngIf="photoUrl" [src]="photoUrl" alt="Passport scan" class="travel-passport__photo-img" />
+      <mat-icon *ngIf="!photoUrl">person</mat-icon>
+    </div>
+    <dl class="travel-passport__fields">
+      <div class="travel-passport__row">
+        <dt>Type</dt>
+        <dd>{{ data.passportType || 'P' }}</dd>
+      </div>
+      <div class="travel-passport__row">
+        <dt>Surname</dt>
+        <dd>{{ splitName().surname }}</dd>
+      </div>
+      <div class="travel-passport__row">
+        <dt>Given name</dt>
+        <dd>{{ splitName().given }}</dd>
+      </div>
+      <div class="travel-passport__row">
+        <dt>Nationality</dt>
+        <dd>{{ data.nationality || '—' }}</dd>
+      </div>
+      <div class="travel-passport__row">
+        <dt>Passport No.</dt>
+        <dd>{{ data.passportNo || '—' }}</dd>
+      </div>
+      <div class="travel-passport__row travel-passport__row--pair">
+        <div>
+          <dt>Date of issue</dt>
+          <dd>{{ data.passportIssueDate || '—' }}</dd>
+        </div>
+        <div>
+          <dt>Date of expiry</dt>
+          <dd>{{ data.passportExpiryDate || '—' }}</dd>
+        </div>
+      </div>
+      <div class="travel-passport__row">
+        <dt>Place of issue</dt>
+        <dd>{{ data.passportPlaceOfIssue || '—' }}</dd>
+      </div>
+      <div class="travel-passport__row" *ngIf="data.nationalId">
+        <dt>National ID</dt>
+        <dd>{{ data.nationalId }}</dd>
+      </div>
+    </dl>
+  </section>
+  <footer class="travel-passport__mrz">{{ mrz }}</footer>
+</article>

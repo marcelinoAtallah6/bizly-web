@@ -1,0 +1,40 @@
+:host {
+  display: block;
+}
+
+.travel-step-fields {
+  padding: 8px 4px 48px;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.row-datetime {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+  align-items: start;
+  margin-bottom: 12px;
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+::ng-deep .mat-horizontal-stepper-content {
+  overflow: visible !important;
+}
+
+.mat-horizontal-stepper-content .mat-mdc-form-field {
+  margin-top: 6px;
+  margin-bottom: 18px;
+  overflow: visible;
+}
+
+.m-b-16 {
+  margin-bottom: 16px;
+}
+
+.f-s-12 {
+  font-size: 0.75rem;
+  line-height: 1.45;
+}

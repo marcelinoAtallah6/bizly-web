@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: travel
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 30MB
+  datasource:
+    url: jdbc:oracle:thin:@localhost:1521/xepdb1
+    username: um
+    password: um
+    driver-class-name: oracle.jdbc.OracleDriver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.Oracle12cDialect
+server:
+  port: 8670
+  tomcat:
+    max-http-form-post-size: 30MB
+    max-swallow-size: -1
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    hostname: ${COMPUTERNAME}
+security:
+  internal:
+    secret: THANKSGOD_BLESSNATHALIEANDMYFAMILY_05082026
+travel:
+  upload:
+    base-dir: uploads
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG

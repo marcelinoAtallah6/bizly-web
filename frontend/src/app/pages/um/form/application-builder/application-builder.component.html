@@ -1,0 +1,226 @@
+<div class="app-builder-page">
+  <div class="page-header">
+    <div>
+      <h2>Application builder</h2>
+      <p class="hint">
+        Manage sidebar applications and menus. Drag to reorder — order is reflected in the navigation for all users.
+        Restricted to portal root administrators.
+      </p>
+    </div>
+    <button mat-stroked-button type="button" (click)="reload()" [disabled]="loading">
+      <i-tabler name="refresh" class="icon-18"></i-tabler>
+      Refresh
+    </button>
+  </div>
+
+  <div class="builder-grid" *ngIf="!loading; else loadingTpl">
+    <!-- Applications -->
+    <mat-card class="panel">
+      <mat-card-header>
+        <mat-card-title>Applications</mat-card-title>
+        <button mat-flat-button color="primary" type="button" (click)="newApplication()">New</button>
+      </mat-card-header>
+      <mat-card-content>
+        <div
+          class="drag-list"
+          cdkDropList
+          (cdkDropListDropped)="onApplicationDrop($event)"
+          [cdkDropListData]="applications">
+          <div
+            class="drag-row"
+            *ngFor="let app of applications; trackBy: trackByAppId"
+            cdkDrag
+            [class.selected]="selectedApplication?.id === app.id"
+            (click)="selectApplication(app)">
+            <i-tabler name="grip-vertical" class="drag-handle" cdkDragHandle></i-tabler>
+            <span class="row-title">{{ app.name }}</span>
+            <span class="badge inactive" *ngIf="app.isActive === false">Off</span>
+            <button
+              mat-icon-button
+              type="button"
+              class="row-delete"
+              color="warn"
+              matTooltip="Delete application"
+              [disabled]="saving"
+              (click)="deleteApplicationFromList(app, $event)">
+              <i-tabler name="trash" class="icon-18"></i-tabler>
+            </button>
+          </div>
+        </div>
+        <p class="empty" *ngIf="applications.length === 0">No applications yet.</p>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Menus -->
+    <mat-card class="panel">
+      <mat-card-header>
+        <mat-card-title>
+          Menus
+          <span class="sub" *ngIf="selectedApplication">— {{ selectedApplication.name }}</span>
+        </mat-card-title>
+        <button mat-flat-button color="primary" type="button" (click)="newMenu()" [disabled]="!selectedApplication">
+          New
+        </button>
+      </mat-card-header>
+      <mat-card-content>
+        <p class="empty" *ngIf="!selectedApplication">Select an application to manage its menus.</p>
+        <div *ngIf="selectedApplication" class="menu-tree">
+          <ng-container
+            *ngTemplateOutlet="menuTree; context: { menus: rootMenus, depth: 0, parentId: null }"></ng-container>
+        </div>
+
+        <ng-template #menuTree let-menus="menus" let-depth="depth" let-parentId="parentId">
+          <div
+            class="drag-list menu-sibling-list"
+            cdkDropList
+            cdkDropListLockAxis="y"
+            [cdkDropListData]="menus"
+            (cdkDropListDropped)="onMenuDrop($event, parentId)">
+            <div
+              class="menu-tree-node"
+              *ngFor="let menu of menus; trackBy: trackByMenuId"
+              [style.--tree-depth]="depth">
+              <div
+                class="drag-row"
+                cdkDrag
+                [cdkDragData]="menu"
+                (cdkDragStarted)="onMenuDragStarted()"
+                (cdkDragEnded)="onMenuDragEnded()"
+                [class.selected]="isMenuSelected(menu)"
+                (click)="onMenuRowClick(menu)">
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="tree-toggle"
+                  *ngIf="hasChildren(menu)"
+                  (click)="toggleMenuExpand(menu, $event)"
+                  [attr.aria-label]="isMenuExpanded(menu) ? 'Collapse' : 'Expand'">
+                  <mat-icon>{{ isMenuExpanded(menu) ? 'expand_more' : 'chevron_right' }}</mat-icon>
+                </button>
+                <span class="tree-toggle-spacer" *ngIf="!hasChildren(menu)"></span>
+                <i-tabler name="grip-vertical" class="drag-handle" cdkDragHandle></i-tabler>
+                <span class="tree-branch" *ngIf="depth > 0"></span>
+                <span class="row-title">{{ menu.name }}</span>
+                <span class="route-hint">{{ menu.route }}</span>
+                <span class="child-count" *ngIf="hasChildren(menu) && !isMenuExpanded(menu)">
+                  {{ menu.children!.length }} nested
+                </span>
+                <span class="badge inactive" *ngIf="menu.isActive === false">Off</span>
+                <button
+                  mat-icon-button
+                  type="button"
+                  class="row-delete"
+                  color="warn"
+                  matTooltip="Delete menu"
+                  [disabled]="saving"
+                  (click)="deleteMenuFromList(menu, $event)">
+                  <i-tabler name="trash" class="icon-18"></i-tabler>
+                </button>
+              </div>
+              <ng-container *ngIf="hasChildren(menu) && isMenuExpanded(menu)">
+                <ng-container
+                  *ngTemplateOutlet="
+                    menuTree;
+                    context: { menus: menu.children, depth: depth + 1, parentId: menu.id }
+                  "></ng-container>
+              </ng-container>
+            </div>
+          </div>
+        </ng-template>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Editor -->
+    <mat-card class="panel editor-panel">
+      <mat-card-header>
+        <mat-card-title>{{ editorMode === 'application' ? 'Application' : 'Menu' }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <form [formGroup]="applicationForm" *ngIf="editorMode === 'application'" (ngSubmit)="saveApplication()">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Name</mat-label>
+            <input matInput formControlName="name" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Description</mat-label>
+            <textarea matInput rows="2" formControlName="description"></textarea>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Icon (Tabler)</mat-label>
+            <input matInput formControlName="icon" placeholder="e.g. flight, settings" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>App route (optional)</mat-label>
+            <input matInput formControlName="route" placeholder="/travel" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Sort order</mat-label>
+            <input matInput type="number" formControlName="sortOrder" />
+          </mat-form-field>
+          <mat-checkbox formControlName="isActive">Active</mat-checkbox>
+          <div class="actions">
+            <button mat-flat-button color="primary" type="submit" [disabled]="saving">Save application</button>
+            <button
+              mat-stroked-button
+              color="warn"
+              type="button"
+              (click)="deleteApplication()"
+              [disabled]="saving || !applicationForm.get('id')?.value">
+              Delete application
+            </button>
+          </div>
+        </form>
+
+        <form [formGroup]="menuForm" *ngIf="editorMode === 'menu'" (ngSubmit)="saveMenu()">
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Application</mat-label>
+            <mat-select formControlName="applicationId" (selectionChange)="onMenuApplicationChange($event.value)">
+              <mat-option *ngFor="let app of applications" [value]="app.id">{{ app.name }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Name</mat-label>
+            <input matInput formControlName="name" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Route</mat-label>
+            <input matInput formControlName="route" placeholder="/travel/bookings" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Icon (Tabler)</mat-label>
+            <input matInput formControlName="icon" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Parent menu</mat-label>
+            <mat-select formControlName="parentId">
+              <mat-option [value]="null">— Top level —</mat-option>
+              <mat-option *ngFor="let p of parentMenuOptions" [value]="p.id">{{ p.label }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="w-100">
+            <mat-label>Sort order</mat-label>
+            <input matInput type="number" formControlName="sortOrder" />
+          </mat-form-field>
+          <mat-checkbox formControlName="isActive">Active</mat-checkbox>
+          <div class="actions">
+            <button mat-flat-button color="primary" type="submit" [disabled]="saving">Save menu</button>
+            <button
+              mat-stroked-button
+              color="warn"
+              type="button"
+              (click)="deleteMenu()"
+              [disabled]="saving || !menuForm.get('id')?.value">
+              Delete menu
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <ng-template #loadingTpl>
+    <div class="loading-wrap">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  </ng-template>
+</div>

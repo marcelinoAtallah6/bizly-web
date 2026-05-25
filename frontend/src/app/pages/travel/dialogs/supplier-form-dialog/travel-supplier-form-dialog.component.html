@@ -1,0 +1,49 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Edit supplier' : 'New supplier' }}</h2>
+<mat-dialog-content [formGroup]="form">
+  <mat-tab-group animationDuration="0ms">
+    <mat-tab label="Contact">
+      <div class="p-t-16">
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Supplier name</mat-label>
+          <input matInput formControlName="name" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Type</mat-label>
+          <mat-select formControlName="supplierType">
+            <mat-option value="">—</mat-option>
+            <mat-option *ngFor="let t of supplierTypes" [value]="t">{{ t }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="contactEmail" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Phone</mat-label>
+          <input matInput formControlName="contactPhone" />
+        </mat-form-field>
+        <mat-slide-toggle formControlName="active">Active</mat-slide-toggle>
+      </div>
+    </mat-tab>
+    <mat-tab label="Contracts & rates">
+      <div class="p-t-16">
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Contracts (airline / hotel / tour agreements)</mat-label>
+          <textarea matInput formControlName="contractsJson" rows="5" placeholder="JSON or free-text contract summary"></textarea>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Commission structure</mat-label>
+          <textarea matInput formControlName="commissionNotes" rows="3"></textarea>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Rate tables (for automatic cost calculation)</mat-label>
+          <textarea matInput formControlName="rateTableNotes" rows="4" placeholder="Seasonal rates, contracted hotel rates…"></textarea>
+        </mat-form-field>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <button mat-flat-button color="primary" type="button" (click)="save()" [disabled]="saving">Save</button>
+</mat-dialog-actions>

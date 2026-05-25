@@ -1,5 +1,5 @@
 <div class="p-24">
-  <app-page-action-bar title="Roles" [toolbar]="listToolbar"></app-page-action-bar>
+  <app-page-action-bar [title]="pageTitle" [toolbar]="listToolbar"></app-page-action-bar>
 
   <ag-grid-angular
     class="ag-theme-quartz"
@@ -8,9 +8,19 @@
     [columnDefs]="columnDefs"
     [defaultColDef]="defaultColDef"
     [animateRows]="true"
+    [rowSelection]="isBusinessTenant ? 'single' : undefined"
+    [pagination]="gridPagination.pagination"
+    [paginationPageSize]="gridPagination.paginationPageSize"
+    [paginationPageSizeSelector]="gridPagination.paginationPageSizeSelector"
     (gridReady)="onGridReady($event)"
+    (selectionChanged)="onSelectionChanged($event)"
     (rowDoubleClicked)="onRowDoubleClicked($event)"
   ></ag-grid-angular>
 
-  <p class="text-muted f-s-12 m-t-8 m-b-0">Double-click a row to open details.</p>
+  <p class="text-muted f-s-12 m-t-8 m-b-0">
+    <ng-container *ngIf="isBusinessTenant; else adminHint">
+      Select a row to delete. Permissions are copied from your business type template on create.
+    </ng-container>
+    <ng-template #adminHint>Double-click a row to open details.</ng-template>
+  </p>
 </div>

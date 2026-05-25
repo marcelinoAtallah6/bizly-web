@@ -29,7 +29,11 @@
   }"
   class="menu-list-item"
 >
-  <i-tabler class="routeIcon" name="{{ item.icon }}" matListItemIcon></i-tabler>
+  <i-tabler
+    *ngIf="tablerIcon(item.icon) as iconName"
+    class="routeIcon"
+    [name]="iconName"
+    matListItemIcon></i-tabler>
   <span class="hide-menu">{{ item.name }}</span>
 
   <!-- Material Icon for Expand/Collapse -->

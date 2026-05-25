@@ -36,7 +36,6 @@ $theme-typography: mat.define-typography-config(
 .mat-subtitle-2 {
   @include mat.typography-level($theme-typography, "subtitle-2");
   margin: 0;
-  font-size: 11px !important;
   color: var(--textPrimary);
 }
 

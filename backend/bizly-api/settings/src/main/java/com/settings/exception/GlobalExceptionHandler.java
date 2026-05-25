@@ -36,6 +36,17 @@ public class GlobalExceptionHandler {
 		return new ResponseEntity<>(ApiResponse.error(ex.getMessage()), HttpStatus.BAD_REQUEST);
 	}
 
+	/**
+	 * {@code BusinessContextHolder.requireBusinessId()} throws {@link IllegalStateException} when
+	 * the caller has no tenant context (admin in "all businesses" mode, or a user whose registration
+	 * never finished). Returning 400 with the raw message gives the SPA something actionable to
+	 * show — better than a generic 500 that looks like a bug.
+	 */
+	@ExceptionHandler(IllegalStateException.class)
+	public ResponseEntity<ApiResponse<Void>> handleIllegalStateException(IllegalStateException ex) {
+		return new ResponseEntity<>(ApiResponse.error(ex.getMessage()), HttpStatus.BAD_REQUEST);
+	}
+
 	@ExceptionHandler(ServiceException.class)
 	public ResponseEntity<ApiResponse<Void>> handleServiceException(ServiceException ex) {
 

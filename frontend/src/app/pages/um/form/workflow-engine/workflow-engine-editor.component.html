@@ -1,0 +1,188 @@
+<div class="p-24 wf-editor">
+  <div class="wf-editor__head">
+    <button mat-icon-button type="button" (click)="back()" aria-label="Back">
+      <i-tabler name="arrow-left" class="icon-20"></i-tabler>
+    </button>
+    <div class="wf-editor__titles">
+      <h1 class="wf-editor__title">{{ isNew ? 'New pipeline' : (detail?.displayName || 'Pipeline') }}</h1>
+      <p class="wf-editor__sub text-muted" *ngIf="detail">
+        {{ detail.actionCode }} · v{{ detail.versionNo }} ·
+        <span class="wf-badge" [attr.data-status]="detail.status">{{ detail.status }}</span>
+      </p>
+    </div>
+    <div class="wf-editor__actions" *ngIf="!isNew && canEdit">
+      <button mat-stroked-button type="button" (click)="saveMeta()" [disabled]="saving || readOnly || metaForm.invalid">
+        Save details
+      </button>
+      <button mat-stroked-button type="button" (click)="saveSteps()" [disabled]="saving || readOnly">
+        Save steps
+      </button>
+      <button mat-flat-button color="primary" type="button" (click)="publish()" [disabled]="saving || readOnly">
+        Publish
+      </button>
+      <button
+        mat-stroked-button
+        color="warn"
+        type="button"
+        (click)="disablePipeline()"
+        [disabled]="saving || detail?.status === 'DISABLED'"
+        *ngIf="detail?.status === 'PUBLISHED'"
+      >
+        Disable
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading">
+    <mat-progress-spinner diameter="40" mode="indeterminate"></mat-progress-spinner>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <mat-card class="mat-elevation-z1 m-b-16">
+      <mat-card-header>
+        <mat-card-title>Pipeline</mat-card-title>
+      </mat-card-header>
+      <mat-card-content [formGroup]="metaForm">
+        <div class="wf-meta-grid">
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Trigger action</mat-label>
+            <mat-select formControlName="actionCode" (selectionChange)="onActionChange()" [disabled]="!isNew">
+              <mat-option *ngFor="let a of actions" [value]="a.actionCode">
+                {{ a.displayName }} ({{ a.actionCode }})
+              </mat-option>
+            </mat-select>
+            <mat-hint *ngIf="isNew">e.g. USER_CREATED_SUCCESS runs after a user is saved</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Display name</mat-label>
+            <input matInput formControlName="displayName" />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full" *ngIf="isNew && isSuperAdmin">
+            <mat-label>Scope</mat-label>
+            <mat-select formControlName="businessScope">
+              <mat-option value="global">Global (all businesses)</mat-option>
+              <mat-option value="business">This business</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Notes</mat-label>
+            <textarea matInput formControlName="notes" rows="2"></textarea>
+          </mat-form-field>
+        </div>
+
+        <button
+          *ngIf="isNew"
+          mat-flat-button
+          color="primary"
+          type="button"
+          (click)="createPipeline()"
+          [disabled]="saving || metaForm.invalid"
+        >
+          Create draft
+        </button>
+      </mat-card-content>
+    </mat-card>
+
+    <div class="wf-layout" *ngIf="!isNew">
+      <mat-card class="wf-timeline mat-elevation-z1">
+        <mat-card-header>
+          <mat-card-title>Steps</mat-card-title>
+          <button
+            mat-button
+            color="primary"
+            type="button"
+            (click)="addNotificationStep()"
+            [disabled]="readOnly"
+            *ngIf="canEdit"
+          >
+            <i-tabler name="plus" class="icon-16 m-r-4"></i-tabler>
+            Notification
+          </button>
+        </mat-card-header>
+        <mat-card-content>
+          <p class="text-muted f-s-13" *ngIf="!steps.length">No steps yet. Add a notification step.</p>
+          <div class="wf-step-list">
+            <button
+              type="button"
+              class="wf-step-item"
+              *ngFor="let s of steps; let i = index"
+              [class.wf-step-item--active]="selectedStepIndex === i"
+              (click)="selectStep(i)"
+            >
+              <span class="wf-step-order">{{ s.stepOrder }}</span>
+              <span class="wf-step-label">{{ stepLabel(s, i) }}</span>
+              <span class="wf-step-type">{{ s.stepType }}</span>
+            </button>
+          </div>
+          <div class="wf-step-toolbar" *ngIf="selectedStepIndex != null && canEdit && isDraft">
+            <button mat-icon-button type="button" (click)="moveStep(-1)" aria-label="Move up">
+              <i-tabler name="arrow-up" class="icon-18"></i-tabler>
+            </button>
+            <button mat-icon-button type="button" (click)="moveStep(1)" aria-label="Move down">
+              <i-tabler name="arrow-down" class="icon-18"></i-tabler>
+            </button>
+            <button mat-icon-button type="button" color="warn" (click)="removeSelectedStep()" aria-label="Remove">
+              <i-tabler name="trash" class="icon-18"></i-tabler>
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="wf-inspector mat-elevation-z1" *ngIf="selectedStepIndex != null">
+        <mat-card-header>
+          <mat-card-title>Step settings</mat-card-title>
+        </mat-card-header>
+        <mat-card-content [formGroup]="stepForm">
+          <mat-slide-toggle formControlName="active" class="m-b-16">Active</mat-slide-toggle>
+
+          <ng-container *ngIf="stepForm.get('stepType')?.value === 'NOTIFICATION'">
+            <mat-form-field appearance="outline" class="full">
+              <mat-label>When to run</mat-label>
+              <mat-select formControlName="timing">
+                <mat-option value="ON_ACTION_SUCCESS">When action completes successfully</mat-option>
+                <mat-option value="AFTER_APPROVAL">After approval completes</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full">
+              <mat-label>Email template</mat-label>
+              <mat-select formControlName="templateKey">
+                <mat-option *ngFor="let t of templates" [value]="t.templateKey">
+                  {{ t.templateKey }}
+                  <span class="text-muted" *ngIf="t.subjectPreview"> — {{ t.subjectPreview }}</span>
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <p class="wf-field-label">Channels</p>
+            <mat-checkbox formControlName="channelEmail">Email</mat-checkbox>
+            <mat-checkbox formControlName="channelInbox" class="m-l-16">In-app inbox</mat-checkbox>
+
+            <mat-form-field appearance="outline" class="full m-t-16">
+              <mat-label>Audience</mat-label>
+              <mat-select formControlName="audienceMode">
+                <mat-option value="CONTEXT">From action context</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="full" *ngIf="stepForm.get('audienceMode')?.value === 'CONTEXT'">
+              <mat-label>Context recipient</mat-label>
+              <mat-select formControlName="contextRecipient">
+                <mat-option value="createdUser">Created user</mat-option>
+                <mat-option value="createdCustomer">Created customer</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </ng-container>
+
+          <p class="wf-hint text-muted" *ngIf="stepForm.get('stepType')?.value === 'APPROVAL'">
+            Configure the gateway API endpoint and maker/checker tiers in this approval step. Add notification steps for
+            emails after the action or after approval completes.
+          </p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </ng-container>
+</div>

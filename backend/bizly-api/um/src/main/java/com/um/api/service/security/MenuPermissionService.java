@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -26,6 +24,7 @@ import com.um.api.repository.role.RoleMenuPermissionRepository;
 import com.um.api.repository.role.RoleRepository;
 import com.um.common.ApiMessages;
 import com.um.exception.ServiceException;
+import com.um.security.BusinessContextHolder;
 
 @Service
 public class MenuPermissionService {
@@ -51,9 +50,20 @@ public class MenuPermissionService {
 	}
 
 	/**
-	 * All role ids assigned to the current principal (from gateway {@code X-Role} → authorities).
-	 * Order is stable (insertion order of authorities).
+	 * Union of menu ids the current principal may delegate (any assigned role grants view/add/edit/delete).
 	 */
+	public Set<Long> menuIdsGrantedToCurrentPrincipal() {
+		Set<Long> menuIds = new LinkedHashSet<>();
+		for (Long roleId : resolveAllAssignedRoleIds()) {
+			for (RoleMenuPermission p : permissionRepository.findByIdRoleId(roleId)) {
+				if (p.isAllowView() || p.isAllowAdd() || p.isAllowEdit() || p.isAllowDelete()) {
+					menuIds.add(p.getId().getMenuId());
+				}
+			}
+		}
+		return menuIds;
+	}
+
 	public List<Long> resolveAllAssignedRoleIds() {
 		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 		if (auth == null) {
@@ -65,7 +75,7 @@ public class MenuPermissionService {
 			if (name.isEmpty()) {
 				continue;
 			}
-			roleRepository.findByNameIgnoreCase(name).map(Role::getId).ifPresent(ids::add);
+			roleRepository.findFirstByNameIgnoreCaseOrderByIdAsc(name).map(Role::getId).ifPresent(ids::add);
 		}
 		return new ArrayList<>(ids);
 	}
@@ -88,18 +98,18 @@ public class MenuPermissionService {
 	}
 
 	/**
-	 * Enforces DB-backed menu permissions for roles that have at least one matrix row. Roles without matrix
-	 * rows do <strong>not</strong> grant extra access when another assigned role uses the matrix — only roles
-	 * with configured rows are evaluated, and the action is allowed if <strong>any</strong> such role grants it.
+	 * Enforces DB-backed menu permissions. ADMIN-level roles (e.g. SUPER_ADMIN) bypass the check —
+	 * they are trusted across the board. Every other role MUST have an explicit row in
+	 * {@code UM_ROLE_MENU_PERM} granting the requested action; an empty matrix means deny, so
+	 * stripping a permission from UM also blocks the API immediately.
 	 */
 	public void assertAllowed(Optional<Long> menuId, Optional<String> menuRoute, MenuPermissionAction action) {
+		if (BusinessContextHolder.canBypassTenant()) {
+			return;
+		}
 		List<Long> assigned = resolveAllAssignedRoleIds();
 		if (assigned.isEmpty()) {
 			throw new ServiceException(ApiMessages.MENU_PERMISSION_DENIED, HttpStatus.FORBIDDEN);
-		}
-		List<Long> matrixRoles = assigned.stream().filter(this::isMatrixEnforcedForRole).collect(Collectors.toList());
-		if (matrixRoles.isEmpty()) {
-			return;
 		}
 		Long mid = menuId.orElse(null);
 		if (mid == null && menuRoute.isPresent()) {
@@ -108,7 +118,7 @@ public class MenuPermissionService {
 		if (mid == null) {
 			throw new ServiceException(ApiMessages.MENU_PERMISSION_DENIED, HttpStatus.FORBIDDEN);
 		}
-		for (Long rid : matrixRoles) {
+		for (Long rid : assigned) {
 			RoleMenuPermissionId compositeId = new RoleMenuPermissionId();
 			compositeId.setRoleId(rid);
 			compositeId.setMenuId(mid);

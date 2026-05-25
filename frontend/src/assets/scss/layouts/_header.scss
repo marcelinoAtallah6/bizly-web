@@ -189,8 +189,11 @@ html .topbar {
   align-items: center;
 }
 
-.bizly-topbar .header-search      { order: 2; }
-.bizly-topbar .pulse-ticker       { order: 3; }
+.bizly-topbar .bizly-nav-toggle    { order: 0; flex-shrink: 0; }
+.bizly-topbar app-global-context-switcher,
+.bizly-topbar .bizly-header-gcs    { order: 1; flex-shrink: 0; }
+.bizly-topbar .header-search      { order: 2; flex: 1 1 200px; min-width: 120px; max-width: 420px; }
+.bizly-topbar .pulse-ticker       { order: 3; flex-shrink: 0; }
 .bizly-topbar .flex-1-auto        { order: 4; }
 .bizly-topbar .role-chip          { order: 10; }
 .bizly-topbar .notif-bell         { order: 20; }

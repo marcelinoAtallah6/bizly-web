@@ -41,6 +41,18 @@ public class BusinessEntity {
 	@Column(name = "updated_at")
 	private LocalDateTime updatedAt;
 
+	@Column(name = "onboarding_source", length = 30)
+	private String onboardingSource = "PUBLIC";
+
+	@Column(name = "business_type_role_id")
+	private Long businessTypeRoleId;
+
+	@Column(name = "subscription_status", length = 30)
+	private String subscriptionStatus;
+
+	@Column(name = "subscription_verified_at")
+	private LocalDateTime subscriptionVerifiedAt;
+
 	public Long getId() { return id; }
 	public void setId(Long id) { this.id = id; }
 	public String getBusinessName() { return businessName; }
@@ -55,4 +67,12 @@ public class BusinessEntity {
 	public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 	public LocalDateTime getUpdatedAt() { return updatedAt; }
 	public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+	public String getOnboardingSource() { return onboardingSource; }
+	public void setOnboardingSource(String onboardingSource) { this.onboardingSource = onboardingSource; }
+	public Long getBusinessTypeRoleId() { return businessTypeRoleId; }
+	public void setBusinessTypeRoleId(Long businessTypeRoleId) { this.businessTypeRoleId = businessTypeRoleId; }
+	public String getSubscriptionStatus() { return subscriptionStatus; }
+	public void setSubscriptionStatus(String subscriptionStatus) { this.subscriptionStatus = subscriptionStatus; }
+	public LocalDateTime getSubscriptionVerifiedAt() { return subscriptionVerifiedAt; }
+	public void setSubscriptionVerifiedAt(LocalDateTime subscriptionVerifiedAt) { this.subscriptionVerifiedAt = subscriptionVerifiedAt; }
 }

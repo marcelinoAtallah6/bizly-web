@@ -1,0 +1,159 @@
+.travel-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 720px;
+
+  .full {
+    width: 100%;
+  }
+
+  &__actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+  }
+}
+
+.travel-dl {
+  display: grid;
+  grid-template-columns: minmax(120px, 36%) 1fr;
+  gap: 10px 20px;
+  margin: 0;
+
+  dt {
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.75;
+  }
+
+  dd {
+    margin: 0;
+    font-size: 0.9375rem;
+    line-height: 1.45;
+    word-break: break-word;
+  }
+}
+
+mat-dialog-content .full {
+  width: 100%;
+  display: block;
+}
+
+/* Travel modals — visible floating labels, readable step content */
+.travel-form-dialog-panel {
+  .mat-mdc-dialog-container {
+    padding: 0;
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: min(90vh, 900px);
+  }
+
+  .mat-mdc-dialog-surface {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: min(90vh, 900px);
+    min-height: 0;
+  }
+
+  h2[mat-dialog-title],
+  .mat-mdc-dialog-title {
+    margin: 0;
+    padding: 20px 24px 12px;
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: normal;
+    flex-shrink: 0;
+  }
+
+  .mat-mdc-dialog-content,
+  mat-dialog-content {
+    margin: 0;
+    padding: 12px 24px 16px !important;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none !important;
+    overflow-x: hidden;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mat-mdc-dialog-actions,
+  mat-dialog-actions {
+    padding: 12px 24px 20px;
+    margin: 0;
+    flex-shrink: 0;
+    border-top: 1px solid var(--borderColor, rgba(0, 0, 0, 0.08));
+    background: var(--cardbg, #fff);
+    z-index: 2;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .mat-horizontal-stepper {
+    background: transparent;
+    overflow: visible;
+  }
+
+  .mat-horizontal-stepper-header-container {
+    padding: 0 0 12px;
+  }
+
+  .mat-horizontal-content-container,
+  .mat-horizontal-stepper-content-container {
+    overflow: visible !important;
+  }
+
+  .mat-horizontal-stepper-content {
+    overflow: visible !important;
+  }
+
+  .travel-step-fields {
+    padding: 12px 4px 40px;
+    overflow: visible;
+    box-sizing: border-box;
+  }
+
+  .mat-mdc-form-field,
+  mat-form-field,
+  app-travel-entity-picker,
+  app-travel-paginated-country-select {
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+    margin-bottom: 18px;
+    overflow: visible;
+  }
+
+  .mat-mdc-text-field-wrapper,
+  .mat-mdc-form-field-flex {
+    overflow: visible;
+  }
+
+  .mat-mdc-form-field-subscript-wrapper {
+    min-height: 1.25em;
+  }
+
+  .mdc-floating-label {
+    overflow: visible;
+  }
+}
+
+.travel-dialog-content--booking {
+  min-width: min(720px, 92vw);
+}
+
+.travel-booking-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}

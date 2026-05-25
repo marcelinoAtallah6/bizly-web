@@ -72,6 +72,7 @@ public class SettingsDashboardManagementService {
 		 */
 		Long businessId = BusinessContextHolder.currentBusinessId();
 		boolean canBypass = BusinessContextHolder.canBypassTenant();
+		boolean portalAdmin = BusinessContextHolder.isPortalAdminRoleLevel();
 
 		Optional<SettingsDashboard> slugOwner = dashboardRepository.findBySlugIgnoreCase(req.getSlug().trim());
 		if (req.getId() == null) {
@@ -102,10 +103,12 @@ public class SettingsDashboardManagementService {
 			userGrantRepository.deleteByIdDashboardId(d.getId());
 		} else {
 			d = new SettingsDashboard();
-			if (!canBypass) {
+			if (!canBypass && !portalAdmin) {
 				if (businessId == null) {
 					throw new ServiceException(ApiMessages.SETTINGS_DASHBOARD_NOT_FOUND, HttpStatus.FORBIDDEN);
 				}
+				d.setBusinessId(businessId);
+			} else if (!canBypass && portalAdmin && businessId != null) {
 				d.setBusinessId(businessId);
 			}
 		}
@@ -147,7 +150,7 @@ public class SettingsDashboardManagementService {
 
 	/** Loads a dashboard the current caller is allowed to see — tenant own + globals, or anything when admin-bypassed. */
 	private SettingsDashboard loadDashboardForCaller(Long id, Long businessId, boolean canBypass) {
-		if (canBypass) {
+		if (BusinessContextHolder.canListCrossTenantBuilderData()) {
 			return dashboardRepository.findById(id)
 					.orElseThrow(() -> new ServiceException(ApiMessages.SETTINGS_DASHBOARD_NOT_FOUND, HttpStatus.NOT_FOUND));
 		}
@@ -159,7 +162,7 @@ public class SettingsDashboardManagementService {
 	}
 
 	private SettingsQueryDef loadQueryForCaller(Long id, Long businessId, boolean canBypass) {
-		if (canBypass) {
+		if (BusinessContextHolder.canListCrossTenantBuilderData()) {
 			return queryDefRepository.findById(id)
 					.orElseThrow(() -> new ServiceException(ApiMessages.SETTINGS_QUERY_NOT_FOUND, HttpStatus.NOT_FOUND));
 		}

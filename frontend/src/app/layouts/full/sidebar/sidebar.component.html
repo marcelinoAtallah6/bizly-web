@@ -2,8 +2,19 @@
   <app-branding></app-branding>
   <mat-nav-list class="sidebar-list">
     <ng-container *ngFor="let item of navItems">
-      <div mat-subheader class="nav-caption">
-        {{ item.name }}
+      <div
+        mat-subheader
+        class="nav-caption"
+        [matTooltip]="item.name ?? ''"
+        matTooltipPosition="right"
+        [matTooltipShowDelay]="300"
+      >
+        <i-tabler
+          class="nav-caption__icon"
+          [name]="sectionIcon(item)"
+          aria-hidden="true"
+        ></i-tabler>
+        <span class="nav-caption__text">{{ item.name }}</span>
       </div>
       <app-nav-item *ngFor="let app of item.menus" [item]="app"></app-nav-item>
     </ng-container>

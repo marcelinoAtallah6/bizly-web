@@ -1,0 +1,19 @@
+<div class="p-24 travel-page">
+  <app-page-action-bar title="Visa management" [toolbar]="listToolbar"></app-page-action-bar>
+  <app-travel-kpi-strip [items]="kpis"></app-travel-kpi-strip>
+  <ag-grid-angular
+    class="ag-theme-quartz"
+    style="width: 100%; height: min(70vh, 640px)"
+    [rowData]="rowData"
+    [columnDefs]="columnDefs"
+    [defaultColDef]="defaultColDef"
+    [rowSelection]="'single'"
+    [animateRows]="true"
+    [pagination]="gridPagination.pagination"
+    [paginationPageSize]="gridPagination.paginationPageSize"
+    [paginationPageSizeSelector]="gridPagination.paginationPageSizeSelector"
+    (gridReady)="onGridReady($event)"
+    (selectionChanged)="onSelectionChanged()"
+    (rowDoubleClicked)="onRowDoubleClicked($event)"
+  ></ag-grid-angular>
+</div>

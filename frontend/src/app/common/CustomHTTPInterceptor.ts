@@ -27,6 +27,32 @@ import { SessionPromptService } from '../services/session-prompt.service';
 export class CustomHTTPInterceptor implements HttpInterceptor {
   private refreshInFlight$: Observable<string> | null = null;
 
+  /**
+   * Public auth endpoints. We never attach a Bearer token to these calls and we
+   * never run the 401-refresh cascade on them. Two reasons:
+   *
+   *   1. The gateway treats them as anonymous; sending a stale JWT alongside the
+   *      request would still pass through but every error response surfaced
+   *      back to the SPA would be misinterpreted as "your session expired",
+   *      kicking the user out of the registration / forgot-password flow.
+   *   2. The 401 handler ends with {@code router.navigate('/authentication/login')}.
+   *      If a user clicks "Create an account" while a stale token is in
+   *      {@code localStorage}, the GET on {@code /auth/business-types} would
+   *      otherwise bounce them right back to the login screen.
+   *
+   * Keep this list in sync with {@code SecurityConfig.permitAll(...)} and the
+   * gateway's {@code PUBLIC_PATHS} so it is a single source of truth.
+   */
+  private static readonly PUBLIC_AUTH_PATHS = [
+    '/auth/login',
+    '/auth/refresh',
+    '/auth/logout',
+    '/auth/register',
+    '/auth/business-types',
+    '/auth/forgot-password',
+    '/auth/social/',
+  ];
+
   constructor(
     private readonly authService: AuthService,
     private readonly deviceIdService: DeviceIdService,
@@ -36,20 +62,35 @@ export class CustomHTTPInterceptor implements HttpInterceptor {
   ) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    const authReq = this.addAuthHeaders(req);
+    const isPublic = this.isPublicAuthEndpoint(req.url);
+    const authReq = this.addAuthHeaders(req, undefined, isPublic);
 
     return next.handle(authReq).pipe(
       catchError((error: HttpErrorResponse) => {
         const isUnauthorized = error.status === 401;
-        const isLoginRequest = req.url.includes('/auth/login');
-        const isRefreshRequest = req.url.includes('/auth/refresh');
 
-        if (!isUnauthorized || isLoginRequest || isRefreshRequest) {
+        // Never trigger the session-expired cascade for public auth endpoints —
+        // the user has no session yet (or is in the middle of starting one).
+        if (!isUnauthorized || isPublic) {
           return throwError(() => error);
         }
 
         return this.handle401Error(req, next);
       })
+    );
+  }
+
+  private forceSignOut(): void {
+    this.authService.clearSession();
+    this.ngZone.run(() => this.router.navigate(['/authentication/login']));
+  }
+
+  private isPublicAuthEndpoint(url: string): boolean {
+    const pathOnly = url.split('?')[0];
+    // Must be exact: url.includes('/auth/register') would match /auth/register-business
+    // (authenticated) and skip the Bearer token → gateway 401 / api-auth "Invalid session".
+    return CustomHTTPInterceptor.PUBLIC_AUTH_PATHS.some((p) =>
+      p === '/auth/register' ? pathOnly.endsWith('/auth/register') : url.includes(p)
     );
   }
 
@@ -60,6 +101,9 @@ export class CustomHTTPInterceptor implements HttpInterceptor {
           !!this.authService.getRefreshToken() && !!this.authService.getSessionId();
         if (!canRefresh) {
           return throwError(() => new Error('No refresh token'));
+        }
+        if (this.authService.isSessionExtendGraceExceeded()) {
+          return throwError(() => new Error('Session extend grace period exceeded'));
         }
         return this.sessionPrompt.askExtendSession().pipe(
           switchMap((extend) => {
@@ -79,10 +123,7 @@ export class CustomHTTPInterceptor implements HttpInterceptor {
         );
       }).pipe(
         tap({
-          error: () => {
-            this.authService.clearSession();
-            this.ngZone.run(() => this.router.navigate(['/authentication/login']));
-          },
+          error: () => this.forceSignOut(),
         }),
         finalize(() => {
           this.refreshInFlight$ = null;
@@ -98,13 +139,20 @@ export class CustomHTTPInterceptor implements HttpInterceptor {
     );
   }
 
-  private addAuthHeaders(req: HttpRequest<any>, forcedToken?: string): HttpRequest<any> {
+  private addAuthHeaders(
+    req: HttpRequest<any>,
+    forcedToken?: string,
+    isPublic: boolean = this.isPublicAuthEndpoint(req.url)
+  ): HttpRequest<any> {
     const token = forcedToken ?? this.authService.getAccessToken();
     const deviceId = this.deviceIdService.getDeviceId();
 
     const headers: Record<string, string> = {};
 
-    if (token) {
+    // Skip Authorization on public endpoints — a stale token attached here
+    // would surface as "session expired" to fresh visitors who actually have
+    // no session, breaking the register / forgot-password flows.
+    if (token && !isPublic) {
       headers['Authorization'] = `Bearer ${token}`;
     }
 

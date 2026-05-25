@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.um.api.audit.Audited;
+import com.um.api.dto.role.NextRoleTypeResponse;
 import com.um.api.dto.role.add.AddRoleRequest;
 import com.um.api.dto.role.add.AddRoleResponse;
 import com.um.api.dto.role.delete.DeleteRoleRequest;
@@ -79,5 +80,13 @@ public class RoleController {
 		log.info("[UM_ROLE][GETS] page={}", request.getPageNumber());
 		PageResponse<GetRoleResponse> response = service.gets(request);
 		return ResponseEntity.ok(ApiResponse.success(response, ApiMessages.SUCCESS));
+	}
+
+	@PostMapping("/next-role-type")
+	@RequireMenuPermission(menuRoute = "/um/role", action = MenuPermissionAction.VIEW)
+	public ResponseEntity<ApiResponse<NextRoleTypeResponse>> nextRoleType() {
+		NextRoleTypeResponse dto = new NextRoleTypeResponse();
+		dto.setNextRoleType(service.nextRoleTypeCode());
+		return ResponseEntity.ok(ApiResponse.success(dto, ApiMessages.SUCCESS));
 	}
 }

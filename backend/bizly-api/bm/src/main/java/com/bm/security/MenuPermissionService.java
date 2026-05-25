@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -47,7 +46,7 @@ public class MenuPermissionService {
 			if (name.isEmpty()) {
 				continue;
 			}
-			roleRepository.findByNameIgnoreCase(name).map(UmRoleEntity::getId).ifPresent(ids::add);
+			roleRepository.findFirstByNameIgnoreCaseOrderByIdAsc(name).map(UmRoleEntity::getId).ifPresent(ids::add);
 		}
 		return new ArrayList<>(ids);
 	}
@@ -69,14 +68,18 @@ public class MenuPermissionService {
 		return m.map(UmMenuEntity::getId);
 	}
 
+	/**
+	 * ADMIN-level roles bypass the matrix; every other role MUST have an explicit allow row in
+	 * {@code UM_ROLE_MENU_PERM}. An empty matrix therefore denies — strip a permission in UM and
+	 * the API stops working immediately, matching the new UI gate.
+	 */
 	public void assertAllowed(Optional<Long> menuId, Optional<String> menuRoute, MenuPermissionAction action) {
+		if (BusinessContextHolder.canBypassTenant()) {
+			return;
+		}
 		List<Long> assigned = resolveAllAssignedRoleIds();
 		if (assigned.isEmpty()) {
 			throw new ServiceException(ApiMessages.MENU_PERMISSION_DENIED, HttpStatus.FORBIDDEN);
-		}
-		List<Long> matrixRoles = assigned.stream().filter(this::isMatrixEnforcedForRole).collect(Collectors.toList());
-		if (matrixRoles.isEmpty()) {
-			return;
 		}
 		Long mid = menuId.orElse(null);
 		if (mid == null && menuRoute.isPresent()) {
@@ -85,7 +88,7 @@ public class MenuPermissionService {
 		if (mid == null) {
 			throw new ServiceException(ApiMessages.MENU_PERMISSION_DENIED, HttpStatus.FORBIDDEN);
 		}
-		for (Long rid : matrixRoles) {
+		for (Long rid : assigned) {
 			UmRoleMenuPermissionId compositeId = new UmRoleMenuPermissionId();
 			compositeId.setRoleId(rid);
 			compositeId.setMenuId(mid);
@@ -95,6 +98,38 @@ public class MenuPermissionService {
 			}
 		}
 		throw new ServiceException(ApiMessages.MENU_PERMISSION_DENIED, HttpStatus.FORBIDDEN);
+	}
+
+	/**
+	 * Non-throwing twin of {@link #assertAllowed} — used by read-side aggregations (e.g. notification
+	 * inbox) that must silently drop rows the caller is not allowed to see instead of returning 403
+	 * for the whole endpoint.
+	 */
+	public boolean isAllowed(Optional<Long> menuId, Optional<String> menuRoute, MenuPermissionAction action) {
+		if (BusinessContextHolder.canBypassTenant()) {
+			return true;
+		}
+		List<Long> assigned = resolveAllAssignedRoleIds();
+		if (assigned.isEmpty()) {
+			return false;
+		}
+		Long mid = menuId.orElse(null);
+		if (mid == null && menuRoute.isPresent()) {
+			mid = resolveMenuIdByRoute(menuRoute.get()).orElse(null);
+		}
+		if (mid == null) {
+			return false;
+		}
+		for (Long rid : assigned) {
+			UmRoleMenuPermissionId compositeId = new UmRoleMenuPermissionId();
+			compositeId.setRoleId(rid);
+			compositeId.setMenuId(mid);
+			Optional<UmRoleMenuPermissionEntity> opt = permissionRepository.findById(compositeId);
+			if (opt.isPresent() && allows(opt.get(), action)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static boolean allows(UmRoleMenuPermissionEntity p, MenuPermissionAction action) {

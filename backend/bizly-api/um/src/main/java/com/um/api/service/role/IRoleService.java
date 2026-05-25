@@ -22,4 +22,7 @@ public interface IRoleService {
 	GetRoleResponse get(GetRoleRequest request);
 
 	PageResponse<GetRoleResponse> gets(GetsRolesRequest request);
+
+	/** Next {@code role_type} for a new row: {@code COALESCE(MAX(role_type),0) + 1} across all roles. */
+	int nextRoleTypeCode();
 }

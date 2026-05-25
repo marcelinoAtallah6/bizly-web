@@ -1,0 +1,45 @@
+:host {
+  display: block;
+}
+
+.branding {
+  flex-shrink: 0;
+  padding: 14px 18px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  box-sizing: border-box;
+  min-height: 64px;
+}
+
+.branding__link {
+  display: flex;
+  align-items: center;
+  line-height: 0;
+  max-width: 100%;
+}
+
+.branding__logo {
+  display: block;
+  background: transparent;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* Full wordmark — expanded sidebar */
+.branding__logo--full {
+  height: 48px;
+  width: auto;
+  max-width: min(100%, 200px);
+  object-fit: contain;
+  object-position: left center;
+}
+
+/* Collapsed rail — show full logo scaled down (clearer than cropping) */
+.branding__logo--mark {
+  display: none;
+  height: 44px;
+  width: auto;
+  max-width: 44px;
+  object-fit: contain;
+  object-position: center;
+}

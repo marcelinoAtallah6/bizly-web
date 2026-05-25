@@ -1,0 +1,54 @@
+@import './workflow-engine-theme';
+
+:host {
+  @include wf-engine-tokens;
+  @include wf-status-badges;
+  display: block;
+  color: var(--wf-text);
+}
+
+.wf-intro {
+  margin: 0 0 16px;
+  max-width: 720px;
+  line-height: 1.5;
+  color: var(--wf-text-muted);
+
+  strong {
+    color: var(--wf-text);
+  }
+
+  a {
+    color: var(--primary, #5d87ff);
+  }
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 48px;
+}
+
+.filter-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.filter-field {
+  min-width: 200px;
+}
+
+:host ::ng-deep .wf-status-published {
+  color: var(--success, #13deb9);
+  font-weight: 600;
+}
+
+:host ::ng-deep .wf-status-draft {
+  color: var(--warning, #ffae1f);
+  font-weight: 600;
+}
+
+:host ::ng-deep .wf-status-disabled {
+  color: var(--wf-text-muted);
+  font-weight: 600;
+}

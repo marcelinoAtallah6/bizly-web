@@ -12,7 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -90,19 +92,20 @@ public class SettingsReportService {
 		PageRequest pr = PageRequest.of(Math.max(0, pageNumber), Math.max(1, Math.min(pageSize, 200)));
 		String search = (nameSearch != null && !nameSearch.isBlank()) ? nameSearch.trim() : null;
 
-		boolean adminBypass = BusinessContextHolder.canBypassTenant();
+		boolean rootBypass = BusinessContextHolder.canBypassTenant();
+		boolean crossTenantList = BusinessContextHolder.canListCrossTenantBuilderData();
 		Long businessId = BusinessContextHolder.currentBusinessId();
-		// Tenant scope: business callers only see own-business + global reports; admins see everything.
-		Page<SettingsReport> page = adminBypass
+		// Tenant scope: business callers only see own-business + global; portal admin (no business) lists all then filters by grants.
+		Page<SettingsReport> page = crossTenantList
 				? reportRepository.searchByName(search, pr)
 				: (businessId != null
 						? reportRepository.searchByNameForBusinessOrGlobal(search, businessId, pr)
 						: Page.empty(pr));
-		Set<Integer> userRoleTypes = adminBypass ? Collections.emptySet() : currentRoleTypes(authorities);
+		Set<Integer> userRoleTypes = rootBypass ? Collections.emptySet() : currentRoleTypes(authorities);
 
 		List<ReportBuilderItem> items = new ArrayList<>();
 		for (SettingsReport r : page.getContent()) {
-			if (adminBypass || canAccessReport(r.getId(), username, userRoleTypes)) {
+			if (rootBypass || canAccessReport(r.getId(), username, userRoleTypes)) {
 				items.add(toItem(r));
 			}
 		}
@@ -160,35 +163,76 @@ public class SettingsReportService {
 
 	@Transactional(readOnly = true)
 	public SettingsReport getEntityByCode(String code) {
-		// Tenant scope: business callers can resolve global + own-business codes; admins resolve any.
-		if (BusinessContextHolder.canBypassTenant()) {
-			return reportRepository.findByCode(code)
+		SettingsReport report;
+		if (BusinessContextHolder.canListCrossTenantBuilderData()) {
+			report = reportRepository.findByCode(code)
 					.orElseThrow(() -> new ServiceException(ApiMessages.REPORTING_REPORT_NOT_FOUND, HttpStatus.NOT_FOUND));
+		} else {
+			Long businessId = BusinessContextHolder.currentBusinessId();
+			if (businessId == null) {
+				throw new ServiceException(ApiMessages.REPORTING_REPORT_NOT_FOUND, HttpStatus.NOT_FOUND);
+			}
+			report = reportRepository.findByCodeForBusinessOrGlobal(code, businessId)
+					.orElseThrow(() -> new ServiceException(ApiMessages.REPORTING_REPORT_NOT_FOUND, HttpStatus.NOT_FOUND));
+			assertCallerCanAccessReport(report.getId());
 		}
-		Long businessId = BusinessContextHolder.currentBusinessId();
-		if (businessId == null) {
-			throw new ServiceException(ApiMessages.REPORTING_REPORT_NOT_FOUND, HttpStatus.NOT_FOUND);
-		}
-		return reportRepository.findByCodeForBusinessOrGlobal(code, businessId)
-				.orElseThrow(() -> new ServiceException(ApiMessages.REPORTING_REPORT_NOT_FOUND, HttpStatus.NOT_FOUND));
+		return report;
 	}
 
 	private SettingsReport loadReportForCaller(Long id) {
-		if (BusinessContextHolder.canBypassTenant()) {
-			return reportRepository.findById(id)
+		SettingsReport report;
+		if (BusinessContextHolder.canListCrossTenantBuilderData()) {
+			report = reportRepository.findById(id)
 					.orElseThrow(() -> new ServiceException(ApiMessages.REPORTING_REPORT_NOT_FOUND, HttpStatus.NOT_FOUND));
+		} else {
+			Long businessId = BusinessContextHolder.currentBusinessId();
+			if (businessId == null) {
+				throw new ServiceException(ApiMessages.REPORTING_REPORT_NOT_FOUND, HttpStatus.NOT_FOUND);
+			}
+			report = reportRepository.findByIdForBusinessOrGlobal(id, businessId)
+					.orElseThrow(() -> new ServiceException(ApiMessages.REPORTING_REPORT_NOT_FOUND, HttpStatus.NOT_FOUND));
+			assertCallerCanAccessReport(report.getId());
 		}
-		Long businessId = BusinessContextHolder.currentBusinessId();
-		if (businessId == null) {
-			throw new ServiceException(ApiMessages.REPORTING_REPORT_NOT_FOUND, HttpStatus.NOT_FOUND);
+		return report;
+	}
+
+	/**
+	 * Ensures the current user may run/export this report (role/user grants on SETTINGS_REPORT_*_GRANT).
+	 */
+	public void assertCallerCanAccessReport(Long reportId) {
+		if (BusinessContextHolder.canBypassTenant()) {
+			return;
 		}
-		return reportRepository.findByIdForBusinessOrGlobal(id, businessId)
-				.orElseThrow(() -> new ServiceException(ApiMessages.REPORTING_REPORT_NOT_FOUND, HttpStatus.NOT_FOUND));
+		String username = currentUsername();
+		Set<Integer> userRoleTypes = currentRoleTypes(currentAuthorities());
+		if (!canAccessReport(reportId, username, userRoleTypes)) {
+			throw new ServiceException(ApiMessages.MENU_PERMISSION_DENIED, HttpStatus.FORBIDDEN);
+		}
+	}
+
+	private static String currentUsername() {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		return auth != null && auth.getName() != null ? auth.getName() : "";
+	}
+
+	private static Collection<? extends GrantedAuthority> currentAuthorities() {
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		return auth != null ? auth.getAuthorities() : Collections.emptyList();
 	}
 
 	@Transactional(readOnly = true)
 	public List<ActiveReportRef> listActiveForSidebar() {
-		return listActiveForSidebar(null, null);
+		return listActiveForSidebar(currentUsername(), currentAuthorities());
+	}
+
+	/** Full report rows the caller may run (ACTIVE + grant visibility). */
+	@Transactional(readOnly = true)
+	public List<SettingsReport> listActiveEntitiesForCaller() {
+		List<SettingsReport> out = new ArrayList<>();
+		for (ActiveReportRef ref : listActiveForSidebar(currentUsername(), currentAuthorities())) {
+			out.add(getEntity(ref.getId()));
+		}
+		return out;
 	}
 
 	/**
@@ -198,11 +242,12 @@ public class SettingsReportService {
 	@Transactional(readOnly = true)
 	public List<ActiveReportRef> listActiveForSidebar(String username,
 			Collection<? extends GrantedAuthority> authorities) {
-		boolean adminBypass = BusinessContextHolder.canBypassTenant();
+		boolean rootBypass = BusinessContextHolder.canBypassTenant();
+		boolean crossTenantList = BusinessContextHolder.canListCrossTenantBuilderData();
 		Long businessId = BusinessContextHolder.currentBusinessId();
-		// Tenant scope: own + global for business callers; everything for admin; nothing if neither.
+		// Tenant scope: own + global for business callers; portal admin (no business) lists all ACTIVE then filters.
 		List<SettingsReport> rows;
-		if (adminBypass) {
+		if (crossTenantList) {
 			rows = reportRepository.findByStatusOrderBySortOrderAscNameAsc("ACTIVE");
 		} else if (businessId != null) {
 			rows = reportRepository.findByStatusForBusinessOrGlobal("ACTIVE", businessId);
@@ -210,10 +255,10 @@ public class SettingsReportService {
 			rows = Collections.emptyList();
 		}
 		if (rows == null || rows.isEmpty()) return Collections.emptyList();
-		Set<Integer> userRoleTypes = adminBypass ? Collections.emptySet() : currentRoleTypes(authorities);
+		Set<Integer> userRoleTypes = rootBypass ? Collections.emptySet() : currentRoleTypes(authorities);
 		List<ActiveReportRef> out = new ArrayList<>(rows.size());
 		for (SettingsReport r : rows) {
-			if (!adminBypass && !canAccessReport(r.getId(), username, userRoleTypes)) continue;
+			if (!rootBypass && !canAccessReport(r.getId(), username, userRoleTypes)) continue;
 			ActiveReportRef ref = new ActiveReportRef();
 			ref.setId(r.getId());
 			ref.setCode(r.getCode());
@@ -221,7 +266,7 @@ public class SettingsReportService {
 			ref.setDescription(r.getDescription());
 			ref.setIcon(r.getIcon());
 			ref.setSortOrder(r.getSortOrder());
-			ref.setRoute("/reporting/run/" + r.getId());
+			ref.setRoute("/reports/run/" + r.getId());
 			out.add(ref);
 		}
 		return out;
@@ -241,10 +286,11 @@ public class SettingsReportService {
 		 * global reports (business_id = NULL) when no override is in effect.
 		 */
 		boolean canBypass = BusinessContextHolder.canBypassTenant();
+		boolean crossTenantList = BusinessContextHolder.canListCrossTenantBuilderData();
 		Long businessId = BusinessContextHolder.currentBusinessId();
 
 		SettingsQueryDef qd;
-		if (canBypass) {
+		if (crossTenantList) {
 			qd = queryDefRepository.findById(req.getQueryDefId())
 					.orElseThrow(() -> new ServiceException(ApiMessages.SETTINGS_QUERY_NOT_FOUND, HttpStatus.BAD_REQUEST));
 		} else {
@@ -260,7 +306,10 @@ public class SettingsReportService {
 			entity = loadReportForCaller(req.getId());
 		} else {
 			entity = new SettingsReport();
-			if (!canBypass) {
+			boolean portalAdmin = BusinessContextHolder.isPortalAdminRoleLevel();
+			if (!canBypass && !portalAdmin) {
+				entity.setBusinessId(businessId);
+			} else if (!canBypass && portalAdmin && businessId != null) {
 				entity.setBusinessId(businessId);
 			}
 		}
@@ -299,10 +348,15 @@ public class SettingsReportService {
 		entity.setFiltersJson(executor.filtersToJson(req.getFilters()));
 
 		List<ReportColumnConfig> columns = req.getColumns();
-		boolean autoDetect = Boolean.TRUE.equals(req.getAutoDetectColumns())
-				|| columns == null || columns.isEmpty();
+		boolean autoDetect = Boolean.TRUE.equals(req.getAutoDetectColumns());
 		if (autoDetect) {
 			columns = executor.introspectColumns(qd.getSqlText(), req.getFilters());
+		} else if (columns == null || columns.isEmpty()) {
+			if (entity.getId() != null && entity.getColumnsJson() != null && !entity.getColumnsJson().isBlank()) {
+				columns = executor.parseColumns(entity.getColumnsJson());
+			} else {
+				columns = executor.introspectColumns(qd.getSqlText(), req.getFilters());
+			}
 		}
 		entity.setColumnsJson(executor.columnsToJson(columns));
 

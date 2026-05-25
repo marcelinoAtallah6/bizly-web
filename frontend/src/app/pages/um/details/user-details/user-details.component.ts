@@ -1,13 +1,15 @@
 import { Component, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
-import { finalize, map } from 'rxjs/operators';
-import { GetUserResponse } from 'src/app/core/models/um.models';
+import { forkJoin, Observable, of } from 'rxjs';
+import { catchError, finalize, map, switchMap } from 'rxjs/operators';
+import { GetRoleResponse, GetUserResponse } from 'src/app/core/models/um.models';
 import { ToolbarButton } from 'src/app/pages/ui-components/button/toolbar/toolbar.component';
+import { AuthService } from 'src/app/services/auth.service';
 import { MenuPermissionService } from 'src/app/services/menu-permission.service';
 import { SimpleConfirmDialogComponent } from 'src/app/shared/dialogs/simple-confirm-dialog.component';
 import { UmRoleService } from '../../services/um-role.service';
+import { UmTeamRoleService } from '../../services/um-team-role.service';
 import { UmUserService } from '../../services/um-user.service';
 
 @Component({
@@ -55,9 +57,16 @@ export class UserDetailsComponent implements OnInit {
     private readonly router: Router,
     private readonly umUserService: UmUserService,
     private readonly umRoleService: UmRoleService,
+    private readonly umTeamRoleService: UmTeamRoleService,
+    private readonly auth: AuthService,
     private readonly dialog: MatDialog,
     private readonly menuPerm: MenuPermissionService
   ) {}
+
+  /** Team-role API is for business tenants only — not portal admins (even with business context). */
+  private get useTeamRoles(): boolean {
+    return this.auth.isBusinessTenant() && !this.auth.isSystemAdmin();
+  }
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -70,16 +79,12 @@ export class UserDetailsComponent implements OnInit {
 
   load(id: number): void {
     this.loading = true;
-    forkJoin({
-      user: this.umUserService.get({ id }),
-      rolesPage: this.umRoleService.gets({ pageNumber: 0, pageSize: 500 }),
-    })
+    this.umUserService
+      .get({ id })
       .pipe(
-        map(({ user, rolesPage }) => {
-          const byId = new Map((rolesPage.items ?? []).map((r) => [r.id, r.name]));
-          const labels = (user.roleIds ?? []).map((rid) => byId.get(rid) ?? `#${rid}`);
-          return { user, roleLabels: labels };
-        }),
+        switchMap((user) =>
+          this.resolveRoleLabels(user).pipe(map((roleLabels) => ({ user, roleLabels })))
+        ),
         finalize(() => (this.loading = false))
       )
       .subscribe({
@@ -94,6 +99,51 @@ export class UserDetailsComponent implements OnInit {
         },
         error: () => {},
       });
+  }
+
+  private loadRoleNameMap(): Observable<Map<number, string>> {
+    if (this.auth.getAdminBusinessContext() != null && !this.auth.isBusinessTenant()) {
+      return this.umRoleService.gets({ pageNumber: 0, pageSize: 500, globalTemplatesOnly: true }).pipe(
+        map((page) => new Map((page.items ?? []).map((r) => [r.id, r.name])))
+      );
+    }
+    if (this.useTeamRoles) {
+      return this.umTeamRoleService.list().pipe(
+        map((items) => new Map((items ?? []).map((r) => [r.id, r.name])))
+      );
+    }
+    return this.umRoleService.gets({ pageNumber: 0, pageSize: 500 }).pipe(
+      map((page) => new Map((page.items ?? []).map((r) => [r.id, r.name])))
+    );
+  }
+
+  private resolveRoleLabels(user: GetUserResponse): Observable<string[]> {
+    const roleIds = user.roleIds ?? [];
+    if (roleIds.length === 0) {
+      return of([]);
+    }
+    return this.loadRoleNameMap().pipe(
+      switchMap((byId) => {
+        const missing = roleIds.filter((id) => !byId.has(id));
+        if (missing.length === 0) {
+          return of(roleIds.map((rid) => byId.get(rid) ?? `#${rid}`));
+        }
+        return forkJoin(
+          missing.map((id) =>
+            this.umRoleService.get({ id }).pipe(catchError(() => of(null as GetRoleResponse | null)))
+          )
+        ).pipe(
+          map((rows) => {
+            for (const row of rows) {
+              if (row?.id != null) {
+                byId.set(row.id, row.name ?? `Role #${row.id}`);
+              }
+            }
+            return roleIds.map((rid) => byId.get(rid) ?? `#${rid}`);
+          })
+        );
+      })
+    );
   }
 
   displayName(u: GetUserResponse): string {

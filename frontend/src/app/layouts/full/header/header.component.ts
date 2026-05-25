@@ -33,11 +33,23 @@ import { FavoriteView, UserFavoritesService } from 'src/app/services/user-favori
   encapsulation: ViewEncapsulation.None,
 })
 export class HeaderComponent implements OnInit, OnDestroy {
+  /** @deprecated Use {@link showNavToggle} — kept for horizontal layout callers. */
   @Input() showToggle = true;
+  /** When true, show the menu button that toggles the left sidenav. */
+  @Input() showNavToggle = true;
+  @Input() isMobileView = false;
   @Input() toggleChecked = false;
   @Output() toggleMobileNav = new EventEmitter<void>();
   @Output() toggleMobileFilterNav = new EventEmitter<void>();
   @Output() toggleCollapsed = new EventEmitter<void>();
+
+  onNavMenuClick(): void {
+    if (this.isMobileView) {
+      this.toggleMobileNav.emit();
+    } else {
+      this.toggleCollapsed.emit();
+    }
+  }
 
   showFiller = false;
   isSigningOut = false;
@@ -107,7 +119,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.userProfile.refresh();
+    this.userProfile.refresh(true);
     this.subs.add(
       this.userProfile.profile$.subscribe((p) => {
         this.headerProf = p;
@@ -159,6 +171,8 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.notifInbox.stopPolling();
+    this.headerPulse.stopPolling();
     this.subs.unsubscribe();
   }
 
@@ -177,12 +191,26 @@ export class HeaderComponent implements OnInit, OnDestroy {
     return u.startsWith('ROLE_') ? u.slice(5) : u;
   }
 
+  /**
+   * Label shown inside the role chip. The active role claim is the source of truth when set, but
+   * the auth service only writes it after the user has explicitly switched roles — a fresh login
+   * for a user with one assigned role has no {@code activeRole} claim, so falling back to
+   * {@code "All roles"} would mislead them. Resolution order:
+   *
+   *   1. JWT {@code activeRole} → that role's display label.
+   *   2. Otherwise, exactly one assigned role → that role's display label.
+   *   3. Otherwise (genuinely operating across multiple roles) → {@code "All roles"}.
+   */
   activeRoleSummary(): string {
     const a = this.authService.getJwtActiveRole();
-    if (!a) {
-      return 'All roles';
+    if (a) {
+      return this.displayRoleLabel(a);
     }
-    return this.displayRoleLabel(a);
+    const roles = this.roleChoices();
+    if (roles.length === 1) {
+      return this.displayRoleLabel(roles[0]);
+    }
+    return 'All roles';
   }
 
   hasMultipleRoles(): boolean {
@@ -190,7 +218,23 @@ export class HeaderComponent implements OnInit, OnDestroy {
   }
 
   switchRole(role: string | null): void {
-    this.authService.setActiveRole(role).subscribe({ error: () => {} });
+    /* After the JWT is reissued for the new active role, the user might be sitting on a page the
+       new role can't see. We re-evaluate the current URL: if the matrix denies it (and we're not
+       admin-level), redirect through {@link MenuPermissionService#landingRoute} so a role with
+       zero permissions ends up on the {@code /no-access} page instead of a forbidden dashboard. */
+    this.authService.setActiveRole(role).subscribe({
+      next: () => {
+        const currentUrl = this.router.url.split('?')[0].split('#')[0];
+        if (this.menuPerm.isAdminBypass()) {
+          return;
+        }
+        if (this.menuPerm.can(currentUrl, 'view')) {
+          return;
+        }
+        void this.router.navigateByUrl(this.menuPerm.landingRoute());
+      },
+      error: () => {},
+    });
   }
 
   // -- Notifications ----------------------------------------------------------
@@ -228,7 +272,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.notifInbox.loadMore().subscribe();
   }
 
-  notifIcon(severity: NotifSeverity | string | undefined | null): string {
+  notifIcon(severity: NotifSeverity | string | undefined | null, item?: NotifInboxItem): string {
+    if (item?.isWorkflowReminder || item?.category === 'WORKFLOW') {
+      return 'clipboard-check';
+    }
+    if (item?.category === 'TRAVEL_BOOKING') {
+      return 'plane';
+    }
+    if (item?.category === 'APPOINTMENT') {
+      return 'calendar-event';
+    }
     switch ((severity || 'INFO').toString().toUpperCase()) {
       case 'SUCCESS':
         return 'circle-check';

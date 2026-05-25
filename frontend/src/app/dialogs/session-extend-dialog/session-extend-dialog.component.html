@@ -2,6 +2,10 @@
 
 <mat-dialog-content class="mat-typography">
   <p>Your session has expired. Do you want to extend it and stay signed in?</p>
+  <p class="grace-hint" *ngIf="remainingLabel">
+    If you do not respond within <strong>{{ remainingLabel }}</strong>, you will be signed out
+    automatically.
+  </p>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">

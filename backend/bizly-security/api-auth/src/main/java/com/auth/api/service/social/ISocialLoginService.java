@@ -10,7 +10,7 @@ public interface ISocialLoginService {
 	 * {@code um_user} row, then issues a Bizly JWT for that user via the existing
 	 * login pipeline so all downstream session / JWT logic is unchanged.
 	 *
-	 * @param provider one of {@code google}, {@code facebook}, {@code apple}
+	 * @param provider {@code google}
 	 */
 	LoginResponse login(String provider, SocialLoginRequest req, String deviceId, String ip);
 }

@@ -2,7 +2,7 @@
   <div class="register-business__panel">
     <div class="register-business__header">
       <a [routerLink]="['/authentication/login']" class="register-business__logo">
-        <img src="./assets/images/logos/logo.svg" alt="Bizly" />
+        <img src="assets/images/logos/bizly.png" alt="Bizly" />
       </a>
       <h1 class="register-business__title">Set up your business</h1>
       <p class="register-business__subtitle">
@@ -29,39 +29,32 @@
       </mat-form-field>
 
       <mat-label class="register-business__label">Business type</mat-label>
-      <div class="register-business__types">
+      <p class="register-business__role-hint" *ngIf="!isLoadingTypes && !typesError">
+        Your business type also becomes your starting role inside Bizly.
+      </p>
+      <p class="register-business__role-hint" *ngIf="isLoadingTypes">Loading business types…</p>
+      <p class="register-business__error" *ngIf="typesError">{{ typesError }}</p>
+
+      <div class="register-business__types" *ngIf="!isLoadingTypes && !typesError">
         <button
           type="button"
           *ngFor="let type of businessTypes"
           class="register-business__type"
-          [class.is-selected]="form.controls.businessType.value === type.code"
-          (click)="selectType(type.code)"
+          [class.is-selected]="form.controls.roleId.value === type.id"
+          (click)="selectType(type.id)"
         >
           <span class="register-business__type-icon">
-            <i-tabler [name]="type.icon"></i-tabler>
+            <i-tabler [name]="typeIcon(type)"></i-tabler>
           </span>
-          <span class="register-business__type-label">{{ type.label }}</span>
+          <span class="register-business__type-label">{{ typeLabel(type) }}</span>
         </button>
       </div>
       <p
         class="register-business__error"
-        *ngIf="form.controls.businessType.touched && form.controls.businessType.hasError('required')"
+        *ngIf="form.controls.roleId.touched && form.controls.roleId.hasError('required')"
       >
         Pick the type that best describes your business.
       </p>
-
-      <div class="register-business__role" *ngIf="assignedRole">
-        <div class="register-business__role-row">
-          <i-tabler name="shield-check"></i-tabler>
-          <div>
-            <div class="register-business__role-name">{{ assignedRole.name }}</div>
-            <div class="register-business__role-hint">
-              Your role is set automatically by the system. You cannot change it here for
-              security reasons. Administrators can grant additional roles later.
-            </div>
-          </div>
-        </div>
-      </div>
 
       <p class="register-business__error" *ngIf="errorMessage">{{ errorMessage }}</p>
 

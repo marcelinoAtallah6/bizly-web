@@ -1,0 +1,28 @@
+<div class="p-24 travel-page">
+  <app-page-action-bar title="Bookings & enquiries" [toolbar]="listToolbar"></app-page-action-bar>
+  <p class="text-muted f-s-12 m-b-8">
+    Trip requests are handled here as bookings in <strong>ENQUIRY</strong> or <strong>QUOTED</strong> status (sales pipeline → confirmation).
+  </p>
+  <app-travel-kpi-strip [items]="kpis" [horizontal]="true"></app-travel-kpi-strip>
+  <mat-chip-listbox class="m-b-16" [(ngModel)]="statusFilter" (ngModelChange)="applyFilter()">
+    <mat-chip-option value="ALL">All</mat-chip-option>
+    <mat-chip-option value="ENQUIRY">Enquiries</mat-chip-option>
+    <mat-chip-option value="QUOTED">Quoted</mat-chip-option>
+    <mat-chip-option value="CONFIRMED">Confirmed</mat-chip-option>
+  </mat-chip-listbox>
+  <ag-grid-angular
+    class="ag-theme-quartz"
+    style="width: 100%; height: min(70vh, 640px)"
+    [rowData]="rowData"
+    [columnDefs]="columnDefs"
+    [defaultColDef]="defaultColDef"
+    [rowSelection]="'single'"
+    [animateRows]="true"
+    [pagination]="gridPagination.pagination"
+    [paginationPageSize]="gridPagination.paginationPageSize"
+    [paginationPageSizeSelector]="gridPagination.paginationPageSizeSelector"
+    (gridReady)="onGridReady($event)"
+    (selectionChanged)="onSelectionChanged()"
+    (rowDoubleClicked)="onRowDoubleClicked($event)"
+  ></ag-grid-angular>
+</div>

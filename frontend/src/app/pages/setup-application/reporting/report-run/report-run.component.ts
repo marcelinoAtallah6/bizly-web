@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { finalize, takeUntil } from 'rxjs/operators';
 
@@ -66,6 +66,21 @@ export class ReportRunComponent implements OnInit, OnDestroy {
   private reportCode: string | null = null;
   private readonly destroy$ = new Subject<void>();
 
+  /** Read-only viewer under /reports; admin builder uses /reporting. */
+  get viewerMode(): boolean {
+    if (this.route.snapshot.data['viewerMode'] === true) {
+      return true;
+    }
+    let snap: ActivatedRouteSnapshot | null = this.route.snapshot;
+    while (snap) {
+      if (snap.data['viewerMode'] === true) {
+        return true;
+      }
+      snap = snap.parent;
+    }
+    return this.router.url.split('?')[0].startsWith('/reports');
+  }
+
   constructor(
     private readonly reporting: ReportingService,
     private readonly route: ActivatedRoute,
@@ -100,8 +115,10 @@ export class ReportRunComponent implements OnInit, OnDestroy {
 
     // Resolve id → code from the active list, then load full meta from getTypes
     // so the runner stays consistent with how /reporting/generate looks up the report.
-    this.reporting
-      .builderListActive()
+    const list$ = this.viewerMode
+      ? this.reporting.listAssignedReports()
+      : this.reporting.builderListActive();
+    list$
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (active) => {
@@ -343,8 +360,8 @@ export class ReportRunComponent implements OnInit, OnDestroy {
       });
   }
 
-  goToBuilder(): void {
-    this.router.navigateByUrl('/reporting');
+  goBack(): void {
+    this.router.navigateByUrl(this.viewerMode ? '/reports' : '/reporting');
   }
 
   // ---------- Track / cell render ----------

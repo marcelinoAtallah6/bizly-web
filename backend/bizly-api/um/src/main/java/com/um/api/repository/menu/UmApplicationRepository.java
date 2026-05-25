@@ -11,4 +11,11 @@ import com.um.api.model.menu.UmApplication;
 public interface UmApplicationRepository extends JpaRepository<UmApplication, Long> {
 
 	List<UmApplication> findByIsActiveOrderByNameAsc(Boolean isActive);
+
+	List<UmApplication> findByIsActiveOrderBySortOrderAscNameAsc(Boolean isActive);
+
+	List<UmApplication> findAllByOrderBySortOrderAscNameAsc();
+
+	@org.springframework.data.jpa.repository.Query("select coalesce(max(a.sortOrder), 0) from UmApplication a")
+	Integer findMaxSortOrder();
 }

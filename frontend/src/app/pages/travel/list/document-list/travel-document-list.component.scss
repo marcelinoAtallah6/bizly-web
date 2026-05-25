@@ -1,0 +1,166 @@
+:host {
+  display: block;
+}
+
+/* SaaS layout — Documents screen only (not imported by other travel routes) */
+.travel-doc-saas-page {
+  --travel-doc-page-bg: var(--background, #f4f6fb);
+  padding: 28px 32px 48px;
+  max-width: 1600px;
+  margin: 0 auto;
+  min-height: 100%;
+  background: var(--travel-doc-page-bg);
+  box-sizing: border-box;
+}
+
+:host-context(.dark-theme) .travel-doc-saas-page,
+:host-context(.dark-blue_theme) .travel-doc-saas-page {
+  --travel-doc-page-bg: var(--background, #0f1419);
+}
+
+.travel-doc-saas-page__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px 24px;
+  margin-bottom: 24px;
+}
+
+.travel-doc-saas-page__title {
+  margin: 0 0 8px;
+  font-size: clamp(1.625rem, 2vw + 1rem, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  color: var(--textPrimary);
+}
+
+.travel-doc-saas-page__desc {
+  margin: 0;
+  max-width: 560px;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--textPrimary) 62%, transparent);
+}
+
+.travel-doc-saas-page__actions {
+  flex-shrink: 0;
+
+  ::ng-deep .page-action-bar {
+    margin-bottom: 0;
+  }
+}
+
+.travel-doc-saas-kpis {
+  margin-bottom: 24px;
+}
+
+.travel-doc-saas-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  margin-bottom: 28px;
+  border-radius: 14px;
+  background: var(--cardbg, #fff);
+  border: 1px solid var(--borderColor, rgba(15, 23, 42, 0.08));
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+
+  &__search {
+    flex: 1 1 280px;
+    min-width: 200px;
+    margin: 0;
+  }
+
+  &__select {
+    flex: 0 1 200px;
+    min-width: 160px;
+    margin: 0;
+  }
+
+  &__upload {
+    margin-left: auto;
+    flex-shrink: 0;
+    height: 48px;
+    border-radius: 10px;
+    padding: 0 20px;
+
+    mat-icon {
+      margin-right: 6px;
+    }
+  }
+}
+
+.travel-doc-saas-feed {
+  display: grid;
+  gap: 24px;
+  width: 100%;
+  box-sizing: border-box;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+
+  @media (min-width: 576px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @media (min-width: 900px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  @media (min-width: 1280px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  app-travel-document-grid-card {
+    display: block;
+    min-width: 0;
+    height: 100%;
+  }
+
+  &__more {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    padding: 24px;
+  }
+}
+
+.travel-doc-saas-empty {
+  text-align: center;
+  padding: 56px 32px;
+  border-radius: 14px;
+  background: var(--cardbg, #fff);
+  border: 1px dashed var(--borderColor, rgba(15, 23, 42, 0.12));
+  margin-top: 8px;
+
+  mat-icon {
+    font-size: 56px;
+    width: 56px;
+    height: 56px;
+    opacity: 0.45;
+    margin-bottom: 16px;
+  }
+
+  h2 {
+    margin: 0 0 8px;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--textPrimary);
+  }
+
+  p {
+    margin: 0 0 20px;
+    font-size: 0.9375rem;
+    color: color-mix(in srgb, var(--textPrimary) 60%, transparent);
+  }
+}
+
+.travel-doc-saas-loading {
+  display: block;
+  margin: 48px auto;
+}
+
+.travel-doc-saas-sentinel {
+  height: 1px;
+  width: 100%;
+  pointer-events: none;
+}

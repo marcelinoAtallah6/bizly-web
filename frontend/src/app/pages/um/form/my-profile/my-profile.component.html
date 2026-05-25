@@ -1,0 +1,62 @@
+<div class="page-wrap">
+  <mat-card>
+    <mat-card-title>My profile</mat-card-title>
+    <mat-card-subtitle>Update your name, phone, and photo. Email and sign-in provider cannot be changed here.</mat-card-subtitle>
+
+    <mat-card-content *ngIf="loading">
+      <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+    </mat-card-content>
+
+    <mat-card-content *ngIf="!loading">
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="photo-row">
+          <div class="profile-preview mat-elevation-z1" *ngIf="profilePreviewUrl">
+            <img [src]="profilePreviewUrl" alt="" />
+          </div>
+          <div class="profile-placeholder" *ngIf="!profilePreviewUrl">No photo</div>
+          <div class="photo-actions">
+            <input #profileFileInput type="file" accept="image/*" hidden (change)="onProfileFileSelected($event)" />
+            <button mat-stroked-button type="button" (click)="profileFileInput.click()">Choose image</button>
+            <button
+              mat-stroked-button
+              type="button"
+              color="warn"
+              *ngIf="profilePreviewUrl || removePhoto"
+              (click)="clearProfilePhoto()"
+            >
+              Remove photo
+            </button>
+          </div>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input matInput [value]="emailDisplay" readonly />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>First name</mat-label>
+          <input matInput formControlName="firstName" autocomplete="given-name" />
+          <mat-error *ngIf="form.controls.firstName.invalid">Required</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Last name</mat-label>
+          <input matInput formControlName="lastName" autocomplete="family-name" />
+          <mat-error *ngIf="form.controls.lastName.invalid">Required</mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Phone</mat-label>
+          <input matInput formControlName="phoneNumber" autocomplete="tel" />
+        </mat-form-field>
+
+        <div class="actions">
+          <button mat-flat-button color="primary" type="submit" [disabled]="saving">
+            {{ saving ? 'Saving…' : 'Save' }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

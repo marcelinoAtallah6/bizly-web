@@ -1,0 +1,27 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Edit payment' : 'Record payment' }}</h2>
+<mat-dialog-content *ngIf="ready" [formGroup]="form">
+  <app-travel-entity-picker
+    formControlName="invoice"
+    entityType="invoice"
+    label="Invoice"
+    [required]="true"
+  ></app-travel-entity-picker>
+  <mat-form-field appearance="outline" class="full">
+    <mat-label>Amount</mat-label>
+    <input matInput type="number" min="0" formControlName="amount" />
+  </mat-form-field>
+  <mat-form-field appearance="outline" class="full">
+    <mat-label>Payment method</mat-label>
+    <mat-select formControlName="paymentMethod">
+      <mat-option *ngFor="let m of paymentMethods" [value]="m">{{ m }}</mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field appearance="outline" class="full">
+    <mat-label>Reference</mat-label>
+    <input matInput formControlName="referenceNo" />
+  </mat-form-field>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <button mat-flat-button color="primary" type="button" (click)="save()" [disabled]="saving || !ready">Save</button>
+</mat-dialog-actions>

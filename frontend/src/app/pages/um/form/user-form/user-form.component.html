@@ -102,6 +102,7 @@
               <mat-select formControlName="roleIds" multiple>
                 <mat-option *ngFor="let r of roles" [value]="r.id">{{ r.name }}</mat-option>
               </mat-select>
+              <mat-hint>{{ rolesHint }}</mat-hint>
               <mat-error *ngIf="form.get('roleIds')?.hasError('roles')">Select at least one role</mat-error>
             </mat-form-field>
           </div>

@@ -3,6 +3,12 @@ server:
 spring:
   main:
     web-application-type: reactive
+  codec:
+    max-in-memory-size: 33554432
+  servlet:
+    multipart:
+      max-file-size: 25MB
+      max-request-size: 30MB
   application:
     name: apigateway
   cloud:
@@ -44,6 +50,7 @@ spring:
         - Path=/kyc/**
         filters:
         - AuthenticationPreFilter
+        - name: WorkflowDeferral
         - StripPrefix=1   
         
       - id: pm
@@ -52,6 +59,7 @@ spring:
         - Path=/pm/**
         filters:
         - AuthenticationPreFilter
+        - name: WorkflowDeferral
         - StripPrefix=1
 
       - id: settings
@@ -60,6 +68,7 @@ spring:
         - Path=/settings/**
         filters:
         - AuthenticationPreFilter
+        - name: WorkflowDeferral
         - StripPrefix=1
 
       - id: bm
@@ -68,6 +77,16 @@ spring:
         - Path=/bm/**
         filters:
         - AuthenticationPreFilter
+        - name: WorkflowDeferral
+        - StripPrefix=1
+
+      - id: travel
+        uri: lb://travel
+        predicates:
+        - Path=/travel/**
+        filters:
+        - AuthenticationPreFilter
+        - name: WorkflowDeferral
         - StripPrefix=1
 
       - id: broadcast
@@ -76,6 +95,7 @@ spring:
         - Path=/broadcast/**
         filters:
         - AuthenticationPreFilter
+        - name: WorkflowDeferral
         - StripPrefix=1
 eureka:
   client:
@@ -89,4 +109,8 @@ keyStore:
   path: keystore.jks
   password: password
   alias: my-server-key
+
+bizly:
+  workflow:
+    deferral-enabled: true
  

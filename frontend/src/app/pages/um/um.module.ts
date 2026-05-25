@@ -14,6 +14,18 @@ import { RoleDetailsComponent } from './details/role-details/role-details.compon
 import { UserDetailsComponent } from './details/user-details/user-details.component';
 import { AuditListComponent } from './list/audit-list/audit-list.component';
 import { RoleMenuPermissionsTabComponent } from './details/role-menu-permissions-tab/role-menu-permissions-tab.component';
+import { MyProfileComponent } from './form/my-profile/my-profile.component';
+import {
+  WorkflowPayloadDialogComponent,
+  WorkflowQueueComponent,
+  WorkflowRejectDialogComponent,
+} from './list/workflow-queue/workflow-queue.component';
+import { WorkflowEngineListComponent } from './form/workflow-engine/workflow-engine-list.component';
+import { WorkflowEngineEditorComponent } from './form/workflow-engine/workflow-engine-editor.component';
+import { WorkflowWorkspaceComponent } from './form/workflow-engine/workflow-workspace.component';
+import { WorkflowTaskPickerDialogComponent } from './form/workflow-engine/workflow-task-picker-dialog.component';
+import { WorkflowQueueActionsRendererComponent } from './list/workflow-queue/workflow-queue-actions-renderer.component';
+import { ApplicationBuilderComponent } from './form/application-builder/application-builder.component';
 
 @NgModule({
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -27,7 +39,23 @@ import { RoleMenuPermissionsTabComponent } from './details/role-menu-permissions
     RoleDetailsComponent,
     AuditListComponent,
     RoleMenuPermissionsTabComponent,
+    MyProfileComponent,
+    WorkflowQueueComponent,
+    WorkflowRejectDialogComponent,
+    WorkflowPayloadDialogComponent,
+    WorkflowEngineListComponent,
+    WorkflowEngineEditorComponent,
+    WorkflowWorkspaceComponent,
+    WorkflowTaskPickerDialogComponent,
+    ApplicationBuilderComponent,
   ],
-  imports: [UmRoutingModule, CommonMaterialModule, UicomponentsModule, CommonModule, PermissionsModule],
+  imports: [
+    UmRoutingModule,
+    CommonMaterialModule,
+    UicomponentsModule,
+    CommonModule,
+    PermissionsModule,
+    WorkflowQueueActionsRendererComponent,
+  ],
 })
 export class UmModule {}

@@ -13,6 +13,13 @@ public class RegisterBusinessResponse {
 	private String businessName;
 	private LoginResponse session;
 
+	/**
+	 * When true, the tenant is not fully active yet (e.g. business status is not {@code ACTIVE}) and
+	 * the SPA should start the business-registration approval workflow. Normal self-serve registration
+	 * uses {@code ACTIVE} businesses, so this stays false for the default path.
+	 */
+	private boolean requiresBusinessApprovalWorkflow;
+
 	public Long getBusinessId() { return businessId; }
 	public void setBusinessId(Long businessId) { this.businessId = businessId; }
 
@@ -21,4 +28,12 @@ public class RegisterBusinessResponse {
 
 	public LoginResponse getSession() { return session; }
 	public void setSession(LoginResponse session) { this.session = session; }
+
+	public boolean isRequiresBusinessApprovalWorkflow() {
+		return requiresBusinessApprovalWorkflow;
+	}
+
+	public void setRequiresBusinessApprovalWorkflow(boolean requiresBusinessApprovalWorkflow) {
+		this.requiresBusinessApprovalWorkflow = requiresBusinessApprovalWorkflow;
+	}
 }

@@ -33,7 +33,7 @@ public class CustomUserDetailService implements UserDetailsService {
 
 		log.info("Attempting to load user: {}", username);
 
-		UserEntity userEntity = userRepository.findByUsername(username)
+		UserEntity userEntity = userRepository.findFirstByUsernameOrderByIdAsc(username)
 				.orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
 		return new User(userEntity.getUsername(), userEntity.getPassword(), getUserAuthorities(userEntity.getId()));

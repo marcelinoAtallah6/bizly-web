@@ -28,10 +28,10 @@ public interface ILoginService {
 	public void resetPassword(ResetPasswordRequest request);
 
 	/**
-	 * Issues a fresh access + refresh token pair for the user's current session on the given device.
-	 * Used by the business-registration and welcome-complete flows so the new claims
-	 * ({@code businessId}, {@code firstLogin}, {@code roleLevel}) take effect immediately without
-	 * forcing the user to log out and back in.
+	 * Issues a fresh access + refresh token pair for the user's session on the given device.
+	 * If no row exists yet (e.g. right after {@code /auth/register}), creates one using the same
+	 * bootstrap rules as password login. Used by registration, welcome-complete, register-business,
+	 * and social-login so JWT claims stay in sync without forcing a manual re-login.
 	 */
 	public LoginResponse reissueAccessTokenForUser(Long userId, String deviceId, String ip);
 

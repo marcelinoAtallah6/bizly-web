@@ -1,0 +1,237 @@
+/* Shared auth screens — selectors are prefixed with .auth-page so app-wide
+   form fields (ui-components.scss) are NOT affected. */
+
+.auth-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  background: linear-gradient(
+    145deg,
+    rgba(var(--primary-rgb), 0.14) 0%,
+    rgba(var(--primary-rgb), 0.04) 42%,
+    #f4f6fb 100%
+  );
+}
+
+.auth-page__wrap {
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  padding: 24px 16px 40px;
+}
+
+.auth-page__col {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  justify-content: center;
+}
+
+.auth-page__col--wide {
+  max-width: 560px;
+}
+
+.auth-page__card {
+  width: 100%;
+  max-width: 480px;
+  border-radius: 20px !important;
+}
+
+.auth-page__content {
+  padding: clamp(20px, 4vw, 36px) !important;
+}
+
+.auth-page__header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.auth-page__logo-link {
+  display: inline-block;
+  margin-bottom: 16px;
+}
+
+.auth-page__logo {
+  height: clamp(48px, 12vw, 72px);
+  width: auto;
+  max-width: min(100%, 280px);
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+  background: transparent;
+}
+
+.auth-page__title {
+  margin: 0 0 6px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a2240;
+  letter-spacing: -0.02em;
+}
+
+.auth-page__subtitle {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: #5b657f;
+  line-height: 1.5;
+}
+
+.auth-page__divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 24px 0 20px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #5b657f;
+}
+
+.auth-page__divider::before,
+.auth-page__divider::after {
+  content: '';
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--borderColor, #dde2f1);
+}
+
+.auth-page__form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Scoped overrides — only inside auth pages */
+.auth-page__form .mat-mdc-form-field {
+  margin-bottom: 4px;
+}
+
+.auth-page .mat-mdc-form-field-appearance-outline .mat-mdc-form-field-flex {
+  height: auto !important;
+  min-height: 56px;
+  align-items: center;
+}
+
+.auth-page .mat-mdc-form-field-appearance-outline .mat-mdc-form-field-infix {
+  padding-top: 14px !important;
+  padding-bottom: 14px !important;
+  min-height: 1.5em;
+}
+
+.auth-page .mat-mdc-form-field-appearance-outline .mdc-floating-label {
+  top: 22px !important;
+}
+
+.auth-page .mat-mdc-form-field-appearance-outline.mat-focused .mdc-floating-label,
+.auth-page
+  .mat-mdc-form-field-appearance-outline
+  .mdc-text-field--outlined
+  .mdc-floating-label--float-above {
+  transform: translateY(-1.4em) scale(0.75) !important;
+}
+
+.auth-page__options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin: 8px 0 16px;
+}
+
+.auth-page__link {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--primary, #2f5fff);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.auth-page__link:hover {
+  text-decoration: underline;
+}
+
+.auth-page__alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  margin-bottom: 12px;
+}
+
+.auth-page__alert--error {
+  background: rgba(211, 50, 42, 0.08);
+  border: 1px solid rgba(211, 50, 42, 0.22);
+  color: #b42318;
+}
+
+.auth-page__alert--success {
+  background: rgba(22, 163, 74, 0.08);
+  border: 1px solid rgba(22, 163, 74, 0.22);
+  color: #15803d;
+}
+
+.auth-page__alert-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.auth-page__submit {
+  min-height: 48px;
+  font-weight: 600;
+  border-radius: 10px;
+  margin-top: 4px;
+}
+
+.auth-page__footer {
+  margin: 24px 0 0;
+  text-align: center;
+  font-size: 0.9375rem;
+  color: #5b657f;
+}
+
+.auth-page__footer a {
+  font-weight: 600;
+  color: var(--primary, #2f5fff);
+  text-decoration: none;
+  margin-left: 4px;
+}
+
+.auth-page__footer a:hover {
+  text-decoration: underline;
+}
+
+.auth-page__password-toggle i-tabler {
+  width: 20px;
+  height: 20px;
+  color: #5b657f;
+}
+
+@media (max-width: 575.98px) {
+  .auth-page__wrap {
+    padding: 16px 12px 32px;
+    padding-top: max(16px, env(safe-area-inset-top, 0px));
+    padding-bottom: max(32px, env(safe-area-inset-bottom, 0px));
+  }
+
+  .auth-page__content {
+    padding: 20px 16px !important;
+  }
+
+  .auth-page__card {
+    border-radius: 16px !important;
+  }
+
+  .auth-page__options {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

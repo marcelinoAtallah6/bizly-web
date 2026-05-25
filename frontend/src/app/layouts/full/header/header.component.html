@@ -1,8 +1,16 @@
 <mat-toolbar class="topbar bizly-topbar">
-  <!-- Mobile hamburger ------------------------------------------------------ -->
-  <button mat-icon-button (click)="toggleMobileNav.emit()" *ngIf="!showToggle" aria-label="Open menu">
+  <!-- Sidebar toggle (mobile overlay + desktop mini/full) ------------------- -->
+  <button
+    mat-icon-button
+    class="bizly-nav-toggle"
+    (click)="onNavMenuClick()"
+    *ngIf="showNavToggle"
+    aria-label="Toggle navigation menu"
+  >
     <i-tabler name="menu-2" class="icon-20 d-flex"></i-tabler>
   </button>
+
+  <app-global-context-switcher class="bizly-header-gcs"></app-global-context-switcher>
 
   <!-- Quick menu search (autocomplete, permission-filtered) -----------------
        Visibility is controlled by `.header-search` in SCSS using a media
@@ -77,10 +85,7 @@
 
   <span class="flex-1-auto"></span>
 
-  <!-- 0. Global business context switcher (SUPER_ADMIN only). --------------- -->
-  <app-global-context-switcher></app-global-context-switcher>
-
-  <!-- 1. Active-role chip --------------------------------------------------- -->
+  <!-- Active-role chip ------------------------------------------------------ -->
   <button
     type="button"
     class="header-pill role-chip"
@@ -158,7 +163,7 @@
         >
           <span class="notif-stripe"></span>
           <div class="notif-icon-wrap">
-            <i-tabler [name]="notifIcon(n.severity)" class="icon-18"></i-tabler>
+            <i-tabler [name]="notifIcon(n.severity, n)" class="icon-18"></i-tabler>
           </div>
           <div class="notif-body">
             <div class="notif-title">{{ n.title }}</div>
@@ -298,6 +303,15 @@
         <span>Star "{{ currentMenuLabel() }}"</span>
       </button>
     </div>
+
+    <mat-divider></mat-divider>
+
+    <button mat-menu-item routerLink="/um/my-profile">
+      <mat-icon class="d-flex align-items-center">
+        <i-tabler name="user-edit" class="icon-18 d-flex"></i-tabler>
+      </mat-icon>
+      Edit profile
+    </button>
 
     <mat-divider></mat-divider>
 

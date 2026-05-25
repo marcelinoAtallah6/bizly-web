@@ -1,0 +1,56 @@
+<section class="rv-page">
+  <header class="rv-page__head">
+    <div>
+      <h2 class="rv-page__title">Reports</h2>
+      <p class="rv-page__intro text-muted f-s-14">
+        View and run reports assigned to your account or roles. Use filters, generate results,
+        and export data.
+      </p>
+    </div>
+  </header>
+
+  <mat-card class="rv-panel">
+    <mat-card-header class="rv-panel__header">
+      <mat-card-title>Available reports</mat-card-title>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="rv-search">
+        <mat-label>Search</mat-label>
+        <input matInput [formControl]="nameSearchCtrl" placeholder="Name or description…" />
+        <i-tabler matSuffix name="search" class="icon-18 text-muted"></i-tabler>
+      </mat-form-field>
+      <button mat-icon-button type="button" matTooltip="Refresh" (click)="load()" [disabled]="loading">
+        <i-tabler name="refresh" class="icon-18"></i-tabler>
+      </button>
+    </mat-card-header>
+
+    <mat-card-content class="rv-panel__content rv-list">
+      <div class="rv-list__loading" *ngIf="loading">
+        <mat-progress-spinner mode="indeterminate" diameter="32"></mat-progress-spinner>
+      </div>
+
+      <ng-container *ngIf="!loading">
+        <div class="rv-empty" *ngIf="!filtered.length">
+          <i-tabler name="report-off" class="icon-48 text-muted"></i-tabler>
+          <p class="text-muted f-s-13">
+            No reports are assigned to you yet. Ask an administrator to grant your role or user on a report.
+          </p>
+        </div>
+
+        <div class="rv-row" *ngFor="let r of filtered; trackBy: trackByReportId">
+          <div class="rv-row__icon">
+            <i-tabler [name]="r.icon || 'report'"></i-tabler>
+          </div>
+          <div class="rv-row__meta">
+            <div class="rv-row__title">{{ r.name }}</div>
+            <p class="rv-row__sub text-muted f-s-12" *ngIf="r.description">{{ r.description }}</p>
+          </div>
+          <div class="rv-row__actions">
+            <button mat-flat-button color="primary" type="button" (click)="openReport(r)">
+              <i-tabler name="player-play" class="icon-18 mr-4"></i-tabler>
+              Run
+            </button>
+          </div>
+        </div>
+      </ng-container>
+    </mat-card-content>
+  </mat-card>
+</section>

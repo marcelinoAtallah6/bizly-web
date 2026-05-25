@@ -2,7 +2,9 @@
   min-height: 100vh;
   background: linear-gradient(135deg, #f4f6fb 0%, #e6eaf8 100%);
   display: flex;
-  align-items: center;
+  /* Start-aligned so tall content scrolls instead of being cropped on phones
+   * (matches the public /authentication/register layout). */
+  align-items: flex-start;
   justify-content: center;
   padding: 32px 16px;
 }
@@ -16,13 +18,33 @@
   padding: 40px;
 }
 
+@media (max-width: 575.98px) {
+  .register-business {
+    padding: 16px 12px 32px;
+  }
+  .register-business__panel {
+    padding: 24px 20px;
+    border-radius: 16px;
+  }
+}
+
 .register-business__header {
   text-align: center;
   margin-bottom: 28px;
 }
 
+.register-business__logo {
+  display: inline-block;
+  line-height: 0;
+}
+
 .register-business__logo img {
-  height: 36px;
+  height: clamp(64px, 14vw, 100px);
+  width: auto;
+  max-width: min(100%, 280px);
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
 }
 
 .register-business__title {

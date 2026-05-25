@@ -6,6 +6,7 @@ public final class NotifCategory {
 	}
 
 	public static final String APPOINTMENT = "APPOINTMENT";
+	public static final String TRAVEL_BOOKING = "TRAVEL_BOOKING";
 	public static final String SALE = "SALE";
 	public static final String PRODUCT = "PRODUCT";
 	public static final String SYSTEM = "SYSTEM";

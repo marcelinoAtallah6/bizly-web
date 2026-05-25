@@ -6,69 +6,41 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import com.notification.repository.UmUserWelcomeQueryDao;
 import com.notification.workflow.BroadcastDeliveryWorkflow;
-import com.notification.workflow.NotificationWorkflowEngine;
-import com.notification.workflow.UserCreatedNotificationPayload;
-import com.notification.workflow.WelcomePendingUser;
+import com.notification.workflow.WorkflowNotifOutboxDelivery;
 
 /**
- * Polls the database on a fixed delay (default every second): pending welcome emails (users + customers) and
- * broadcast delivery. Birthday emails run on a separate daily cron. No HTTP APIs — workflows are driven only by
- * schedulers + DB state.
+ * Delivers emails queued by the workflow engine ({@code UM_NOTIF_OUTBOX}).
+ * Domain triggers, scheduled jobs (birthdays), and gateway hooks all enqueue via UM orchestrator.
  */
 @Component
 public class NotificationWorkflowScheduler {
 
 	private static final Logger log = LogManager.getLogger(NotificationWorkflowScheduler.class);
 
-	private final UmUserWelcomeQueryDao welcomeQueryDao;
-	private final NotificationWorkflowEngine workflowEngine;
 	private final BroadcastDeliveryWorkflow broadcastDeliveryWorkflow;
+	private final WorkflowNotifOutboxDelivery workflowOutboxDelivery;
 
-	private final int maxUsersPerTick;
-
+	private final int maxOutboxPerTick;
 	private final int maxBroadcastsPerTick;
 
-	public NotificationWorkflowScheduler(UmUserWelcomeQueryDao welcomeQueryDao,
-			NotificationWorkflowEngine workflowEngine,
-			BroadcastDeliveryWorkflow broadcastDeliveryWorkflow,
-			@Value("${notification.workflow.max-users-per-tick:50}") int maxUsersPerTick,
+	public NotificationWorkflowScheduler(BroadcastDeliveryWorkflow broadcastDeliveryWorkflow,
+			WorkflowNotifOutboxDelivery workflowOutboxDelivery,
+			@Value("${notification.workflow.max-outbox-per-tick:50}") int maxOutboxPerTick,
 			@Value("${notification.broadcast.max-broadcasts-per-tick:3}") int maxBroadcastsPerTick) {
-		this.welcomeQueryDao = welcomeQueryDao;
-		this.workflowEngine = workflowEngine;
 		this.broadcastDeliveryWorkflow = broadcastDeliveryWorkflow;
-		this.maxUsersPerTick = maxUsersPerTick;
+		this.workflowOutboxDelivery = workflowOutboxDelivery;
+		this.maxOutboxPerTick = maxOutboxPerTick;
 		this.maxBroadcastsPerTick = maxBroadcastsPerTick;
 	}
 
 	@Scheduled(fixedDelayString = "${notification.workflow.poll-interval-ms:1000}")
 	public void tick() {
 		try {
-			for (WelcomePendingUser u : welcomeQueryDao.findPendingWelcome(maxUsersPerTick)) {
-				UserCreatedNotificationPayload p = new UserCreatedNotificationPayload();
-				p.setUserId(u.getUserId());
-				p.setUsername(u.getUsername());
-				p.setEmail(u.getEmail());
-				p.setFirstName(u.getFirstName());
-				p.setLastName(u.getLastName());
-				workflowEngine.handleUserCreatedEvent(p);
-			}
-			workflowEngine.pollPendingCustomerWelcomes(maxUsersPerTick);
+			workflowOutboxDelivery.deliverPending(maxOutboxPerTick);
 			broadcastDeliveryWorkflow.deliverPending(maxBroadcastsPerTick);
 		} catch (Exception e) {
 			log.error("[NOTIF_SCHEDULER] tick failed: {}", e.toString(), e);
-		}
-	}
-
-	/** User and customer birthday emails once per day (server timezone). Deduped via dispatch log. */
-	@Scheduled(cron = "${notification.birthday.daily-cron:0 0 7 * * *}")
-	public void dailyBirthdayEmails() {
-		try {
-			workflowEngine.pollBirthdayEmails();
-			workflowEngine.pollCustomerBirthdayEmails();
-		} catch (Exception e) {
-			log.error("[NOTIF_SCHEDULER] dailyBirthdayEmails failed: {}", e.toString(), e);
 		}
 	}
 }

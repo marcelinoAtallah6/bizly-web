@@ -1,0 +1,64 @@
+<div class="p-24">
+  <app-page-action-bar title="Approval queue" [toolbar]="toolbar"></app-page-action-bar>
+
+  <mat-card class="filters mat-elevation-z1 m-b-16">
+    <mat-card-content class="filter-grid">
+      <mat-form-field appearance="outline" class="f">
+        <mat-label>Status</mat-label>
+        <mat-select [(value)]="statusFilter" (selectionChange)="load()">
+          <mat-option *ngFor="let o of statusOptions" [value]="o.value">{{ o.label }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="f">
+        <mat-label>Screen</mat-label>
+        <mat-select [(value)]="screenRouteFilter" (selectionChange)="load()">
+          <mat-option value="">All screens</mat-option>
+          <mat-option *ngFor="let s of catalog" [value]="s.route">{{ screenLabel(s) }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="f">
+        <mat-label>Action</mat-label>
+        <mat-select [(value)]="actionFilter" (selectionChange)="load()">
+          <mat-option value="">All actions</mat-option>
+          <mat-option *ngFor="let a of actionFilterOptions" [value]="a">{{ a }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="f">
+        <mat-label>From date</mat-label>
+        <input matInput [matDatepicker]="pickerFrom" [(ngModel)]="dateFromDate" />
+        <mat-datepicker-toggle matSuffix [for]="pickerFrom"></mat-datepicker-toggle>
+        <mat-datepicker #pickerFrom></mat-datepicker>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="f">
+        <mat-label>To date</mat-label>
+        <input matInput [matDatepicker]="pickerTo" [(ngModel)]="dateToDate" />
+        <mat-datepicker-toggle matSuffix [for]="pickerTo"></mat-datepicker-toggle>
+        <mat-datepicker #pickerTo></mat-datepicker>
+      </mat-form-field>
+      <div class="f actions">
+        <button mat-flat-button color="primary" type="button" (click)="load()" [disabled]="loading">
+          Apply filters
+        </button>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <div *ngIf="loading" class="loading">
+    <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+  </div>
+
+  <ag-grid-angular
+    *ngIf="!loading"
+    class="ag-theme-quartz"
+    style="width: 100%; height: min(70vh, 640px)"
+    [rowData]="rowData"
+    [columnDefs]="columnDefs"
+    [defaultColDef]="defaultColDef"
+    [context]="this"
+    [animateRows]="true"
+    [pagination]="gridPagination.pagination"
+    [paginationPageSize]="gridPagination.paginationPageSize"
+    [paginationPageSizeSelector]="gridPagination.paginationPageSizeSelector"
+    (gridReady)="onGridReady($event)"
+  ></ag-grid-angular>
+</div>

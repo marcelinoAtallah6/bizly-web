@@ -1,0 +1,102 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Trip request' : 'New trip request' }}</h2>
+<mat-dialog-content *ngIf="ready" [formGroup]="form">
+  <div class="travel-kpi-strip travel-kpi-strip--inline m-b-16" *ngIf="isEdit && row">
+    <div class="travel-kpi-card tone-open">
+      <mat-icon>flag</mat-icon>
+      <div>
+        <span class="travel-kpi-card__label">Status</span>
+        <strong>{{ status }}</strong>
+      </div>
+    </div>
+    <div class="travel-kpi-card tone-bookings" *ngIf="row.quotedAmount">
+      <mat-icon>payments</mat-icon>
+      <div>
+        <span class="travel-kpi-card__label">Quoted</span>
+        <strong>{{ row.quotedAmount | number }} {{ row.currency || 'USD' }}</strong>
+      </div>
+    </div>
+    <div class="travel-kpi-card tone-packages" *ngIf="row.bookingId">
+      <mat-icon>confirmation_number</mat-icon>
+      <div>
+        <span class="travel-kpi-card__label">Booking</span>
+        <strong>#{{ row.bookingId }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <mat-tab-group animationDuration="0ms">
+    <mat-tab label="Request">
+      <div class="p-t-16">
+        <app-travel-entity-picker
+          formControlName="client"
+          entityType="client"
+          label="Client"
+          [required]="true"
+        ></app-travel-entity-picker>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Destination</mat-label>
+          <input matInput formControlName="destinationName" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Departure</mat-label>
+          <input matInput [matDatepicker]="depPicker" formControlName="departureDate" />
+          <mat-datepicker-toggle matSuffix [for]="depPicker"></mat-datepicker-toggle>
+          <mat-datepicker #depPicker></mat-datepicker>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Return</mat-label>
+          <input matInput [matDatepicker]="retPicker" formControlName="returnDate" />
+          <mat-datepicker-toggle matSuffix [for]="retPicker"></mat-datepicker-toggle>
+          <mat-datepicker #retPicker></mat-datepicker>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Budget</mat-label>
+          <input matInput type="number" min="0" formControlName="budgetAmount" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Currency</mat-label>
+          <input matInput formControlName="currency" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Travelers</mat-label>
+          <input matInput type="number" min="1" formControlName="travelerCount" />
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Traveler details</mat-label>
+          <textarea matInput formControlName="travelerDetails" rows="3"></textarea>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Notes</mat-label>
+          <textarea matInput formControlName="notes" rows="2"></textarea>
+        </mat-form-field>
+      </div>
+    </mat-tab>
+    <mat-tab label="Quotation" *ngIf="isEdit">
+      <div class="p-t-16">
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Quoted amount</mat-label>
+          <input matInput type="number" min="0" formControlName="quotedAmount" />
+        </mat-form-field>
+        <div class="travel-workflow-actions">
+          <button mat-stroked-button type="button" (click)="sendQuote()" [disabled]="workflowBusy || status !== 'PENDING'">
+            Send quotation
+          </button>
+          <button mat-flat-button color="primary" type="button" (click)="acceptQuote()" [disabled]="workflowBusy || status !== 'QUOTED'">
+            Customer accepts
+          </button>
+          <button mat-stroked-button color="warn" type="button" (click)="rejectQuote()" [disabled]="workflowBusy || status !== 'QUOTED'">
+            Customer rejects
+          </button>
+          <button mat-flat-button color="accent" type="button" (click)="convertToBooking()" [disabled]="workflowBusy || status !== 'ACCEPTED'">
+            Convert to booking
+          </button>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</mat-dialog-content>
+<mat-dialog-content *ngIf="!ready"><mat-spinner diameter="36"></mat-spinner></mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Close</button>
+  <button mat-flat-button color="primary" type="button" (click)="save()" [disabled]="saving || !ready">Save</button>
+</mat-dialog-actions>

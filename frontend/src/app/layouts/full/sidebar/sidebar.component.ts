@@ -49,6 +49,25 @@ export class SidebarComponent implements OnInit, OnDestroy {
     this.menuSub?.unsubscribe();
   }
 
+  /** Application group icon from UM_APPLICATIONS (Tabler name). */
+  sectionIcon(group: NavGroupItem): string {
+    const raw = group?.icon?.trim();
+    if (raw) {
+      return raw;
+    }
+    const name = (group?.name ?? '').toLowerCase();
+    if (name.includes('home') || name.includes('dashboard')) {
+      return 'layout-dashboard';
+    }
+    if (name.includes('manage') || name.includes('operation')) {
+      return 'briefcase';
+    }
+    if (name.includes('setup') || name.includes('config')) {
+      return 'settings';
+    }
+    return 'apps';
+  }
+
   onSignOut(): void {
     if (this.isSigningOut) {
       return;

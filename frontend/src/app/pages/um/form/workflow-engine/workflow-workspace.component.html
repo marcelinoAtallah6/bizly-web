@@ -1,0 +1,375 @@
+<div class="wf-workspace" *ngIf="!loading">
+  <header class="wf-workspace__header">
+    <button mat-icon-button type="button" (click)="back()" aria-label="Back">
+      <i-tabler name="arrow-left" class="icon-20"></i-tabler>
+    </button>
+    <div class="wf-workspace__header-main" [formGroup]="headerForm">
+      <mat-form-field appearance="outline" class="wf-workspace__name-field">
+        <mat-label>Workflow name</mat-label>
+        <input matInput formControlName="displayName" />
+      </mat-form-field>
+      <span class="wf-workspace__version text-muted" *ngIf="detail">
+        v{{ detail.versionNo }} ·
+        <span class="wf-badge" [attr.data-status]="detail.status">{{ detail.status }}</span>
+      </span>
+    </div>
+    <div class="wf-workspace__header-actions" *ngIf="!isNew && canEdit">
+      <button mat-stroked-button type="button" (click)="saveAll()" [disabled]="saving">Save</button>
+      <button mat-flat-button color="primary" type="button" (click)="publish()" [disabled]="saving">
+        {{ publishButtonLabel }}
+      </button>
+      <button
+        mat-stroked-button
+        color="warn"
+        type="button"
+        (click)="disablePipeline()"
+        [disabled]="saving || isDisabled"
+        *ngIf="isPublished"
+      >
+        Disable
+      </button>
+      <button mat-stroked-button color="warn" type="button" (click)="deletePipeline()" [disabled]="saving">
+        Delete
+      </button>
+    </div>
+  </header>
+
+  <div *ngIf="isNew" class="wf-workspace__create p-24">
+    <mat-card>
+      <mat-card-title>New workflow</mat-card-title>
+      <mat-card-content [formGroup]="headerForm">
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Trigger action</mat-label>
+          <mat-select formControlName="actionCode">
+            <mat-option *ngFor="let a of actions" [value]="a.actionCode">
+              {{ a.displayName }}
+            </mat-option>
+          </mat-select>
+          <mat-hint>Domain events, API endpoints and screen actions </mat-hint>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full" *ngIf="isSuperAdmin">
+          <mat-label>Scope</mat-label>
+          <mat-select formControlName="businessScope">
+            <mat-option value="global">Global</mat-option>
+            <mat-option value="business">This business</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <button mat-flat-button color="primary" type="button" (click)="createPipeline()" [disabled]="saving || headerForm.invalid">
+          Create draft
+        </button>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <p class="wf-workspace__status-banner" *ngIf="!isNew && isDisabled && canEdit">
+    Disabled — edit and click <strong>Republish</strong> to turn gateway approval back on.
+  </p>
+
+  <div class="wf-workspace__body" *ngIf="!isNew">
+    <aside class="wf-workspace__sidebar">
+      <h3 class="wf-workspace__sidebar-title">Steps</h3>
+      <div
+        class="wf-workspace__step-list"
+        cdkDropList
+        (cdkDropListDropped)="dropStep($event)"
+        [cdkDropListDisabled]="readOnly"
+      >
+        <div
+          class="wf-workspace__step-item"
+          *ngFor="let node of nodes; let i = index"
+          cdkDrag
+          [class.wf-workspace__step-item--active]="selectedClientKey === node.clientKey"
+          (click)="selectNode(node.clientKey)"
+        >
+          <span class="wf-workspace__step-num">{{ i + 1 }}</span>
+          <span class="wf-workspace__step-label">{{ nodeTitle(node) }}</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="wf-workspace__canvas workflow-canvas">
+      <div class="wf-flow">
+        <div class="wf-flow__node wf-flow__node--start">
+          <span class="wf-flow__dot"></span>
+          <span>Start</span>
+        </div>
+        <ng-container *ngFor="let node of nodes">
+          <div class="wf-flow__connector">
+            <span class="wf-flow__line"></span>
+          </div>
+          <div
+            class="wf-flow__card"
+            [class.wf-flow__card--selected]="selectedClientKey === node.clientKey"
+            (click)="selectNode(node.clientKey)"
+          >
+            <button
+              mat-icon-button
+              type="button"
+              class="wf-flow__remove"
+              *ngIf="!readOnly && selectedClientKey === node.clientKey"
+              (click)="removeSelectedNode(); $event.stopPropagation()"
+            >
+              <i-tabler name="x" class="icon-16"></i-tabler>
+            </button>
+            <i-tabler [name]="nodeIcon(node)" class="wf-flow__card-icon wf-theme-icon"></i-tabler>
+            <div class="wf-flow__card-text">
+              <strong>{{ nodeTitle(node) }}</strong>
+              <small>{{ nodeSubtitle(node) }}</small>
+            </div>
+            <span class="wf-flow__tag">{{ node.step.stepType }}</span>
+          </div>
+        </ng-container>
+        <div class="wf-flow__connector" *ngIf="nodes.length">
+          <span class="wf-flow__line"></span>
+        </div>
+        <button
+          mat-stroked-button
+          type="button"
+          class="wf-flow__add-step"
+          *ngIf="!readOnly"
+          (click)="openTaskPicker()"
+        >
+          <i-tabler name="plus" class="icon-18"></i-tabler>
+          Add step
+        </button>
+        <div class="wf-flow__connector" *ngIf="nodes.length">
+          <span class="wf-flow__line"></span>
+        </div>
+        <div class="wf-flow__node wf-flow__node--end">
+          <span class="wf-flow__dot"></span>
+          <span>End</span>
+        </div>
+      </div>
+    </main>
+
+    <aside class="wf-workspace__inspector">
+      <mat-tab-group [(selectedIndex)]="inspectorTabIndex" (selectedIndexChange)="onInspectorTab($event)">
+        <mat-tab label="Workflow"></mat-tab>
+        <mat-tab label="Task" [disabled]="!selectedClientKey"></mat-tab>
+      </mat-tab-group>
+
+      <div class="wf-workspace__inspector-body wf-inspector-panel" [formGroup]="headerForm" *ngIf="inspectorTab === 'workflow'">
+        <mat-form-field appearance="outline" class="full wf-field-block">
+          <mat-label>Trigger action</mat-label>
+          <mat-select formControlName="actionCode" [disabled]="true">
+            <mat-option *ngFor="let a of actions" [value]="a.actionCode">{{ a.displayName }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full wf-field-block">
+          <mat-label>Notes</mat-label>
+          <textarea matInput formControlName="notes" rows="2"></textarea>
+        </mat-form-field>
+        <mat-slide-toggle formControlName="roleRestricted">Restrict who can run this workflow</mat-slide-toggle>
+        <mat-form-field appearance="outline" class="full wf-field-block" *ngIf="headerForm.get('roleRestricted')?.value">
+          <mat-label>Roles allowed to run</mat-label>
+          <mat-select formControlName="runRoleNames" multiple>
+            <mat-option *ngFor="let name of roleNames()" [value]="name">{{ name }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <p class="text-muted wf-hint" *ngIf="!headerForm.get('roleRestricted')?.value">
+          When not restricted, all roles can run this workflow.
+        </p>
+      </div>
+
+      <div class="wf-workspace__inspector-body wf-inspector-panel" *ngIf="inspectorTab === 'task' && selectedNode">
+        <ng-container *ngIf="selectedNode.step.stepType === 'APPROVAL'" [formGroup]="approvalForm">
+          <h4 class="wf-inspector-title">Approval (maker–checker)</h4>
+          <p class="wf-hint wf-hint--block">
+            Choose which API call is deferred for approval. Step type (approval, notification, etc.) is set when
+            you add the step on the canvas.
+          </p>
+          <p class="wf-registry-note">
+            The list above is the <strong>gateway API registry</strong> (which HTTP paths can be deferred). It is
+            maintained in the database / by administrators — not on this screen. If your API is missing, register it
+            in <code>UM_WORKFLOW_API_ENDPOINT</code> first (SQL seed or gateway sync).
+          </p>
+          <mat-form-field appearance="outline" class="full wf-field-block">
+            <mat-label>Gateway API endpoint</mat-label>
+            <mat-select
+              formControlName="endpointId"
+              (selectionChange)="onApprovalEndpointChange($event.value)"
+            >
+              <mat-option *ngFor="let e of gatewayEndpoints()" [value]="e.endpointId">
+                {{ endpointLabel(e) }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <div class="wf-endpoint-meta" *ngIf="approvalForm.get('endpointId')?.value">
+            <span><strong>Screen</strong> {{ approvalForm.get('screenRoute')?.value }}</span>
+            <span><strong>Action</strong> {{ approvalForm.get('actionName')?.value }}</span>
+          </div>
+          <mat-slide-toggle
+            formControlName="userOverride"
+            (change)="onApprovalOverrideToggle()"
+            class="wf-toggle-block"
+          >
+            Override roles with specific users
+          </mat-slide-toggle>
+
+          <ng-container *ngIf="!approvalForm.get('userOverride')?.value">
+            <mat-form-field appearance="outline" class="full wf-field-block">
+              <mat-label>Maker roles</mat-label>
+              <mat-select formControlName="makerRoles" multiple>
+                <mat-option *ngFor="let name of roleNames()" [value]="name">{{ name }}</mat-option>
+              </mat-select>
+              <mat-hint>Optional. Leave empty to allow any user with access to the screen.</mat-hint>
+            </mat-form-field>
+
+            <div class="tier-block" *ngFor="let ctrl of checkerRoleTiers.controls; let i = index">
+              <mat-form-field appearance="outline" class="full wf-field-block">
+                <mat-label>Checker roles — level {{ i + 1 }}</mat-label>
+                <mat-select [formControl]="$any(ctrl)" multiple>
+                  <mat-option *ngFor="let name of roleNames()" [value]="name">{{ name }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <div class="tier-actions" *ngIf="checkerRoleTiers.length > 1">
+                <button mat-stroked-button type="button" color="warn" (click)="removeCheckerTier(i)">
+                  Remove level
+                </button>
+              </div>
+            </div>
+            <button
+              mat-stroked-button
+              type="button"
+              class="m-t-8"
+              (click)="addCheckerTier()"
+              [disabled]="checkerRoleTiers.length >= 10 || readOnly"
+            >
+              Add checker level
+            </button>
+          </ng-container>
+
+          <ng-container *ngIf="approvalForm.get('userOverride')?.value">
+            <mat-form-field appearance="outline" class="full wf-field-block">
+              <mat-label>Maker users</mat-label>
+              <mat-select formControlName="makerUsers" multiple>
+                <mat-option *ngFor="let u of users" [value]="u.username">{{ userLabel(u) }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+
+            <div class="tier-block" *ngFor="let ctrl of checkerUserTiers.controls; let i = index">
+              <mat-form-field appearance="outline" class="full wf-field-block">
+                <mat-label>Checker users — level {{ i + 1 }}</mat-label>
+                <mat-select [formControl]="$any(ctrl)" multiple>
+                  <mat-option *ngFor="let u of users" [value]="u.username">{{ userLabel(u) }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <div class="tier-actions" *ngIf="checkerUserTiers.length > 1">
+                <button mat-stroked-button type="button" color="warn" (click)="removeCheckerTier(i)">
+                  Remove level
+                </button>
+              </div>
+            </div>
+            <button
+              mat-stroked-button
+              type="button"
+              class="m-t-8"
+              (click)="addCheckerTier()"
+              [disabled]="checkerUserTiers.length >= 10 || readOnly"
+            >
+              Add checker level
+            </button>
+          </ng-container>
+
+          <p class="wf-error" *ngIf="approvalCheckerError">{{ approvalCheckerError }}</p>
+        </ng-container>
+
+        <ng-container *ngIf="selectedNode.step.stepType === 'NOTIFICATION'" [formGroup]="notificationForm">
+          <h4 class="wf-inspector-title">Notification</h4>
+          <p class="wf-pipeline-trigger">
+            <strong>Pipeline trigger:</strong> {{ pipelineTriggerLabel() }}
+            <span class="text-muted">({{ detail?.actionCode || headerForm.get('actionCode')?.value }})</span>
+          </p>
+          <mat-slide-toggle formControlName="active" class="wf-toggle-block">Active</mat-slide-toggle>
+          <div class="wf-channels">
+            <mat-checkbox formControlName="channelEmail">Email</mat-checkbox>
+            <mat-checkbox formControlName="channelInbox">Inbox</mat-checkbox>
+          </div>
+          <mat-form-field appearance="outline" class="full wf-field-block">
+            <mat-label>Template</mat-label>
+            <mat-select formControlName="templateKey">
+              <mat-option *ngFor="let t of templates" [value]="t.templateKey">{{ t.templateKey }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full wf-field-block">
+            <mat-label>When to send</mat-label>
+            <mat-select formControlName="timing">
+              <mat-option value="ON_ACTION_SUCCESS">When pipeline trigger runs</mat-option>
+              <mat-option value="AFTER_APPROVAL">When approval completes (gateway only)</mat-option>
+            </mat-select>
+            <mat-hint>{{ notificationTimingHint() }}</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full wf-field-block">
+            <mat-label>Audience mode</mat-label>
+            <mat-select formControlName="audienceMode">
+              <mat-option value="CONTEXT">Context recipient</mat-option>
+              <mat-option value="ROLES">Roles</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field
+            appearance="outline"
+            class="full wf-field-block"
+            *ngIf="notificationForm.get('audienceMode')?.value === 'CONTEXT'"
+          >
+            <mat-label>Recipient from context</mat-label>
+            <mat-select formControlName="contextRecipient">
+              <mat-option value="createdUser">User who triggered the action</mat-option>
+              <mat-option value="createdCustomer">Customer who was created</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field
+            appearance="outline"
+            class="full wf-field-block"
+            *ngIf="notificationForm.get('audienceMode')?.value === 'ROLES'"
+          >
+            <mat-label>Audience roles</mat-label>
+            <mat-select formControlName="audienceRoleNames" multiple>
+              <mat-option *ngFor="let name of roleNames()" [value]="name">{{ name }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </ng-container>
+
+        <ng-container
+          *ngIf="selectedNode.step.stepType === 'HTTP_TASK' || selectedNode.step.stepType === 'HTTP_POLL'"
+          [formGroup]="httpForm"
+        >
+          <h4 class="wf-inspector-title">HTTP task</h4>
+          <mat-slide-toggle formControlName="active" class="wf-toggle-block">Active</mat-slide-toggle>
+          <mat-form-field appearance="outline" class="full wf-field-block">
+            <mat-label>Method</mat-label>
+            <mat-select formControlName="httpMethod">
+              <mat-option value="GET">GET</mat-option>
+              <mat-option value="POST">POST</mat-option>
+              <mat-option value="PUT">PUT</mat-option>
+              <mat-option value="DELETE">DELETE</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full">
+            <mat-label>Endpoint</mat-label>
+            <mat-select formControlName="endpointPath">
+              <mat-option *ngFor="let ep of endpointCatalog" [value]="ep.pathAntPattern">
+                {{ ep.displayLabel || ep.pathAntPattern }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="full wf-field-block">
+            <mat-label>Payload JSON</mat-label>
+            <textarea matInput formControlName="payloadJson" rows="8" class="wf-code"></textarea>
+          </mat-form-field>
+        </ng-container>
+
+        <p class="text-muted" *ngIf="selectedNode.step.stepType === 'SYSTEM'">
+          System steps are saved as configuration placeholders. Runtime execution is not yet enabled.
+        </p>
+      </div>
+    </aside>
+  </div>
+
+  <footer class="wf-workspace__footer" *ngIf="!isNew">
+    <span class="text-muted">Workflow engine · drag steps in the sidebar to reorder</span>
+  </footer>
+</div>
+
+<div class="wf-workspace__loading" *ngIf="loading">
+  <mat-progress-spinner diameter="48" mode="indeterminate"></mat-progress-spinner>
+</div>

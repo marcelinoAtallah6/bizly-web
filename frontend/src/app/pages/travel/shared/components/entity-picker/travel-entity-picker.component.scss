@@ -1,0 +1,14 @@
+.travel-entity-picker {
+  width: 100%;
+
+  &__primary {
+    display: block;
+    font-weight: 500;
+  }
+
+  &__secondary {
+    display: block;
+    font-size: 12px;
+    opacity: 0.75;
+  }
+}

@@ -1,9 +1,9 @@
 <section class="reporting-page">
   <header class="reporting-page__head">
     <div>
-      <button mat-button color="primary" type="button" class="reporting-back" (click)="goToBuilder()">
+      <button mat-button color="primary" type="button" class="reporting-back" (click)="goBack()">
         <i-tabler name="arrow-left" class="icon-18 mr-4"></i-tabler>
-        Back to Report Builder
+        {{ viewerMode ? 'Back to Reports' : 'Back to Report Builder' }}
       </button>
       <h2 class="reporting-page__title">{{ meta?.name || 'Report' }}</h2>
       <p class="reporting-page__intro text-muted f-s-14" *ngIf="meta?.description">

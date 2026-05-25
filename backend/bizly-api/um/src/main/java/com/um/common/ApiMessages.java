@@ -26,5 +26,10 @@ public class ApiMessages {
 	public static final String PROFILE_IMAGE_TOO_LARGE = "Profile image exceeds maximum size";
 
 	public static final String MENU_PERMISSION_DENIED = "You do not have permission for this action";
+
+	public static final String BUSINESS_NOT_FOUND = "Business not found";
+	public static final String BUSINESS_NAME_TAKEN = "Business name is already taken";
+	public static final String CANNOT_DELETE_BUSINESS_OWNER = "The business owner account cannot be deleted from the business portal";
+	public static final String CANNOT_DELETE_SELF = "You cannot delete your own account";
 }
 

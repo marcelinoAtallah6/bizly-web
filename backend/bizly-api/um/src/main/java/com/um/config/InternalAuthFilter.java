@@ -66,9 +66,16 @@ public class InternalAuthFilter extends OncePerRequestFilter {
 		List<GrantedAuthority> authorities = resolveAuthoritiesWithSession(session,
 				authoritiesFromGatewayRoleHeaders(request));
 
-		if (username != null && !authorities.isEmpty()) {
+		/*
+		 * Fresh social-onboarding JWTs can legitimately carry zero roles until
+		 * /auth/register-business completes. We still need an authenticated principal so
+		 * downstream services (e.g. UM self-profile PUT) don't reject the request before the
+		 * controller runs.
+		 */
+		if (username != null && !username.isBlank()) {
 			UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(username, null,
-					authorities);
+					authorities.isEmpty() ? Collections.singletonList(new SimpleGrantedAuthority("ROLE_PRE_ONBOARDING"))
+							: authorities);
 			SecurityContextHolder.getContext().setAuthentication(auth);
 		}
 
@@ -78,12 +85,20 @@ public class InternalAuthFilter extends OncePerRequestFilter {
 		if ("ADMIN".equalsIgnoreCase(roleLevel)) {
 			override = parseLong(request.getHeader("X-Business-Override"));
 		}
-		BusinessContextHolder.set(bid, roleLevel, override);
+		BusinessContextHolder.set(bid, roleLevel, override, parseTenantBypass(request.getHeader("X-Tenant-Bypass")));
 		try {
 			filterChain.doFilter(request, response);
 		} finally {
 			BusinessContextHolder.clear();
 		}
+	}
+
+	private static Boolean parseTenantBypass(String header) {
+		if (header == null || header.isBlank()) {
+			return null;
+		}
+		String v = header.trim();
+		return "true".equalsIgnoreCase(v) || "1".equals(v);
 	}
 
 	private static Long parseLong(String s) {

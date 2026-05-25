@@ -1,3 +1,104 @@
+@import '../auth-page';
+
+/* Registration wizard — extends shared auth-page shell */
+.register-page {
+  align-items: stretch;
+}
+
+.register-page__wrap {
+  align-items: flex-start;
+  padding-bottom: 48px;
+}
+
+.register-page__col {
+  width: 100%;
+  max-width: min(560px, 100%);
+  display: flex;
+}
+
+.register-page__card {
+  width: 100%;
+  /* override Material's default max-width so the card flexes with the column */
+  max-width: none;
+}
+
+.register-page__content {
+  padding: 32px;
+}
+
+.register-page__header {
+  margin-bottom: 8px;
+}
+
+.register-page__logo {
+  height: clamp(72px, 16vw, 112px);
+  width: auto;
+  max-width: min(100%, 300px);
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+  background: transparent;
+}
+
+@media (max-width: 575.98px) {
+  .register-page__wrap {
+    padding: 16px 12px 32px;
+  }
+  .register-page__content {
+    padding: 20px;
+  }
+}
+
+/* ---- First / Last name row: side-by-side on >=sm, stacked on phones ---- */
+.register-page__name-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 575.98px) {
+  .register-page__name-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
+
+/* ---- Back / Create-account button pair: prevent buttons becoming tiny on
+ * phones; stack vertically when the row gets too narrow. */
+.register-page__actions {
+  display: flex;
+  gap: 12px;
+}
+
+.register-page__action-btn {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+@media (max-width: 419.98px) {
+  .register-page__actions {
+    flex-direction: column-reverse;
+  }
+}
+
+/* Use shared auth divider instead of global or-border on narrow screens */
+.register-page .or-border {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+.register-page .or-border::before,
+.register-page .or-border::after {
+  content: '';
+  position: static;
+  flex: 1 1 auto;
+  width: auto;
+  height: 1px;
+  background: var(--borderColor);
+}
+
 .step-dot {
   width: 32px;
   height: 32px;
@@ -72,9 +173,15 @@
  * scopes styles by default, so we can't inherit from the sibling component. */
 .register-business__types {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 10px;
   margin: 4px 0 8px;
+}
+
+@media (max-width: 419.98px) {
+  .register-business__types {
+    grid-template-columns: 1fr;
+  }
 }
 
 .register-business__type {
@@ -89,9 +196,11 @@
   transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
   text-align: left;
   width: 100%;
+  min-width: 0;
   font-family: inherit;
   font-size: 13px;
 }
+
 
 .register-business__type:hover {
   border-color: #6690ff;
@@ -123,4 +232,9 @@
 .register-business__type-label {
   font-weight: 600;
   color: #1a2240;
+  /* keep long labels from breaking the tile layout */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

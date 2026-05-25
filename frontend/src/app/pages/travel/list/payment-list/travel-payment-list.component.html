@@ -1,0 +1,16 @@
+<app-page-action-bar title="Payments" [toolbar]="listToolbar"></app-page-action-bar>
+<ag-grid-angular
+  class="ag-theme-quartz"
+  style="width: 100%; height: min(60vh, 560px)"
+  [rowData]="rowData"
+  [columnDefs]="columnDefs"
+  [defaultColDef]="defaultColDef"
+  [rowSelection]="'single'"
+  [animateRows]="true"
+  [pagination]="gridPagination.pagination"
+  [paginationPageSize]="gridPagination.paginationPageSize"
+  [paginationPageSizeSelector]="gridPagination.paginationPageSizeSelector"
+  (gridReady)="onGridReady($event)"
+  (selectionChanged)="onSelectionChanged()"
+  (rowDoubleClicked)="onRowDoubleClicked($event)"
+></ag-grid-angular>

@@ -8,6 +8,9 @@
     [columnDefs]="columnDefs"
     [defaultColDef]="defaultColDef"
     [animateRows]="true"
+    [pagination]="gridPagination.pagination"
+    [paginationPageSize]="gridPagination.paginationPageSize"
+    [paginationPageSizeSelector]="gridPagination.paginationPageSizeSelector"
     (gridReady)="onGridReady($event)"
     (rowDoubleClicked)="onRowDoubleClicked($event)"
   ></ag-grid-angular>

@@ -21,26 +21,51 @@ import com.bm.api.model.NotifInbox;
 @Repository
 public interface NotifInboxRepository extends JpaRepository<NotifInbox, Long> {
 
-	List<NotifInbox> findByUsernameOrderByCreatedAtDesc(String username, Pageable pageable);
+	@Query("SELECT n FROM NotifInbox n WHERE n.username = :username "
+			+ "AND (:hideAppointment = false OR n.category <> 'APPOINTMENT') "
+			+ "AND (:hideTravelBooking = false OR n.category <> 'TRAVEL_BOOKING') "
+			+ "ORDER BY n.createdAt DESC")
+	List<NotifInbox> findByUsernameOrderByCreatedAtDesc(@Param("username") String username,
+			@Param("hideAppointment") boolean hideAppointment,
+			@Param("hideTravelBooking") boolean hideTravelBooking, Pageable pageable);
 
-	long countByUsername(String username);
+	@Query("SELECT COUNT(n) FROM NotifInbox n WHERE n.username = :username "
+			+ "AND (:hideAppointment = false OR n.category <> 'APPOINTMENT') "
+			+ "AND (:hideTravelBooking = false OR n.category <> 'TRAVEL_BOOKING') ")
+	long countByUsername(@Param("username") String username, @Param("hideAppointment") boolean hideAppointment,
+			@Param("hideTravelBooking") boolean hideTravelBooking);
 
-	long countByUsernameAndReadAtIsNull(String username);
+	@Query("SELECT COUNT(n) FROM NotifInbox n WHERE n.username = :username "
+			+ "AND n.readAt IS NULL AND (:hideAppointment = false OR n.category <> 'APPOINTMENT') "
+			+ "AND (:hideTravelBooking = false OR n.category <> 'TRAVEL_BOOKING') ")
+	long countByUsernameAndReadAtIsNull(@Param("username") String username,
+			@Param("hideAppointment") boolean hideAppointment,
+			@Param("hideTravelBooking") boolean hideTravelBooking);
 
-	// -- Tenant-scoped finders. Match own-business rows AND global (business_id IS NULL) rows. --
 	@Query("SELECT n FROM NotifInbox n WHERE n.username = :username "
 			+ "AND (n.businessId IS NULL OR n.businessId = :businessId) "
+			+ "AND (:hideAppointment = false OR n.category <> 'APPOINTMENT') "
+			+ "AND (:hideTravelBooking = false OR n.category <> 'TRAVEL_BOOKING') "
 			+ "ORDER BY n.createdAt DESC")
 	List<NotifInbox> findInboxForUserAndBusiness(@Param("username") String username,
-			@Param("businessId") Long businessId, Pageable pageable);
+			@Param("businessId") Long businessId, @Param("hideAppointment") boolean hideAppointment,
+			@Param("hideTravelBooking") boolean hideTravelBooking, Pageable pageable);
 
 	@Query("SELECT COUNT(n) FROM NotifInbox n WHERE n.username = :username "
-			+ "AND (n.businessId IS NULL OR n.businessId = :businessId)")
-	long countInboxForUserAndBusiness(@Param("username") String username, @Param("businessId") Long businessId);
+			+ "AND (n.businessId IS NULL OR n.businessId = :businessId) "
+			+ "AND (:hideAppointment = false OR n.category <> 'APPOINTMENT') "
+			+ "AND (:hideTravelBooking = false OR n.category <> 'TRAVEL_BOOKING') ")
+	long countInboxForUserAndBusiness(@Param("username") String username, @Param("businessId") Long businessId,
+			@Param("hideAppointment") boolean hideAppointment,
+			@Param("hideTravelBooking") boolean hideTravelBooking);
 
 	@Query("SELECT COUNT(n) FROM NotifInbox n WHERE n.username = :username "
-			+ "AND n.readAt IS NULL AND (n.businessId IS NULL OR n.businessId = :businessId)")
-	long countUnreadForUserAndBusiness(@Param("username") String username, @Param("businessId") Long businessId);
+			+ "AND n.readAt IS NULL AND (n.businessId IS NULL OR n.businessId = :businessId) "
+			+ "AND (:hideAppointment = false OR n.category <> 'APPOINTMENT') "
+			+ "AND (:hideTravelBooking = false OR n.category <> 'TRAVEL_BOOKING') ")
+	long countUnreadForUserAndBusiness(@Param("username") String username, @Param("businessId") Long businessId,
+			@Param("hideAppointment") boolean hideAppointment,
+			@Param("hideTravelBooking") boolean hideTravelBooking);
 
 	@Query("SELECT CASE WHEN COUNT(n) > 0 THEN true ELSE false END FROM NotifInbox n "
 			+ "WHERE n.username = :username AND n.resourceType = :rt AND n.resourceId = :rid "
@@ -49,11 +74,6 @@ public interface NotifInboxRepository extends JpaRepository<NotifInbox, Long> {
 			@Param("rt") String resourceType, @Param("rid") String resourceId,
 			@Param("businessId") Long businessId);
 
-	/**
-	 * Used by schedulers for idempotent fan-out: "have we already produced this
-	 * exact reminder for this user?". The producer chooses a stable
-	 * (resourceType, resourceId) such as ("APPOINTMENT_REMINDER_60", "42@202605120800").
-	 */
 	boolean existsByUsernameAndResourceTypeAndResourceId(String username, String resourceType, String resourceId);
 
 	@Modifying
@@ -64,16 +84,21 @@ public interface NotifInboxRepository extends JpaRepository<NotifInbox, Long> {
 
 	@Modifying
 	@Query("UPDATE NotifInbox n SET n.readAt = :now WHERE n.username = :username "
-			+ "AND n.readAt IS NULL AND (n.businessId IS NULL OR n.businessId = :businessId)")
+			+ "AND n.readAt IS NULL AND (n.businessId IS NULL OR n.businessId = :businessId) "
+			+ "AND (:hideAppointment = false OR n.category <> 'APPOINTMENT') "
+			+ "AND (:hideTravelBooking = false OR n.category <> 'TRAVEL_BOOKING') ")
 	int markAllReadForBusiness(@Param("username") String username, @Param("businessId") Long businessId,
-			@Param("now") LocalDateTime now);
+			@Param("hideAppointment") boolean hideAppointment,
+			@Param("hideTravelBooking") boolean hideTravelBooking, @Param("now") LocalDateTime now);
 
-	// -- Legacy un-scoped variants kept for system-wide schedulers / housekeeping. --
 	@Modifying
 	@Query("UPDATE NotifInbox n SET n.readAt = :now WHERE n.id = :id AND n.username = :username AND n.readAt IS NULL")
 	int markRead(@Param("id") Long id, @Param("username") String username, @Param("now") LocalDateTime now);
 
 	@Modifying
-	@Query("UPDATE NotifInbox n SET n.readAt = :now WHERE n.username = :username AND n.readAt IS NULL")
-	int markAllRead(@Param("username") String username, @Param("now") LocalDateTime now);
+	@Query("UPDATE NotifInbox n SET n.readAt = :now WHERE n.username = :username AND n.readAt IS NULL "
+			+ "AND (:hideAppointment = false OR n.category <> 'APPOINTMENT') "
+			+ "AND (:hideTravelBooking = false OR n.category <> 'TRAVEL_BOOKING') ")
+	int markAllRead(@Param("username") String username, @Param("hideAppointment") boolean hideAppointment,
+			@Param("hideTravelBooking") boolean hideTravelBooking, @Param("now") LocalDateTime now);
 }

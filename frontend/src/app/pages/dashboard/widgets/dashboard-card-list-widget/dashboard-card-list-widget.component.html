@@ -1,0 +1,18 @@
+<div class="dash-card-list">
+  <p class="dash-muted empty-widget-msg" *ngIf="!cards.length">No items.</p>
+  <mat-card class="dash-card-list__item" *ngFor="let c of cards">
+    <mat-card-content>
+      <div class="dash-card-list__head">
+        <div>
+          <h4 class="m-0 f-w-600">{{ c.title }}</h4>
+          <p class="m-0 m-t-4 text-muted f-s-13">{{ c.subtitle }}</p>
+        </div>
+        <span class="dash-card-list__channel" *ngIf="c.channel">{{ c.channel }}</span>
+      </div>
+      <p class="m-b-12 m-t-8 f-s-12 text-muted" *ngIf="c.meta">{{ c.meta }}</p>
+      <button mat-stroked-button color="primary" type="button" (click)="onAction(c.row)">
+        {{ config?.actionLabel || 'Send Now' }}
+      </button>
+    </mat-card-content>
+  </mat-card>
+</div>

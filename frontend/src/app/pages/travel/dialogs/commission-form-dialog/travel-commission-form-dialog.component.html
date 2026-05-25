@@ -1,0 +1,26 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Edit commission rule' : 'New commission rule' }}</h2>
+<mat-dialog-content [formGroup]="form">
+  <mat-form-field appearance="outline" class="full">
+    <mat-label>Name</mat-label>
+    <input matInput formControlName="name" />
+  </mat-form-field>
+  <mat-form-field appearance="outline" class="full">
+    <mat-label>Rule type</mat-label>
+    <mat-select formControlName="ruleType">
+      <mat-option *ngFor="let t of ruleTypes" [value]="t">{{ t }}</mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field appearance="outline" class="full">
+    <mat-label>Rate percent</mat-label>
+    <input matInput type="number" min="0" max="100" formControlName="ratePercent" />
+  </mat-form-field>
+  <mat-form-field appearance="outline" class="full">
+    <mat-label>Flat amount</mat-label>
+    <input matInput type="number" min="0" formControlName="flatAmount" />
+  </mat-form-field>
+  <mat-slide-toggle formControlName="active">Active</mat-slide-toggle>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <button mat-flat-button color="primary" type="button" (click)="save()" [disabled]="saving">Save</button>
+</mat-dialog-actions>

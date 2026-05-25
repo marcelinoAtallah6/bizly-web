@@ -3,6 +3,7 @@ package com.auth.api.service.registration;
 import java.util.List;
 
 import com.auth.api.controllers.dto.registration.AssignableRoleDto;
+import com.auth.api.controllers.dto.registration.BusinessTypeOption;
 import com.auth.api.controllers.dto.registration.MeAvatarResponse;
 import com.auth.api.controllers.dto.registration.MeResponse;
 import com.auth.api.controllers.dto.registration.RegisterBusinessRequest;
@@ -35,6 +36,15 @@ public interface IRegisterBusinessService {
 
 	/** Returns ONLY roles whose level allows assignment on registration and which are not system-restricted. */
 	List<AssignableRoleDto> listAssignableRoles();
+
+	/**
+	 * Returns the catalog of business-type roles offered to the public sign-up
+	 * and post-login business-creation flows. Filters at the SQL boundary so
+	 * SUPER_ADMIN / system-restricted / non-BUSINESS-level rows can never leak
+	 * to the client — adding a row to {@code um_role} is the only way to
+	 * expose a new business type.
+	 */
+	List<BusinessTypeOption> listBusinessTypes();
 
 	/** Marks the welcome wizard as finished and reissues the JWT so the {@code firstLogin} claim updates. */
 	RegisterBusinessResponse completeWelcome(String username, String deviceId, String ip);

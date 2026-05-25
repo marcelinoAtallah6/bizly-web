@@ -23,7 +23,11 @@ public final class BusinessContextHolder {
 	private BusinessContextHolder() {}
 
 	public static void set(Long businessId, String roleLevel, Long overrideBusinessId) {
-		TL.set(new Context(businessId, roleLevel, overrideBusinessId));
+		set(businessId, roleLevel, overrideBusinessId, null);
+	}
+
+	public static void set(Long businessId, String roleLevel, Long overrideBusinessId, Boolean tenantBypass) {
+		TL.set(new Context(businessId, roleLevel, overrideBusinessId, tenantBypass));
 	}
 
 	public static void clear() {
@@ -44,24 +48,36 @@ public final class BusinessContextHolder {
 	 * Resolves the business id to use for queries — never returns {@code null}. For non-admin users
 	 * this is always the user's own {@code business_id}; for admin users that have explicitly chosen
 	 * a target business via the admin business-picker, it's that chosen id. Throws when neither is
-	 * available.
+	 * available. The error message distinguishes admins in "all businesses" mode (asks them to pick
+	 * one via the header dropdown) from regular users with an incomplete profile.
 	 */
 	public static Long requireBusinessId() {
+		Context c = TL.get();
 		Long id = currentBusinessId();
 		if (id == null) {
-			throw new IllegalStateException("No business context — caller has not completed business registration");
+			if (c != null && "ADMIN".equalsIgnoreCase(c.roleLevel)) {
+				throw new IllegalStateException(
+						"Select a specific business from the header dropdown to perform this action.");
+			}
+			throw new IllegalStateException(
+					"Your account is not linked to a business yet — finish registration before continuing.");
 		}
 		return id;
 	}
 
 	/**
-	 * True when the caller is on an ADMIN-level role and can therefore read/write across all
-	 * businesses (subject to the explicit business chooser). Use with caution — every admin call
-	 * must still log who and what.
+	 * True only for the portal root admin ({@code tenantBypass} in JWT). Delegated internal admin
+	 * roles keep {@code roleLevel = ADMIN} for provisioning flows but must obey the menu matrix.
 	 */
 	public static boolean canBypassTenant() {
 		Context c = TL.get();
-		return c != null && "ADMIN".equalsIgnoreCase(c.roleLevel);
+		if (c == null) {
+			return false;
+		}
+		if (c.tenantBypass != null) {
+			return c.tenantBypass;
+		}
+		return "ADMIN".equalsIgnoreCase(c.roleLevel);
 	}
 
 	public static final class Context {
@@ -69,11 +85,14 @@ public final class BusinessContextHolder {
 		public final String roleLevel;
 		/** Admin-set "act-as" override of the business id; null otherwise. */
 		public final Long overrideBusinessId;
+		/** From JWT {@code tenantBypass}; null on legacy tokens (falls back to roleLevel). */
+		public final Boolean tenantBypass;
 
-		public Context(Long businessId, String roleLevel, Long overrideBusinessId) {
+		public Context(Long businessId, String roleLevel, Long overrideBusinessId, Boolean tenantBypass) {
 			this.businessId = businessId;
 			this.roleLevel = roleLevel;
 			this.overrideBusinessId = overrideBusinessId;
+			this.tenantBypass = tenantBypass;
 		}
 	}
 }

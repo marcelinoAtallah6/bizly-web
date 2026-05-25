@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.auth.api.controllers.dto.registration.AssignableRoleDto;
+import com.auth.api.controllers.dto.registration.BusinessTypeOption;
 import com.auth.api.controllers.dto.registration.MeAvatarResponse;
 import com.auth.api.controllers.dto.registration.MeResponse;
 import com.auth.api.controllers.dto.registration.RegisterBusinessRequest;
@@ -99,6 +100,25 @@ public class RegisterBusinessController {
 	public ResponseEntity<ApiResponse<List<AssignableRoleDto>>> assignableRoles(HttpServletRequest request) {
 		requireUser(request);
 		return ResponseEntity.ok(ApiResponse.success(service.listAssignableRoles(), "OK"));
+	}
+
+	/**
+	 * Public catalogue of business-type roles for the registration screens.
+	 *
+	 * <p>Both wizards call this endpoint:</p>
+	 * <ul>
+	 *   <li>The public "Create Account" page (before login) — anonymous.</li>
+	 *   <li>The post-login "Set up your business" page (after social sign-up
+	 *       or for legacy accounts that have no business yet).</li>
+	 * </ul>
+	 *
+	 * <p>Filtering is enforced server-side: SUPER_ADMIN and other system /
+	 * non-BUSINESS-level rows are never returned. See
+	 * {@link IRegisterBusinessService#listBusinessTypes()}.</p>
+	 */
+	@PostMapping("/business-types")
+	public ResponseEntity<ApiResponse<List<BusinessTypeOption>>> businessTypes() {
+		return ResponseEntity.ok(ApiResponse.success(service.listBusinessTypes(), "OK"));
 	}
 
 	/**

@@ -17,8 +17,16 @@ public class GetUserResponse {
 	private LocalDate dateOfBirth;
 	private List<Long> roleIds;
 
+	private Long businessId;
+	private String businessName;
+
 	private String profileImageMimeType;
 	private String profileImageBase64;
+
+	/** 1 = business owner (tenant account holder); portal admins may manage only these users. */
+	private Boolean businessOwner;
+
+	private String userType;
 
 	public Long getId() {
 		return id;
@@ -100,6 +108,22 @@ public class GetUserResponse {
 		this.roleIds = roleIds;
 	}
 
+	public Long getBusinessId() {
+		return businessId;
+	}
+
+	public void setBusinessId(Long businessId) {
+		this.businessId = businessId;
+	}
+
+	public String getBusinessName() {
+		return businessName;
+	}
+
+	public void setBusinessName(String businessName) {
+		this.businessName = businessName;
+	}
+
 	public String getProfileImageMimeType() {
 		return profileImageMimeType;
 	}
@@ -114,5 +138,21 @@ public class GetUserResponse {
 
 	public void setProfileImageBase64(String profileImageBase64) {
 		this.profileImageBase64 = profileImageBase64;
+	}
+
+	public Boolean getBusinessOwner() {
+		return businessOwner;
+	}
+
+	public void setBusinessOwner(Boolean businessOwner) {
+		this.businessOwner = businessOwner;
+	}
+
+	public String getUserType() {
+		return userType;
+	}
+
+	public void setUserType(String userType) {
+		this.userType = userType;
 	}
 }

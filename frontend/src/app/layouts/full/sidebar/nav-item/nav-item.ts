@@ -1,6 +1,10 @@
 export interface NavGroupItem {
     id?: number;
     name?: string;
+    /** Tabler icon name from {@code UM_APPLICATIONS.icon}. */
+    icon?: string;
+    route?: string;
+    description?: string;
     menus?: NavItem[];
   }
 

@@ -48,6 +48,19 @@ public class RoleEntity {
 	@Column(name = "is_system_restricted", nullable = false)
 	private Integer isSystemRestricted;
 
+	/**
+	 * 1 = this role doubles as a business type (e.g. RESTAURANT, CLINIC,
+	 * BEAUTY_CENTER, GYM, TAXI_COMPANY). The public sign-up screen
+	 * (and the post-login business wizard) list ONLY rows where this flag is
+	 * 1, ensuring system / internal roles can never appear in the picker.
+	 *
+	 * <p>Replacement for the old hardcoded business-type catalog: adding a new
+	 * row to {@code um_role} with this flag set is enough to surface a new
+	 * business type in the UI — no code change required.</p>
+	 */
+	@Column(name = "is_business_type", nullable = false)
+	private Integer isBusinessType;
+
 	public Long getId() {
 		return id;
 	}
@@ -90,5 +103,9 @@ public class RoleEntity {
 	public Integer getIsSystemRestricted() { return isSystemRestricted; }
 	public void setIsSystemRestricted(Integer v) { this.isSystemRestricted = v; }
 	public boolean isSystemRestricted() { return isSystemRestricted != null && isSystemRestricted == 1; }
+
+	public Integer getIsBusinessType() { return isBusinessType; }
+	public void setIsBusinessType(Integer v) { this.isBusinessType = v; }
+	public boolean isBusinessType() { return isBusinessType != null && isBusinessType == 1; }
 
 }

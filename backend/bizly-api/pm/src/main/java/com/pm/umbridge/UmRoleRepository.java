@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UmRoleRepository extends JpaRepository<UmRoleEntity, Long> {
 
-	Optional<UmRoleEntity> findByNameIgnoreCase(String name);
+	Optional<UmRoleEntity> findFirstByNameIgnoreCaseOrderByIdAsc(String name);
 }

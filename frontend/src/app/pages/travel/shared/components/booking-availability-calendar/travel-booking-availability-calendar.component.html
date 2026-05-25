@@ -1,0 +1,25 @@
+<div class="travel-availability-calendar">
+  <p class="travel-availability-calendar__hint">Select a departure date. Colors reflect package occupancy.</p>
+  <div class="travel-availability-calendar__legend">
+    <span *ngFor="let l of legend()" class="travel-availability-calendar__legend-item">
+      <span class="travel-availability-calendar__swatch" [ngClass]="l.className"></span>
+      {{ l.label }}
+    </span>
+  </div>
+  <div class="travel-availability-calendar__nav">
+    <button mat-icon-button type="button" (click)="prevMonth()" aria-label="Previous month">
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+    <span class="travel-availability-calendar__month-label">{{ calendarMonth | date : 'MMMM y' }}</span>
+    <button mat-icon-button type="button" (click)="nextMonth()" aria-label="Next month">
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+  </div>
+  <mat-spinner *ngIf="loading" diameter="28"></mat-spinner>
+  <mat-calendar
+    [startAt]="calendarMonth"
+    [selected]="selected"
+    [dateClass]="dateClass"
+    (selectedChange)="onDateSelected($event)"
+  ></mat-calendar>
+</div>

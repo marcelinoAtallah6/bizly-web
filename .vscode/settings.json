@@ -1,0 +1,8 @@
+{
+  // Backend modules are Eclipse/m2e imports (.classpath, .settings). On JDK 17+ the JDT
+  // builder needs these opens (same idea as adding them to eclipse.ini in Eclipse IDE).
+  "java.jdt.ls.vmargs": "-XX:+UseParallelGC -Xmx2G -Xms100m -Dsun.zip.disableMemoryMapping=true --add-opens=java.base/java.lang=ALL-UNNAMED --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.base/java.io=ALL-UNNAMED",
+
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.compile.nullAnalysis.mode": "disabled"
+}

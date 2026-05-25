@@ -1,0 +1,143 @@
+@import './workflow-engine-theme';
+
+:host {
+  @include wf-engine-tokens;
+  @include wf-status-badges;
+  display: block;
+  color: var(--wf-text);
+}
+
+.wf-editor__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.wf-editor__titles {
+  flex: 1;
+  min-width: 200px;
+}
+
+.wf-editor__title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--wf-text);
+}
+
+.wf-editor__sub {
+  margin: 4px 0 0;
+  font-size: 0.875rem;
+  color: var(--wf-text-muted);
+}
+
+.wf-editor__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.wf-meta-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.full {
+  width: 100%;
+}
+
+.wf-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(320px, 1.2fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .wf-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.wf-step-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wf-step-item {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  text-align: left;
+  padding: 10px 12px;
+  border: 1px solid var(--wf-border);
+  border-radius: 8px;
+  background: var(--wf-surface);
+  color: var(--wf-text);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.wf-step-item:hover {
+  border-color: var(--primary, #5d87ff);
+  background: var(--wf-hover);
+}
+
+.wf-step-item--active {
+  border-color: var(--primary, #5d87ff);
+  background: rgba(var(--primary-rgb, 93, 135, 255), 0.12);
+}
+
+.wf-step-order {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--wf-text-muted);
+}
+
+.wf-step-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--wf-text);
+}
+
+.wf-step-type {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--wf-text-muted);
+}
+
+.wf-step-toolbar {
+  display: flex;
+  gap: 4px;
+  margin-top: 12px;
+}
+
+.wf-field-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: var(--wf-text-muted);
+}
+
+.wf-hint {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--wf-text-muted);
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 48px;
+}
+
+mat-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}

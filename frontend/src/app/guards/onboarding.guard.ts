@@ -26,10 +26,10 @@ import { AuthService } from '../services/auth.service';
  *   - An admin manually created a user without immediately attaching them to a
  *     business.
  *
- * Behaviour:
- *   - {@code first_login = true} → {@code /authentication/welcome}
- *   - {@code business_id is null} AND role-level ≠ ADMIN
- *       → {@code /authentication/register-business}
+ * Behaviour (Full app shell only — auth routes use {@link GuestGuard}):
+ *   - Business pending approval (JWT/cache) → {@code /authentication/pending-business-approval} only
+ *   - {@code first_login = true} (and not pending) → {@code /authentication/welcome}
+ *   - {@code business_id is null} AND role-level ≠ ADMIN → {@code /authentication/register-business}
  *   - Otherwise → allow.
  *
  * Uses the cache populated by login / refresh / register / /auth/me. SUPER_ADMIN
@@ -56,6 +56,15 @@ export class OnboardingGuard implements CanActivate, CanActivateChild {
     if (!this.authService.isAuthenticated()) {
       return true; // AuthGuard handles the redirect to /authentication/login
     }
+    /* Block the main app whenever the JWT (or cache) says the tenant is still PENDING_APPROVAL — even
+     * if localStorage was cleared or stale (e.g. multi-tab), the access token remains authoritative. */
+    if (this.authService.getCachedPendingBusinessApproval()) {
+      const pending = '/authentication/pending-business-approval';
+      if (url === pending || url.startsWith(pending + '/') || url.startsWith(pending + '?')) {
+        return true;
+      }
+      return this.router.parseUrl(pending);
+    }
     if (url.startsWith('/authentication')) {
       return true; // never redirect the onboarding screens themselves
     }
@@ -64,7 +73,8 @@ export class OnboardingGuard implements CanActivate, CanActivateChild {
     }
     const bid = this.authService.getCachedBusinessId();
     const level = (this.authService.getCachedRoleLevel() ?? '').toUpperCase();
-    if (bid == null && level !== 'ADMIN') {
+    const allowWithoutBusiness = url.startsWith('/um/my-profile');
+    if (bid == null && level !== 'ADMIN' && !allowWithoutBusiness) {
       return this.router.parseUrl('/authentication/register-business');
     }
     return true;

@@ -1,8 +1,10 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, EMPTY, Observable, Subject, Subscription, of, timer } from 'rxjs';
-import { catchError, finalize, switchMap, takeUntil, tap } from 'rxjs/operators';
+import { BehaviorSubject, EMPTY, Observable, Subject, Subscription, forkJoin, of, timer } from 'rxjs';
+import { catchError, finalize, map, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { GlobalConstants } from '../common/GlobalConstants';
+import { AuthService } from './auth.service';
 import { BusinessApiService } from './business-api.service';
+import { UmWorkflowService } from '../pages/um/services/um-workflow.service';
 
 /** Severity is mirrored from the backend enum. */
 export type NotifSeverity = 'INFO' | 'SUCCESS' | 'WARN' | 'ERROR';
@@ -19,6 +21,8 @@ export interface NotifInboxItem {
   createdAt: string;
   readAt?: string | null;
   unread: boolean;
+  /** Synthetic row merged from UM workflow queue — not stored in BM inbox. */
+  isWorkflowReminder?: boolean;
 }
 
 export interface NotifInboxListResponse {
@@ -30,30 +34,18 @@ export interface NotifInboxListResponse {
   hasMore: boolean;
 }
 
+/** Synthetic inbox ids for workflow reminders (no collision with real BM ids). */
+const WORKFLOW_NOTIF_ID_BASE = 9_000_000_000;
+
 /** Default page size for both the initial load and every loadMore() call. */
 const PAGE_SIZE = 15;
 
 /** Polling cadence while a subscriber is listening. */
 const POLL_INTERVAL_MS = 45_000;
 
-/**
- * Owns the user's in-app inbox state with **infinite-scroll pagination**.
- *
- * State model:
- *   - `items`: accumulated list across already-loaded pages, newest first.
- *   - `pageNumber`: the highest page index successfully fetched.
- *   - `hasMore`: whether the server still has older rows to deliver.
- *
- * Two ways the list mutates:
- *   1. **refresh()** — called by the 45s poll and the bell-open trigger.
- *      Fetches page 0 with size = max(PAGE_SIZE, items.length), so the user's
- *      already-scrolled range is refreshed in one round trip without losing
- *      scroll position. Any new server-side rows naturally land at the top.
- *   2. **loadMore()** — called by the scroll listener in the header. Fetches
- *      the next page (size = PAGE_SIZE) and appends it. No-op when already
- *      loading or when `hasMore` is false.
- */
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root',
+})
 export class NotifInboxService implements OnDestroy {
   private readonly itemsSubject = new BehaviorSubject<NotifInboxItem[]>([]);
   private readonly unreadSubject = new BehaviorSubject<number>(0);
@@ -62,7 +54,6 @@ export class NotifInboxService implements OnDestroy {
   private readonly stop$ = new Subject<void>();
   private pollSub: Subscription | null = null;
 
-  /** Highest 0-based page successfully fetched. -1 means "nothing loaded yet". */
   private pageNumber = -1;
 
   readonly items$ = this.itemsSubject.asObservable();
@@ -70,7 +61,11 @@ export class NotifInboxService implements OnDestroy {
   readonly hasMore$ = this.hasMoreSubject.asObservable();
   readonly loadingMore$ = this.loadingMoreSubject.asObservable();
 
-  constructor(private readonly api: BusinessApiService) {}
+  constructor(
+    private readonly api: BusinessApiService,
+    private readonly umWorkflow: UmWorkflowService,
+    private readonly auth: AuthService
+  ) {}
 
   ngOnDestroy(): void {
     this.stopPolling();
@@ -78,7 +73,6 @@ export class NotifInboxService implements OnDestroy {
     this.stop$.complete();
   }
 
-  /** Begin polling (idempotent). Safe to call from header on init. */
   startPolling(): void {
     if (this.pollSub) {
       return;
@@ -96,16 +90,14 @@ export class NotifInboxService implements OnDestroy {
     this.pollSub = null;
   }
 
-  /** Force-refresh now (used after the user opens the dropdown or marks-read). */
   refresh(): Observable<NotifInboxListResponse | null> {
     return this.refreshInternal();
   }
 
-  /**
-   * Append the next page of older items. Idempotent — bails out cheaply if
-   * we're already fetching or there's nothing left to fetch.
-   */
   loadMore(): Observable<NotifInboxListResponse | null> {
+    if (!this.auth.isAuthenticated()) {
+      return of(null);
+    }
     if (this.loadingMoreSubject.value || !this.hasMoreSubject.value) {
       return of(null);
     }
@@ -122,31 +114,27 @@ export class NotifInboxService implements OnDestroy {
         tap((res) => {
           if (!res) return;
           const existing = this.itemsSubject.value;
-          // De-dup against existing ids so a poll-interleave can't produce dupes.
           const existingIds = new Set(existing.map((n) => n.id));
           const fresh = (res.items ?? []).filter((n) => !existingIds.has(n.id));
           this.itemsSubject.next([...existing, ...fresh]);
-          this.unreadSubject.next(res.unreadCount ?? 0);
+          this.unreadSubject.next(this.itemsSubject.value.filter((n) => n.unread).length);
           this.hasMoreSubject.next(!!res.hasMore);
           this.pageNumber = res.pageNumber ?? nextPage;
-          // eslint-disable-next-line no-console
-          console.debug(
-            '[notif-inbox] loadMore OK · page=' + this.pageNumber +
-              ' · added=' + fresh.length +
-              ' · total=' + this.itemsSubject.value.length +
-              ' · hasMore=' + res.hasMore
-          );
         }),
-        catchError((err) => {
-          // eslint-disable-next-line no-console
-          console.warn('[notif-inbox] loadMore FAILED', err);
-          return of(null);
-        }),
+        catchError(() => of(null)),
         finalize(() => this.loadingMoreSubject.next(false))
       );
   }
 
   markRead(id: number): void {
+    if (id >= WORKFLOW_NOTIF_ID_BASE) {
+      const items = this.itemsSubject.value.map((n) =>
+        n.id === id ? { ...n, unread: false, readAt: new Date().toISOString() } : n
+      );
+      this.itemsSubject.next(items);
+      this.unreadSubject.next(items.filter((n) => n.unread).length);
+      return;
+    }
     this.api
       .postEnvelope<void>(GlobalConstants.API_ENDPOINTS.bm.notifInbox.markRead, { id }, 'silent')
       .pipe(
@@ -169,19 +157,17 @@ export class NotifInboxService implements OnDestroy {
         tap(() => {
           const now = new Date().toISOString();
           this.itemsSubject.next(
-            this.itemsSubject.value.map((n) => ({ ...n, unread: false, readAt: now }))
+            this.itemsSubject.value.map((n) =>
+              n.isWorkflowReminder ? n : { ...n, unread: false, readAt: now }
+            )
           );
-          this.unreadSubject.next(0);
+          this.unreadSubject.next(this.itemsSubject.value.filter((n) => n.unread).length);
         }),
         catchError(() => EMPTY)
       )
       .subscribe();
   }
 
-  /**
-   * Diagnostic: publish a test notification to myself, then refresh. Uses
-   * 'success-and-errors' so the user sees a snackbar on either outcome.
-   */
   seedTest(): Observable<NotifInboxListResponse | null> {
     return this.api
       .postEnvelope<string>(
@@ -191,55 +177,69 @@ export class NotifInboxService implements OnDestroy {
       )
       .pipe(
         switchMap(() => this.refreshInternal()),
-        catchError((err) => {
-          // eslint-disable-next-line no-console
-          console.warn('[notif-inbox] seed-test FAILED', err);
-          return of(null);
-        })
+        catchError(() => of(null))
       );
   }
 
-  /**
-   * Re-fetch from page 0 with size = max(PAGE_SIZE, currently-loaded-count).
-   * One request refreshes the entire visible range so scroll position is
-   * preserved and any new top-of-list arrivals appear immediately.
-   */
+  private workflowToNotifItems(rows: { id: number; screenName?: string | null; actionName?: string | null; createdAt?: string | null }[]): NotifInboxItem[] {
+    return (rows ?? []).map((row) => ({
+      id: WORKFLOW_NOTIF_ID_BASE + row.id,
+      category: 'WORKFLOW',
+      severity: 'WARN' as NotifSeverity,
+      title: 'Pending approval',
+      body: `${row.screenName ?? '—'} · ${row.actionName ?? ''}`.trim(),
+      linkRoute: '/um/workflow-queue',
+      resourceType: 'WORKFLOW_INSTANCE',
+      resourceId: String(row.id),
+      createdAt: row.createdAt ?? new Date().toISOString(),
+      unread: true,
+      isWorkflowReminder: true,
+    }));
+  }
+
   private refreshInternal(): Observable<NotifInboxListResponse | null> {
+    if (!this.auth.isAuthenticated()) {
+      this.itemsSubject.next([]);
+      this.unreadSubject.next(0);
+      this.hasMoreSubject.next(false);
+      this.pageNumber = -1;
+      return of(null);
+    }
+
     const currentlyLoaded = this.itemsSubject.value.length;
     const refreshSize = Math.max(PAGE_SIZE, currentlyLoaded);
 
-    return this.api
-      .postEnvelope<NotifInboxListResponse>(
-        GlobalConstants.API_ENDPOINTS.bm.notifInbox.recent,
-        { pageNumber: 0, pageSize: refreshSize },
-        'silent'
-      )
-      .pipe(
-        tap((res) => {
-          // eslint-disable-next-line no-console
-          console.debug(
-            '[notif-inbox] refresh OK · items=' + (res?.items?.length ?? 0) +
-              ' · unread=' + (res?.unreadCount ?? 0) +
-              ' · hasMore=' + (res?.hasMore ?? false)
-          );
-          if (!res) return;
-          this.itemsSubject.next(res.items ?? []);
-          this.unreadSubject.next(res.unreadCount ?? 0);
-          this.hasMoreSubject.next(!!res.hasMore);
-          // Pin pageNumber to the count we just fetched. If we asked for size
-          // 45 (=3 pages worth), the "last loaded" virtual page is 2 so the
-          // next loadMore() correctly asks for page 3.
-          const fetched = res.items?.length ?? 0;
-          this.pageNumber = fetched === 0 ? -1 : Math.floor((fetched - 1) / PAGE_SIZE);
-        }),
-        catchError((err) => {
-          // eslint-disable-next-line no-console
-          console.warn(
-            '[notif-inbox] fetch FAILED — check (a) DDL applied? (b) bm service restarted? (c) gateway routing /bm/notif-inbox/**',
-            err
-          );
-          return of(null);
-        })
-      );
+    return forkJoin({
+      inbox: this.api
+        .postEnvelope<NotifInboxListResponse>(
+          GlobalConstants.API_ENDPOINTS.bm.notifInbox.recent,
+          { pageNumber: 0, pageSize: refreshSize },
+          'silent'
+        )
+        .pipe(catchError(() => of(null))),
+      wf: this.umWorkflow.queue({ status: 'PENDING' }).pipe(catchError(() => of([]))),
+    }).pipe(
+      map(({ inbox, wf }) => {
+        const wfItems = this.workflowToNotifItems(wf ?? []);
+        const baseItems = inbox?.items ?? [];
+        const merged = [...wfItems, ...baseItems];
+        const bmUnread = baseItems.filter((n) => n.unread).length;
+        const out: NotifInboxListResponse = {
+          items: merged,
+          unreadCount: bmUnread + wfItems.length,
+          totalCount: (inbox?.totalCount ?? baseItems.length) + wfItems.length,
+          pageNumber: inbox?.pageNumber ?? 0,
+          pageSize: refreshSize,
+          hasMore: inbox?.hasMore ?? false,
+        };
+        this.itemsSubject.next(merged);
+        this.unreadSubject.next(out.unreadCount);
+        this.hasMoreSubject.next(!!out.hasMore);
+        const fetched = baseItems.length;
+        this.pageNumber = fetched === 0 ? -1 : Math.floor((fetched - 1) / PAGE_SIZE);
+        return out;
+      }),
+      catchError(() => of(null))
+    );
   }
 }

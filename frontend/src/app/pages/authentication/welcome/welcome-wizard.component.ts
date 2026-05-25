@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from 'src/app/services/auth.service';
+import { MenuPermissionService } from 'src/app/services/menu-permission.service';
 
 interface WelcomeStep {
   icon: string;
@@ -20,7 +21,7 @@ interface WelcomeStep {
   templateUrl: './welcome-wizard.component.html',
   styleUrls: ['./welcome-wizard.component.scss'],
 })
-export class WelcomeWizardComponent {
+export class WelcomeWizardComponent implements OnInit {
   /* Each step renders full-screen; the carousel is animated via CSS transform on the wrapper. */
   readonly steps: WelcomeStep[] = [
     {
@@ -59,8 +60,15 @@ export class WelcomeWizardComponent {
 
   constructor(
     private readonly authService: AuthService,
+    private readonly menuPerm: MenuPermissionService,
     private readonly router: Router
   ) {}
+
+  ngOnInit(): void {
+    if (this.authService.getCachedPendingBusinessApproval()) {
+      void this.router.navigateByUrl('/authentication/pending-business-approval');
+    }
+  }
 
   next(): void {
     if (this.currentStep < this.steps.length - 1) {
@@ -90,7 +98,7 @@ export class WelcomeWizardComponent {
         const bid = this.authService.getCachedBusinessId();
         const role = this.authService.getCachedRoleLevel();
         if (bid != null || (role && role.toUpperCase() === 'ADMIN')) {
-          this.router.navigateByUrl('/dashboard');
+          this.router.navigateByUrl(this.menuPerm.landingRoute());
         } else {
           this.router.navigateByUrl('/authentication/register-business');
         }

@@ -29,6 +29,12 @@ public class LoginResponse {
 	/** Code of the role level for the user's currently active role (ADMIN / BUSINESS). */
 	public String roleLevel;
 
+	/** True while the user's business row is in {@code PENDING_APPROVAL} (governance gate). */
+	public Boolean pendingBusinessApproval;
+
+	/** Raw {@code um_business.status} for the user's tenant (e.g. ACTIVE, PENDING_APPROVAL). */
+	public String businessStatus;
+
 	public String getToken() {
 		return token;
 	}
@@ -80,4 +86,17 @@ public class LoginResponse {
 
 	public String getRoleLevel() { return roleLevel; }
 	public void setRoleLevel(String roleLevel) { this.roleLevel = roleLevel; }
+
+	public Boolean getPendingBusinessApproval() { return pendingBusinessApproval; }
+	public void setPendingBusinessApproval(Boolean pendingBusinessApproval) {
+		this.pendingBusinessApproval = pendingBusinessApproval;
+	}
+
+	public String getBusinessStatus() {
+		return businessStatus;
+	}
+
+	public void setBusinessStatus(String businessStatus) {
+		this.businessStatus = businessStatus;
+	}
 }

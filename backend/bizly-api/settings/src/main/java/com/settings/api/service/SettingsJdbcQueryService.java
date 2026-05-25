@@ -66,7 +66,8 @@ public class SettingsJdbcQueryService {
 					Map<String, Object> row = new LinkedHashMap<>();
 					for (int c = 1; c <= cols; c++) {
 						String label = md.getColumnLabel(c);
-						row.put(label != null ? label : md.getColumnName(c), rs.getObject(c));
+						row.put(label != null ? label : md.getColumnName(c),
+								JdbcResultValueConverter.normalize(rs.getObject(c)));
 					}
 					rows.add(row);
 				}
@@ -106,7 +107,8 @@ public class SettingsJdbcQueryService {
 				Map<String, Object> row = new LinkedHashMap<>();
 				for (int c = 1; c <= cols; c++) {
 					String label = md.getColumnLabel(c);
-					row.put(label != null ? label : md.getColumnName(c), rs.getObject(c));
+					row.put(label != null ? label : md.getColumnName(c),
+							JdbcResultValueConverter.normalize(rs.getObject(c)));
 				}
 				rows.add(row);
 				read++;

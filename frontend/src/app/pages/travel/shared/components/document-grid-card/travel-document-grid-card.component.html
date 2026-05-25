@@ -1,0 +1,46 @@
+<article
+  class="travel-doc-post"
+  [class.travel-doc-post--saas]="displayMode === 'saas'"
+  [ngStyle]="headerStyle"
+>
+  <header class="travel-doc-post__head">
+    <div class="travel-doc-post__avatar">
+      <mat-icon>{{ iconForType }}</mat-icon>
+    </div>
+    <div class="travel-doc-post__who">
+      <strong>{{ clientLabel }}</strong>
+      <span>{{ typeLabel }}</span>
+    </div>
+    <span class="travel-doc-post__ext">{{ fileExt }}</span>
+  </header>
+  <div class="travel-doc-post__body">
+    <div class="travel-doc-post__file" *ngIf="displayMode === 'saas'">
+      <mat-icon class="travel-doc-post__file-icon">picture_as_pdf</mat-icon>
+      <div>
+        <h3>{{ doc.fileName || 'Document' }}</h3>
+        <p *ngIf="doc.uploadedAt">{{ doc.uploadedAt | date : 'mediumDate' }}</p>
+      </div>
+    </div>
+    <ng-container *ngIf="displayMode !== 'saas'">
+      <h3>{{ doc.fileName || 'Document' }}</h3>
+      <p *ngIf="doc.uploadedAt">{{ doc.uploadedAt | date : 'mediumDate' }}</p>
+    </ng-container>
+  </div>
+  <footer class="travel-doc-post__actions">
+    <button mat-button type="button" (click)="view.emit(doc)">
+      <mat-icon *ngIf="displayMode === 'saas'">visibility</mat-icon>
+      View
+    </button>
+    <button mat-button type="button" (click)="download.emit(doc)">
+      <mat-icon *ngIf="displayMode === 'saas'">download</mat-icon>
+      Download
+    </button>
+    <button mat-button type="button" *ngIf="canEdit" (click)="edit.emit(doc)">
+      <mat-icon *ngIf="displayMode === 'saas'">edit</mat-icon>
+      Edit
+    </button>
+    <button mat-icon-button type="button" *ngIf="canDelete" (click)="remove.emit(doc)" aria-label="Delete">
+      <mat-icon>delete</mat-icon>
+    </button>
+  </footer>
+</article>

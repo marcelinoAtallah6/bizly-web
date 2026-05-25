@@ -1,0 +1,84 @@
+<div class="auth-page">
+  <div class="auth-page__wrap">
+    <div class="auth-page__col">
+      <mat-card class="cardWithShadow auth-page__card">
+        <mat-card-content class="auth-page__content">
+          <div class="auth-page__header">
+            <a class="auth-page__logo-link" [routerLink]="['/authentication/login']">
+              <img src="./assets/images/logos/bizly.png" class="auth-page__logo" alt="Bizly" />
+            </a>
+            <h1 class="auth-page__title">Verify email</h1>
+            <p class="auth-page__subtitle">Set your password to complete business account setup.</p>
+          </div>
+
+          <form class="auth-page__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+            <mat-form-field appearance="outline" class="w-100" color="primary">
+              <mat-label>Password</mat-label>
+              <input
+                matInput
+                [type]="hidePassword ? 'password' : 'text'"
+                formControlName="password"
+                autocomplete="new-password"
+                [disabled]="isSubmitting"
+              />
+              <button
+                mat-icon-button
+                matSuffix
+                type="button"
+                class="auth-page__password-toggle"
+                [attr.aria-label]="hidePassword ? 'Show password' : 'Hide password'"
+                (click)="hidePassword = !hidePassword"
+              >
+                <i-tabler [name]="hidePassword ? 'eye' : 'eye-off'"></i-tabler>
+              </button>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-100" color="primary">
+              <mat-label>Confirm password</mat-label>
+              <input
+                matInput
+                [type]="hideConfirm ? 'password' : 'text'"
+                formControlName="confirmPassword"
+                autocomplete="new-password"
+                [disabled]="isSubmitting"
+              />
+              <button
+                mat-icon-button
+                matSuffix
+                type="button"
+                class="auth-page__password-toggle"
+                [attr.aria-label]="hideConfirm ? 'Show password' : 'Hide password'"
+                (click)="hideConfirm = !hideConfirm"
+              >
+                <i-tabler [name]="hideConfirm ? 'eye' : 'eye-off'"></i-tabler>
+              </button>
+            </mat-form-field>
+
+            <div *ngIf="errorMessage" class="auth-page__alert auth-page__alert--error" role="alert">
+              <i-tabler name="alert-circle" class="auth-page__alert-icon"></i-tabler>
+              <span>{{ errorMessage }}</span>
+            </div>
+            <div *ngIf="successMessage" class="auth-page__alert auth-page__alert--success" role="status">
+              <i-tabler name="circle-check" class="auth-page__alert-icon"></i-tabler>
+              <span>{{ successMessage }}</span>
+            </div>
+
+            <button
+              mat-flat-button
+              color="primary"
+              class="auth-page__submit w-100"
+              type="submit"
+              [disabled]="isSubmitting || !token"
+            >
+              {{ isSubmitting ? 'Saving…' : 'Set password' }}
+            </button>
+          </form>
+
+          <p class="auth-page__footer">
+            <a [routerLink]="['/authentication/login']">Back to sign in</a>
+          </p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

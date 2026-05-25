@@ -7,6 +7,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -39,6 +40,18 @@ public class Role {
 	@Column(name = "is_system_restricted")
 	private Integer isSystemRestricted;
 
+	@Column(name = "is_business_type")
+	private Integer isBusinessType = 0;
+
+	@Column(name = "business_id")
+	private Long businessId;
+
+	@Column(name = "parent_role_id")
+	private Long parentRoleId;
+
+	@Column(name = "role_kind", length = 40)
+	private String roleKind = "BUSINESS_TEAM";
+
 	public Long getRoleLevelId() { return roleLevelId; }
 	public void setRoleLevelId(Long roleLevelId) { this.roleLevelId = roleLevelId; }
 
@@ -49,6 +62,17 @@ public class Role {
 	public Integer getIsSystemRestricted() { return isSystemRestricted; }
 	public void setIsSystemRestricted(Integer v) { this.isSystemRestricted = v; }
 	public boolean isSystemRestricted() { return isSystemRestricted != null && isSystemRestricted == 1; }
+
+	public Integer getIsBusinessType() { return isBusinessType; }
+	public void setIsBusinessType(Integer v) { this.isBusinessType = v; }
+	public boolean isBusinessType() { return isBusinessType != null && isBusinessType == 1; }
+
+	public Long getBusinessId() { return businessId; }
+	public void setBusinessId(Long businessId) { this.businessId = businessId; }
+	public Long getParentRoleId() { return parentRoleId; }
+	public void setParentRoleId(Long parentRoleId) { this.parentRoleId = parentRoleId; }
+	public String getRoleKind() { return roleKind; }
+	public void setRoleKind(String roleKind) { this.roleKind = roleKind; }
 
 	public Long getId() {
 		return id;
@@ -80,5 +104,19 @@ public class Role {
 
 	public void setCreatedAt(LocalDateTime createdAt) {
 		this.createdAt = createdAt;
+	}
+
+	/** Oracle NOT NULL columns — Hibernate omits null fields on INSERT. */
+	@PrePersist
+	void applyInsertDefaults() {
+		if (isDefaultForRegistration == null) {
+			isDefaultForRegistration = 0;
+		}
+		if (isSystemRestricted == null) {
+			isSystemRestricted = 0;
+		}
+		if (isBusinessType == null) {
+			isBusinessType = 0;
+		}
 	}
 }

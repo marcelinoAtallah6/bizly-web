@@ -5,6 +5,7 @@ import { finalize } from 'rxjs';
 import { GetProductResponse } from 'src/app/core/models/pm.models';
 import { ToolbarButton } from 'src/app/pages/ui-components/button/toolbar/toolbar.component';
 import { MenuPermissionService } from 'src/app/services/menu-permission.service';
+import { gridListPaginationMixin } from 'src/app/shared/ag-grid/ag-grid-list-pagination.mixin';
 import { PmProductService } from '../../services/pm-product.service';
 
 @Component({
@@ -13,6 +14,7 @@ import { PmProductService } from '../../services/pm-product.service';
   styleUrl: './product-list.component.scss',
 })
 export class ProductListComponent implements OnInit {
+  readonly gridPagination = gridListPaginationMixin;
   rowData: GetProductResponse[] = [];
   loading = false;
 

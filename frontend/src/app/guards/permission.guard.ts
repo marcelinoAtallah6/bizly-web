@@ -53,7 +53,10 @@ export class PermissionGuard implements CanActivate, CanActivateChild {
   }
 
   private check(route: ActivatedRouteSnapshot, url: string): boolean | UrlTree {
-    if (!this.perm.isMatrixActive()) {
+    /* ADMIN-level roles bypass the UI matrix entirely (server still enforces APIs). For any
+       BUSINESS-level role we always run the check — an empty {@code perms} array means "deny
+       everything" so removing a permission in UM also blocks direct URL entry. */
+    if (this.perm.isAdminBypass()) {
       return true;
     }
     const cleaned = this.stripQueryFragment(url);
@@ -125,16 +128,17 @@ export class PermissionGuard implements CanActivate, CanActivateChild {
   }
 
   /**
-   * When the guard denies a screen, take the user to a screen they CAN see — typically the first
-   * accessible row in the JWT matrix, otherwise {@code /dashboard}. {@code data.permissionFallback}
-   * on the route still wins when set, so feature modules can override this if they need to.
+   * When the guard denies a screen, take the user to a screen they CAN see — first accessible row
+   * in the JWT matrix, or {@code /no-access} for a non-admin role with no permitted screens. Admin
+   * roles still land on {@code /dashboard}. {@code data.permissionFallback} on the route still
+   * wins when set, so feature modules can override this if they need to.
    */
   private computeFallback(route: ActivatedRouteSnapshot): string {
     const declared = this.readString(route, 'permissionFallback');
     if (declared) {
       return declared;
     }
-    return this.perm.firstAccessibleRoute() ?? '/dashboard';
+    return this.perm.landingRoute();
   }
 
   private readString(route: ActivatedRouteSnapshot, key: string): string | null {

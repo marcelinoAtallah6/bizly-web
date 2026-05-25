@@ -2,6 +2,7 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { BehaviorSubject, EMPTY, Observable, Subject, Subscription, of, timer } from 'rxjs';
 import { catchError, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { GlobalConstants } from '../common/GlobalConstants';
+import { AuthService } from './auth.service';
 import { BusinessApiService } from './business-api.service';
 
 export interface HeaderPulse {
@@ -23,7 +24,10 @@ export class HeaderPulseService implements OnDestroy {
 
   readonly pulse$ = this.pulseSubject.asObservable();
 
-  constructor(private readonly api: BusinessApiService) {}
+  constructor(
+    private readonly api: BusinessApiService,
+    private readonly auth: AuthService
+  ) {}
 
   ngOnDestroy(): void {
     this.stopPolling();
@@ -53,6 +57,10 @@ export class HeaderPulseService implements OnDestroy {
   }
 
   private fetchInternal(): Observable<HeaderPulse | null> {
+    if (!this.auth.isAuthenticated()) {
+      this.pulseSubject.next(null);
+      return of(null);
+    }
     return this.api
       .postEnvelope<HeaderPulse>(
         GlobalConstants.API_ENDPOINTS.bm.headerPulse.get,

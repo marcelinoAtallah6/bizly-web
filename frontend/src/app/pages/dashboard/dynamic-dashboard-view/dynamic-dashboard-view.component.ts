@@ -10,12 +10,18 @@ import {
   Output,
   SimpleChanges,
 } from '@angular/core';
-import { Subject, Subscription } from 'rxjs';
+import { Subject, Subscription, interval } from 'rxjs';
 import { debounceTime, filter } from 'rxjs/operators';
 import { DashboardDetailDto, QueryDefDto, WidgetDetailDto, WidgetSaveDto } from 'src/app/core/models/settings.models';
 import { SettingsApiService } from 'src/app/services/settings-api.service';
 import { DashboardContextService } from 'src/app/services/dashboard-context.service';
 import { MenuPermissionService } from 'src/app/services/menu-permission.service';
+import {
+  DashboardCalendarConfig,
+} from '../widgets/dashboard-calendar-widget/dashboard-calendar-widget.component';
+import {
+  DashboardCardListConfig,
+} from '../widgets/dashboard-card-list-widget/dashboard-card-list-widget.component';
 
 /** Parse JDBC/Oracle numbers that may arrive as strings (with commas / NBSP). */
 function parseNumericLoose(v: unknown): number {
@@ -147,6 +153,11 @@ export class DynamicDashboardViewComponent implements OnInit, OnChanges, OnDestr
         })
       );
       this.subs.add(this.ctx.loading$.subscribe((l) => (this.loadingDetail = l)));
+      this.subs.add(
+        interval(60000)
+          .pipe(filter(() => !this.previewMode))
+          .subscribe(() => void this.refreshTimedWidgets())
+      );
     }
 
     this.subs.add(
@@ -310,6 +321,41 @@ export class DynamicDashboardViewComponent implements OnInit, OnChanges, OnDestr
 
   widgets(): WidgetDetailDto[] {
     return this.effectiveDetail?.widgets?.filter((w) => (w.widgetType || '').toUpperCase() !== 'QUICK_ACTION') ?? [];
+  }
+
+  /** Re-fetch KPI widgets that declare refreshSec (travel ops dashboard uses 60s). */
+  private async refreshTimedWidgets(): Promise<void> {
+    const src = this.effectiveDetail;
+    if (!src?.widgets?.length || this.previewMode) {
+      return;
+    }
+    const timed = src.widgets.filter((w) => (w.refreshSec ?? 0) > 0 && this.kind(w) === 'KPI');
+    if (!timed.length) {
+      return;
+    }
+    for (const w of timed) {
+      await this.loadWidgetData(w);
+    }
+  }
+
+  private async loadWidgetData(w: WidgetDetailDto): Promise<void> {
+    const wid = w.id;
+    if (wid == null || wid <= 0) {
+      return;
+    }
+    try {
+      const rows = await this.settingsApi.widgetData(wid);
+      this.widgetRows.set(wid, rows);
+      const apex = this.buildApexOptions(w.widgetType, rows);
+      if (apex) {
+        this.apexByWidget.set(wid, apex);
+      } else {
+        this.apexByWidget.delete(wid);
+      }
+    } catch {
+      this.widgetRows.set(wid, []);
+      this.apexByWidget.delete(wid);
+    }
   }
 
   private async reloadWidgets(): Promise<void> {
@@ -476,7 +522,7 @@ export class DynamicDashboardViewComponent implements OnInit, OnChanges, OnDestr
 
   private buildApexOptions(widgetType: string, rows: Record<string, unknown>[]): unknown {
     let t = this.normalizeWidgetType(widgetType);
-    if (!rows.length || ['KPI', 'TABLE', 'QUICK_ACTION'].includes(t)) {
+    if (!rows.length || ['KPI', 'TABLE', 'QUICK_ACTION', 'CALENDAR', 'CARD_LIST'].includes(t)) {
       return null;
     }
     const keys = Object.keys(rows[0]);
@@ -1086,11 +1132,50 @@ export class DynamicDashboardViewComponent implements OnInit, OnChanges, OnDestr
   }
 
   showChart(w: WidgetDetailDto): boolean {
+    const k = this.kind(w);
+    if (k === 'CALENDAR' || k === 'CARD_LIST') {
+      return false;
+    }
     return this.apexByWidget.has(w.id);
   }
 
+  showCalendar(w: WidgetDetailDto): boolean {
+    return this.kind(w) === 'CALENDAR';
+  }
+
+  showCardList(w: WidgetDetailDto): boolean {
+    return this.kind(w) === 'CARD_LIST';
+  }
+
+  calendarConfig(w: WidgetDetailDto): DashboardCalendarConfig | null {
+    return this.parseWidgetConfig<DashboardCalendarConfig>(w.configJson);
+  }
+
+  cardListConfig(w: WidgetDetailDto): DashboardCardListConfig | null {
+    return this.parseWidgetConfig<DashboardCardListConfig>(w.configJson);
+  }
+
+  tableLinkRoute(w: WidgetDetailDto): string | null {
+    const cfg = this.parseWidgetConfig<{ linkRoute?: string }>(w.configJson);
+    const r = cfg?.linkRoute?.trim();
+    return r || null;
+  }
+
+  tableLinkLabel(w: WidgetDetailDto): string {
+    const cfg = this.parseWidgetConfig<{ linkLabel?: string }>(w.configJson);
+    return cfg?.linkLabel?.trim() || 'View';
+  }
+
+  tableColumnsFor(wid: number, w: WidgetDetailDto): string[] {
+    const cols = this.tableColumns(wid);
+    if (this.tableLinkRoute(w)) {
+      return [...cols, '__action'];
+    }
+    return cols;
+  }
+
   showGrid(w: WidgetDetailDto): boolean {
-    if (this.kind(w) === 'KPI') {
+    if (this.kind(w) === 'KPI' || this.showCalendar(w) || this.showCardList(w)) {
       return false;
     }
     if (this.showChart(w)) {
@@ -1098,5 +1183,16 @@ export class DynamicDashboardViewComponent implements OnInit, OnChanges, OnDestr
     }
     /** Includes chart-only widget types when Apex options are missing — raw SQL grid as fallback. */
     return (this.widgetRows.get(w.id)?.length ?? 0) > 0;
+  }
+
+  private parseWidgetConfig<T>(json: string | null | undefined): T | null {
+    if (!json?.trim()) {
+      return null;
+    }
+    try {
+      return JSON.parse(json) as T;
+    } catch {
+      return null;
+    }
   }
 }

@@ -82,6 +82,28 @@ public class User {
 	@Column(name = "provider_user_id", length = 200)
 	private String providerUserId;
 
+	@Column(name = "user_type", length = 30)
+	private String userType = "BUSINESS_OWNER";
+
+	@Column(name = "registration_source", length = 30)
+	private String registrationSource = "PUBLIC";
+
+	@Column(name = "email_verified_at")
+	private LocalDateTime emailVerifiedAt;
+
+	@Column(name = "expires_at")
+	private LocalDateTime expiresAt;
+
+	@Column(name = "is_business_owner")
+	private Integer isBusinessOwner = 0;
+
+	@Column(name = "last_login_at")
+	private LocalDateTime lastLoginAt;
+
+	public boolean isBusinessOwnerFlag() {
+		return isBusinessOwner != null && isBusinessOwner == 1;
+	}
+
 	public Long getBusinessId() { return businessId; }
 	public void setBusinessId(Long businessId) { this.businessId = businessId; }
 
@@ -208,4 +230,17 @@ public class User {
 	public void setProfileImageData(byte[] profileImageData) {
 		this.profileImageData = profileImageData;
 	}
+
+	public String getUserType() { return userType; }
+	public void setUserType(String userType) { this.userType = userType; }
+	public String getRegistrationSource() { return registrationSource; }
+	public void setRegistrationSource(String registrationSource) { this.registrationSource = registrationSource; }
+	public LocalDateTime getEmailVerifiedAt() { return emailVerifiedAt; }
+	public void setEmailVerifiedAt(LocalDateTime emailVerifiedAt) { this.emailVerifiedAt = emailVerifiedAt; }
+	public LocalDateTime getExpiresAt() { return expiresAt; }
+	public void setExpiresAt(LocalDateTime expiresAt) { this.expiresAt = expiresAt; }
+	public Integer getIsBusinessOwner() { return isBusinessOwner; }
+	public void setIsBusinessOwner(Integer isBusinessOwner) { this.isBusinessOwner = isBusinessOwner; }
+	public LocalDateTime getLastLoginAt() { return lastLoginAt; }
+	public void setLastLoginAt(LocalDateTime lastLoginAt) { this.lastLoginAt = lastLoginAt; }
 }

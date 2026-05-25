@@ -1,0 +1,124 @@
+:host {
+  display: block;
+  padding: 24px;
+  color: var(--textPrimary);
+}
+
+.rv-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  &__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  &__title {
+    margin: 0 0 4px;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--textPrimary);
+  }
+
+  &__intro {
+    margin: 0;
+    max-width: 720px;
+    color: color-mix(in srgb, var(--textPrimary) 72%, transparent);
+  }
+}
+
+.rv-panel {
+  border-radius: 12px !important;
+  background: var(--cardbg) !important;
+  color: var(--textPrimary);
+  border: 1px solid var(--borderColor);
+  box-shadow: var(--cardshadow, none);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 16px 0;
+
+    mat-card-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-right: auto;
+      color: var(--textPrimary);
+    }
+  }
+
+  &__content {
+    padding: 12px 16px 16px;
+  }
+}
+
+.rv-search {
+  min-width: 220px;
+}
+
+.rv-list__loading {
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+}
+
+.rv-empty {
+  text-align: center;
+  padding: 36px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--textPrimary);
+
+  p {
+    margin: 0;
+    max-width: 360px;
+    color: color-mix(in srgb, var(--textPrimary) 70%, transparent);
+  }
+}
+
+.rv-row {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 8px;
+  border-radius: 10px;
+  border-bottom: 1px solid var(--borderColor);
+
+  &:hover {
+    background: var(--hoverBgColor);
+  }
+
+  &__icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--primary) 14%, var(--cardbg));
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  &__meta {
+    min-width: 0;
+  }
+
+  &__title {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--textPrimary);
+  }
+
+  &__sub {
+    margin: 2px 0 0;
+    color: color-mix(in srgb, var(--textPrimary) 70%, transparent);
+  }
+}

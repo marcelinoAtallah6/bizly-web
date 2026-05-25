@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,6 +21,8 @@ import com.bm.api.dto.notif.NotifInboxListResponse;
 import com.bm.api.model.NotifInbox;
 import com.bm.api.repository.NotifInboxRepository;
 import com.bm.security.BusinessContextHolder;
+import com.bm.security.MenuPermissionAction;
+import com.bm.security.MenuPermissionService;
 
 @Service
 public class NotifInboxServiceImpl implements INotifInboxService {
@@ -29,8 +32,17 @@ public class NotifInboxServiceImpl implements INotifInboxService {
 	private static final int DEFAULT_PAGE_SIZE = 15;
 	private static final int MAX_PAGE_SIZE = 100;
 
+	/** Same route as {@code AppointmentController} — inbox rows tagged {@link NotifCategory#APPOINTMENT} are hidden when VIEW is denied. */
+	private static final String APPOINTMENTS_MENU_ROUTE = "/bm/appointments";
+
+	/** Travel booking inbox rows are visible only when VIEW is granted on the bookings screen. */
+	private static final String TRAVEL_BOOKINGS_MENU_ROUTE = "/travel/bookings";
+
 	@Autowired
 	private NotifInboxRepository repository;
+
+	@Autowired
+	private MenuPermissionService menuPermissionService;
 
 	/**
 	 * REQUIRES_NEW guarantees the caller's transaction (e.g. appointment add)
@@ -160,13 +172,15 @@ public class NotifInboxServiceImpl implements INotifInboxService {
 		 * fall back to the legacy un-scoped query so they still see the full inbox.
 		 */
 		Long businessId = BusinessContextHolder.currentBusinessId();
+		boolean hideAppointmentNotifs = hideAppointmentCategory();
+		boolean hideTravelBookingNotifs = hideTravelBookingCategory();
 		long total = businessId != null
-				? repository.countInboxForUserAndBusiness(u, businessId)
-				: repository.countByUsername(u);
+				? repository.countInboxForUserAndBusiness(u, businessId, hideAppointmentNotifs, hideTravelBookingNotifs)
+				: repository.countByUsername(u, hideAppointmentNotifs, hideTravelBookingNotifs);
 		res.setTotalCount(total);
 		res.setUnreadCount(businessId != null
-				? repository.countUnreadForUserAndBusiness(u, businessId)
-				: repository.countByUsernameAndReadAtIsNull(u));
+				? repository.countUnreadForUserAndBusiness(u, businessId, hideAppointmentNotifs, hideTravelBookingNotifs)
+				: repository.countByUsernameAndReadAtIsNull(u, hideAppointmentNotifs, hideTravelBookingNotifs));
 
 		long fromIndex = (long) safePage * safeSize;
 		if (fromIndex >= total) {
@@ -176,8 +190,8 @@ public class NotifInboxServiceImpl implements INotifInboxService {
 
 		Pageable pageable = PageRequest.of(safePage, safeSize);
 		List<NotifInbox> rows = businessId != null
-				? repository.findInboxForUserAndBusiness(u, businessId, pageable)
-				: repository.findByUsernameOrderByCreatedAtDesc(u, pageable);
+				? repository.findInboxForUserAndBusiness(u, businessId, hideAppointmentNotifs, hideTravelBookingNotifs, pageable)
+				: repository.findByUsernameOrderByCreatedAtDesc(u, hideAppointmentNotifs, hideTravelBookingNotifs, pageable);
 		List<NotifInboxItemResponse> items = new ArrayList<>(rows.size());
 		for (NotifInbox r : rows) {
 			items.add(toResponse(r));
@@ -195,9 +209,35 @@ public class NotifInboxServiceImpl implements INotifInboxService {
 			return 0L;
 		}
 		Long businessId = BusinessContextHolder.currentBusinessId();
+		boolean hideAppt = hideAppointmentCategory();
+		boolean hideTravel = hideTravelBookingCategory();
 		return businessId != null
-				? repository.countUnreadForUserAndBusiness(u, businessId)
-				: repository.countByUsernameAndReadAtIsNull(u);
+				? repository.countUnreadForUserAndBusiness(u, businessId, hideAppt, hideTravel)
+				: repository.countByUsernameAndReadAtIsNull(u, hideAppt, hideTravel);
+	}
+
+	/**
+	 * When the active role cannot VIEW the appointments screen, appointment-tagged inbox rows must
+	 * not appear in {@link #recent} / unread counts — same rule as {@code GET /bm/appointments/*}.
+	 */
+	private boolean hideAppointmentCategory() {
+		return !menuPermissionService.isAllowed(Optional.empty(), Optional.of(APPOINTMENTS_MENU_ROUTE),
+				MenuPermissionAction.VIEW);
+	}
+
+	private boolean hideTravelBookingCategory() {
+		return !menuPermissionService.isAllowed(Optional.empty(), Optional.of(TRAVEL_BOOKINGS_MENU_ROUTE),
+				MenuPermissionAction.VIEW);
+	}
+
+	private boolean isRestrictedInboxCategory(String category) {
+		if (category == null) {
+			return false;
+		}
+		if (hideAppointmentCategory() && NotifCategory.APPOINTMENT.equalsIgnoreCase(category)) {
+			return true;
+		}
+		return hideTravelBookingCategory() && NotifCategory.TRAVEL_BOOKING.equalsIgnoreCase(category);
 	}
 
 	@Override
@@ -205,6 +245,17 @@ public class NotifInboxServiceImpl implements INotifInboxService {
 	public void markRead(String username, Long id) {
 		String u = trimToNull(username);
 		if (u == null || id == null) {
+			return;
+		}
+		Optional<NotifInbox> row = repository.findById(id);
+		if (row.isEmpty()) {
+			return;
+		}
+		NotifInbox n = row.get();
+		if (!u.equalsIgnoreCase(n.getUsername())) {
+			return;
+		}
+		if (isRestrictedInboxCategory(n.getCategory())) {
 			return;
 		}
 		Long businessId = BusinessContextHolder.currentBusinessId();
@@ -222,11 +273,13 @@ public class NotifInboxServiceImpl implements INotifInboxService {
 		if (u == null) {
 			return;
 		}
+		boolean hideAppt = hideAppointmentCategory();
+		boolean hideTravel = hideTravelBookingCategory();
 		Long businessId = BusinessContextHolder.currentBusinessId();
 		if (businessId != null) {
-			repository.markAllReadForBusiness(u, businessId, LocalDateTime.now());
+			repository.markAllReadForBusiness(u, businessId, hideAppt, hideTravel, LocalDateTime.now());
 		} else {
-			repository.markAllRead(u, LocalDateTime.now());
+			repository.markAllRead(u, hideAppt, hideTravel, LocalDateTime.now());
 		}
 	}
 

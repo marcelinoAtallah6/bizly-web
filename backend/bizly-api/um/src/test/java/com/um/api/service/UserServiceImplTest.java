@@ -4,12 +4,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,23 +24,29 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import com.um.api.dto.user.add.AddUserRequest;
+import com.um.api.domain.UserType;
 import com.um.api.dto.user.get.GetUserResponse;
 import com.um.api.dto.user.gets.GetsUsersRequest;
 import com.um.api.dto.user.update.UpdateUserRequest;
 import com.um.api.model.role.Role;
 import com.um.api.model.role.UserRole;
 import com.um.api.model.user.User;
+import com.um.api.repository.business.BusinessRepository;
 import com.um.api.repository.role.RoleRepository;
 import com.um.api.repository.role.UserRoleRepository;
 import com.um.api.repository.user.UserRepository;
 import com.um.api.service.user.UserServiceImpl;
 import com.um.common.PasswordUtil;
+import com.um.security.BusinessContextHolder;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceImplTest {
 
 	@Mock
 	private UserRepository repository;
+
+	@Mock
+	private BusinessRepository businessRepository;
 
 	@Mock
 	private RoleRepository roleRepository;
@@ -48,6 +56,9 @@ public class UserServiceImplTest {
 
 	@Mock
 	private PasswordUtil passwordUtil;
+
+	@Mock
+	private com.um.api.service.role.RolePolicyService rolePolicyService;
 
 	@InjectMocks
 	private UserServiceImpl service;
@@ -64,6 +75,12 @@ public class UserServiceImplTest {
 		user.setEmail("john.doe@example.com");
 		user.setMobileNumber("+1234567890");
 		user.setStatus("ACTIVE");
+		BusinessContextHolder.set(null, "ADMIN", null);
+	}
+
+	@AfterEach
+	public void tearDown() {
+		BusinessContextHolder.clear();
 	}
 
 	@Test
@@ -138,15 +155,38 @@ public class UserServiceImplTest {
 	}
 
 	@Test
-	public void testGetsUsers() {
+	public void testGetsUsers_portalAdminScopeWhenNoBusinessSelected() {
+		user.setUserType(UserType.PORTAL_ADMIN.name());
 		Page<User> page = new PageImpl<>(List.of(user), PageRequest.of(0, 10), 1);
-		when(repository.findAll(any(Pageable.class))).thenReturn(page);
+		when(repository.findAllByBusinessIdIsNullAndUserType(eq(UserType.PORTAL_ADMIN.name()), any(Pageable.class)))
+				.thenReturn(page);
+		when(userRoleRepository.findById_UserId(anyLong())).thenReturn(List.of());
 
 		GetsUsersRequest request = new GetsUsersRequest();
 		request.setPageNumber(0);
 		request.setPageSize(10);
 
-		assertNotNull(service.gets(request));
-		assertEquals(1, service.gets(request).getItems().size());
+		var response = service.gets(request);
+		assertNotNull(response);
+		assertEquals(1, response.getItems().size());
+	}
+
+	@Test
+	public void testGetsUsers_scopedToSelectedBusiness() {
+		BusinessContextHolder.set(null, "ADMIN", 42L);
+		user.setBusinessId(42L);
+		Page<User> page = new PageImpl<>(List.of(user), PageRequest.of(0, 10), 1);
+		when(repository.findAllByBusinessId(eq(42L), any(Pageable.class))).thenReturn(page);
+		when(userRoleRepository.findById_UserId(anyLong())).thenReturn(List.of());
+		when(businessRepository.findAllById(any())).thenReturn(List.of());
+
+		GetsUsersRequest request = new GetsUsersRequest();
+		request.setPageNumber(0);
+		request.setPageSize(10);
+
+		var response = service.gets(request);
+		assertNotNull(response);
+		assertEquals(1, response.getItems().size());
+		assertEquals(42L, response.getItems().get(0).getBusinessId());
 	}
 }

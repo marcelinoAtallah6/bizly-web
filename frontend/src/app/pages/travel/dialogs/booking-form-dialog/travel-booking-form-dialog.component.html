@@ -1,0 +1,113 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Edit booking' : 'New booking' }}</h2>
+<mat-dialog-content class="travel-dialog-content travel-dialog-content--booking" *ngIf="ready" [formGroup]="form">
+  <mat-horizontal-stepper #bookingStepper linear animationDuration="0ms">
+    <mat-step label="Client & package">
+      <div class="travel-step-fields">
+      <app-travel-entity-picker
+        formControlName="client"
+        entityType="client"
+        label="Client"
+        hint="Search by name, email, or phone"
+        [required]="true"
+      ></app-travel-entity-picker>
+      <app-travel-entity-picker
+        formControlName="package"
+        entityType="package"
+        label="Tour package (optional)"
+        hint="Search packages by name or destination"
+      ></app-travel-entity-picker>
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Reference</mat-label>
+        <input matInput formControlName="referenceNo" />
+      </mat-form-field>
+      </div>
+    </mat-step>
+    <mat-step label="Travel dates">
+      <div class="travel-step-fields">
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Departure date</mat-label>
+        <input matInput [matDatepicker]="depPicker" formControlName="departureDate" />
+        <mat-datepicker-toggle matSuffix [for]="depPicker"></mat-datepicker-toggle>
+        <mat-datepicker #depPicker></mat-datepicker>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Return date</mat-label>
+        <input matInput [matDatepicker]="retPicker" formControlName="returnDate" />
+        <mat-datepicker-toggle matSuffix [for]="retPicker"></mat-datepicker-toggle>
+        <mat-datepicker #retPicker></mat-datepicker>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Status</mat-label>
+        <mat-select formControlName="status">
+          <mat-option *ngFor="let s of statusOptions" [value]="s">{{ s }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Total amount</mat-label>
+        <input matInput type="number" min="0" formControlName="totalAmount" />
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Currency</mat-label>
+        <input matInput formControlName="currency" />
+      </mat-form-field>
+      </div>
+    </mat-step>
+    <mat-step label="Workflow & payments">
+      <div class="travel-step-fields">
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Timeline stage</mat-label>
+        <mat-select formControlName="timelineStage">
+          <mat-option *ngFor="let t of timelineStages" [value]="t">{{ t }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-slide-toggle formControlName="requiresApproval" class="m-b-16">Requires approval (high-value)</mat-slide-toggle>
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Approval status</mat-label>
+        <mat-select formControlName="approvalStatus">
+          <mat-option *ngFor="let a of approvalStatuses" [value]="a">{{ a }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <p class="text-muted f-s-12">Payment schedule (installments)</p>
+      <button mat-stroked-button type="button" class="m-b-16" (click)="addPaymentItem()">Add installment</button>
+      <div *ngFor="let p of paymentSchedule.controls; let i = index" [formGroup]="$any(p)" class="row-datetime m-b-16">
+        <mat-form-field appearance="outline">
+          <mat-label>Label</mat-label>
+          <input matInput formControlName="label" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Amount</mat-label>
+          <input matInput type="number" min="0" formControlName="amount" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Due date</mat-label>
+          <input matInput [matDatepicker]="duePicker" formControlName="dueDate" />
+          <mat-datepicker-toggle matSuffix [for]="duePicker"></mat-datepicker-toggle>
+          <mat-datepicker #duePicker></mat-datepicker>
+        </mat-form-field>
+        <mat-checkbox formControlName="paid">Paid</mat-checkbox>
+        <button mat-icon-button type="button" color="warn" (click)="removePaymentItem(i)"><mat-icon>delete</mat-icon></button>
+      </div>
+      <p class="text-muted f-s-12">Upload passports and visas from the Documents screen and link them to this booking.</p>
+      </div>
+    </mat-step>
+    <mat-step label="Notes">
+      <div class="travel-step-fields">
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Notes</mat-label>
+        <textarea matInput formControlName="notes" rows="4"></textarea>
+      </mat-form-field>
+      </div>
+    </mat-step>
+  </mat-horizontal-stepper>
+</mat-dialog-content>
+<mat-dialog-content *ngIf="!ready">
+  <mat-spinner diameter="36"></mat-spinner>
+</mat-dialog-content>
+<mat-dialog-actions align="end" class="travel-booking-dialog__actions">
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <button mat-button type="button" (click)="bookingStepper?.previous()" [disabled]="bookingBackDisabled">Back</button>
+  <button mat-stroked-button type="button" (click)="bookingStepper?.next()" [disabled]="bookingNextDisabled">
+    Next
+  </button>
+  <button mat-flat-button color="primary" type="button" (click)="save()" [disabled]="saving || !ready">Save</button>
+</mat-dialog-actions>

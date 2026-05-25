@@ -1,0 +1,30 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Edit document' : 'Upload document' }}</h2>
+<mat-dialog-content class="travel-dialog-content" *ngIf="ready" [formGroup]="form">
+  <app-travel-file-upload
+    label="Choose file"
+    [fileName]="form.get('fileName')?.value"
+    accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx"
+    hint="Passport, visa, ticket, invoice…"
+    [showPreview]="true"
+    (fileSelected)="onFilePicked($event)"
+  ></app-travel-file-upload>
+  <app-travel-entity-picker formControlName="client" entityType="client" label="Client"></app-travel-entity-picker>
+  <app-travel-entity-picker
+    formControlName="booking"
+    entityType="booking"
+    label="Booking (optional)"
+    [filterBookingByClientId]="filterClientId"
+  ></app-travel-entity-picker>
+  <mat-form-field appearance="outline" class="full">
+    <mat-label>Document type</mat-label>
+    <mat-select formControlName="docType">
+      <mat-option *ngFor="let t of docTypes" [value]="t">{{ t }}</mat-option>
+    </mat-select>
+  </mat-form-field>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <button mat-flat-button color="primary" type="button" (click)="save()" [disabled]="saving || !ready">
+    {{ saving ? 'Saving…' : 'Save' }}
+  </button>
+</mat-dialog-actions>

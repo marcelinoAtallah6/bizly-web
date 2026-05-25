@@ -1,0 +1,19 @@
+<div class="no-access-wrapper">
+  <div class="no-access-card">
+    <div class="no-access-icon" aria-hidden="true">
+      <mat-icon>lock_outline</mat-icon>
+    </div>
+    <h2 class="no-access-title">No access available</h2>
+    <p class="no-access-subtitle">
+      Your current role
+      <ng-container *ngIf="activeRole">
+        (<strong>{{ activeRole }}</strong>)
+      </ng-container>
+      doesn't grant access to any screens yet.
+    </p>
+    <p class="no-access-help">
+      Ask your administrator to assign the permissions you need, or switch to a
+      different role from the menu in the header.
+    </p>
+  </div>
+</div>

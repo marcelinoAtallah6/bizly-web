@@ -1,0 +1,63 @@
+// Shared workflow engine surfaces — uses app theme tokens (light / white / dark / dark-blue).
+
+@mixin wf-engine-tokens {
+  --wf-surface: var(--cardbg, #ffffff);
+  --wf-canvas: var(--background, #f5f6f8);
+  --wf-border: var(--borderColor, #e5eaef);
+  --wf-text: var(--textPrimary, #2a3547);
+  --wf-text-muted: var(--gray-100, #7c8fac);
+  --wf-hover: var(--hoverBgColor, #f6f9fc);
+  --wf-dot: color-mix(in srgb, var(--borderColor) 85%, var(--textPrimary) 15%);
+  --wf-line: color-mix(in srgb, var(--borderColor) 70%, transparent);
+  --wf-tag-bg: var(--light-primary, #ecf2ff);
+  --wf-tag-text: var(--textPrimary, #2a3547);
+}
+
+@mixin wf-status-badges {
+  .wf-badge[data-status='PUBLISHED'] {
+    color: var(--success, #13deb9);
+    font-weight: 600;
+  }
+
+  .wf-badge[data-status='DRAFT'] {
+    color: var(--warning, #ffae1f);
+    font-weight: 600;
+  }
+
+  .wf-badge[data-status='DISABLED'] {
+    color: var(--wf-text-muted);
+    font-weight: 600;
+  }
+}
+
+@mixin wf-theme-icon {
+  .wf-theme-icon {
+    color: var(--primary, #5d87ff);
+    stroke: var(--primary, #5d87ff);
+  }
+}
+
+// MatDialog panelClass (rendered in cdk-overlay-container)
+.wf-engine-dialog {
+  .mat-mdc-dialog-container {
+    --mdc-dialog-container-color: var(--cardbg, #fff);
+    color: var(--textPrimary, #2a3547);
+  }
+
+  .mat-mdc-dialog-title,
+  .mdc-dialog__title {
+    color: var(--textPrimary, #2a3547) !important;
+  }
+
+  .mat-mdc-dialog-content {
+    color: var(--textPrimary, #2a3547);
+  }
+
+  .mat-mdc-tab-link {
+    color: var(--wf-text-muted, var(--gray-100, #7c8fac));
+  }
+
+  .mat-mdc-tab-link.mat-mdc-tab-link-active {
+    color: var(--primary, #5d87ff);
+  }
+}

@@ -1,15 +1,12 @@
 import { Injectable } from '@angular/core';
+import { environment } from 'src/environments/environment';
 
 /**
- * Verified profile snapshot returned by a social provider. Used to pre-fill the
- * Create-Account wizard when the user clicks "Sign up with Google / Facebook".
- *
- * The {@code idToken} / {@code accessToken} fields are forwarded verbatim to the
- * backend so it can re-verify with the provider before issuing a Bizly JWT — we
- * never trust the profile fields client-side for authentication, only for UX.
+ * Verified profile snapshot returned by Google. Used to authenticate via
+ * {@link AuthService#socialLogin}.
  */
 export interface SocialAuthResult {
-  provider: 'GOOGLE' | 'FACEBOOK' | 'APPLE';
+  provider: 'GOOGLE';
   idToken?: string | null;
   accessToken?: string | null;
   email: string;
@@ -18,154 +15,178 @@ export interface SocialAuthResult {
   providerUserId: string;
 }
 
-/**
- * Configure these in environment.ts (or an injected config) before going to prod.
- * The values below are placeholders that intentionally fail loudly so a missing
- * config can't be deployed by accident.
- */
-const GOOGLE_CLIENT_ID = '645145027382-rd3m9lvdlfi5rl2vaobg44eofuc7m9jq.apps.googleusercontent.com';
-const FACEBOOK_APP_ID = '__YOUR_FACEBOOK_APP_ID__';
+type GoogleCredentialCallback = (resp: { credential: string }) => void;
+
+interface GooglePromptNotification {
+  isNotDisplayed?: () => boolean;
+  isSkippedMoment?: () => boolean;
+  isDismissedMoment?: () => boolean;
+  getNotDisplayedReason?: () => string;
+  getSkippedReason?: () => string;
+  getDismissedReason?: () => string;
+}
 
 declare const google: {
   accounts: {
     id: {
       initialize: (cfg: {
         client_id: string;
-        callback: (resp: { credential: string }) => void;
+        callback: GoogleCredentialCallback;
         ux_mode?: 'popup' | 'redirect';
         cancel_on_tap_outside?: boolean;
         auto_select?: boolean;
       }) => void;
-      prompt: (listener?: (notification: unknown) => void) => void;
-      renderButton: (el: HTMLElement, options: Record<string, unknown>) => void;
-      disableAutoSelect: () => void;
-    };
-    oauth2: {
-      initTokenClient: (cfg: {
-        client_id: string;
-        scope: string;
-        callback: (resp: { access_token?: string; error?: string }) => void;
-      }) => { requestAccessToken: () => void };
+      prompt: (listener?: (notification: GooglePromptNotification) => void) => void;
+      renderButton: (
+        parent: HTMLElement,
+        options: Record<string, string | number | boolean>
+      ) => void;
+      cancel: () => void;
     };
   };
 } | undefined;
 
-declare const FB: {
-  init: (cfg: { appId: string; cookie?: boolean; xfbml?: boolean; version: string }) => void;
-  login: (
-    cb: (resp: {
-      status: 'connected' | 'not_authorized' | 'unknown';
-      authResponse: { accessToken: string; userID: string } | null;
-    }) => void,
-    opts?: { scope?: string }
-  ) => void;
-  api: <T>(path: string, params: Record<string, string>, cb: (resp: T) => void) => void;
-} | undefined;
+const GOOGLE_SIGNIN_TIMEOUT_MS = 120_000;
 
 @Injectable({ providedIn: 'root' })
 export class SocialAuthService {
   private googleReady: Promise<void> | null = null;
-  private facebookReady: Promise<void> | null = null;
 
   /**
-   * Triggers Google Identity Services. Returns a verified ID token + profile. The
-   * SDK is lazy-loaded; we don't ship it on first paint.
-   *
-   * If Google isn't configured (client id placeholder) we throw a clear error so
-   * the UI can show a "Google sign-in is not configured" message instead of a
-   * broken popup. The same error surfaces in dev so operators see it early.
+   * Opens Google's account picker (popup via official button). Avoids One Tap {@code prompt()}
+   * hanging when the user clicked a custom CTA and GIS chose not to show the moment.
    */
   async signInWithGoogle(): Promise<SocialAuthResult> {
     await this.ensureGoogleSdk();
     if (typeof google === 'undefined' || !google?.accounts?.id) {
       throw new Error('Google Identity Services failed to load');
     }
-    if (GOOGLE_CLIENT_ID.startsWith('__')) {
+    const googleClientId = (environment.googleWebClientId || '').trim();
+    if (!googleClientId || !googleClientId.endsWith('.apps.googleusercontent.com')) {
       throw new Error(
-        'Google sign-in is not configured. Set GOOGLE_CLIENT_ID in social-auth.service.ts.'
+        'Google sign-in is not configured. Set environment.googleWebClientId in src/environments/environment.ts.'
       );
     }
+    return this.signInWithGooglePicker(googleClientId);
+  }
 
+  private signInWithGooglePicker(googleClientId: string): Promise<SocialAuthResult> {
     return new Promise<SocialAuthResult>((resolve, reject) => {
+      let settled = false;
+      const overlay = document.createElement('div');
+      overlay.className = 'bizly-google-signin-overlay';
+      overlay.setAttribute('role', 'dialog');
+      overlay.setAttribute('aria-label', 'Sign in with Google');
+
+      const panel = document.createElement('div');
+      panel.className = 'bizly-google-signin-panel';
+
+      const title = document.createElement('p');
+      title.className = 'bizly-google-signin-title';
+      title.textContent = 'Continue with Google';
+
+      const buttonHost = document.createElement('div');
+      buttonHost.className = 'bizly-google-signin-button-host';
+
+      const cancel = document.createElement('button');
+      cancel.type = 'button';
+      cancel.className = 'bizly-google-signin-cancel';
+      cancel.textContent = 'Cancel';
+
+      panel.append(title, buttonHost, cancel);
+      overlay.appendChild(panel);
+      document.body.appendChild(overlay);
+
+      const cleanup = () => {
+        try {
+          google?.accounts?.id?.cancel?.();
+        } catch {
+          /* ignore */
+        }
+        overlay.remove();
+      };
+
+      const finish = (fn: () => void) => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        fn();
+      };
+
+      const timer = window.setTimeout(
+        () => finish(() => reject(new Error('Google sign-in timed out. Please try again.'))),
+        GOOGLE_SIGNIN_TIMEOUT_MS
+      );
+
+      cancel.addEventListener('click', () => {
+        window.clearTimeout(timer);
+        finish(() => reject(new Error('Google sign-in was cancelled.')));
+      });
+
+      overlay.addEventListener('click', (ev) => {
+        if (ev.target === overlay) {
+          window.clearTimeout(timer);
+          finish(() => reject(new Error('Google sign-in was cancelled.')));
+        }
+      });
+
       try {
         google!.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
+          client_id: googleClientId,
           ux_mode: 'popup',
-          cancel_on_tap_outside: false,
           auto_select: false,
+          cancel_on_tap_outside: true,
           callback: (resp) => {
+            window.clearTimeout(timer);
             if (!resp?.credential) {
-              reject(new Error('No credential returned from Google'));
+              finish(() => reject(new Error('No credential returned from Google')));
               return;
             }
-            const profile = SocialAuthService.decodeGoogleIdToken(resp.credential);
-            if (!profile?.email) {
-              reject(new Error('Google profile is missing email'));
-              return;
+            try {
+              const profile = SocialAuthService.decodeJwtPayload(resp.credential);
+              if (!profile?.email) {
+                finish(() => reject(new Error('Google profile is missing email')));
+                return;
+              }
+              finish(() =>
+                resolve({
+                  provider: 'GOOGLE',
+                  idToken: resp.credential,
+                  accessToken: null,
+                  email: profile.email,
+                  firstName: profile.givenName || '',
+                  lastName: profile.familyName || '',
+                  providerUserId: profile.sub || '',
+                })
+              );
+            } catch (e) {
+              finish(() =>
+                reject(e instanceof Error ? e : new Error('Could not read Google profile'))
+              );
             }
-            resolve({
-              provider: 'GOOGLE',
-              idToken: resp.credential,
-              accessToken: null,
-              email: profile.email,
-              firstName: profile.givenName || '',
-              lastName: profile.familyName || '',
-              providerUserId: profile.sub || '',
-            });
           },
         });
-        // We can't render an actual button on every screen, so we trigger the one-tap prompt.
-        google!.accounts.id.prompt();
+
+        google!.accounts.id.renderButton(buttonHost, {
+          type: 'standard',
+          theme: 'outline',
+          size: 'large',
+          text: 'continue_with',
+          shape: 'rectangular',
+          width: 280,
+        });
+
+        window.setTimeout(() => {
+          const gBtn =
+            buttonHost.querySelector<HTMLElement>('div[role="button"]') ??
+            buttonHost.querySelector<HTMLElement>('iframe');
+          gBtn?.click();
+        }, 120);
       } catch (e) {
-        reject(e instanceof Error ? e : new Error(String(e)));
+        window.clearTimeout(timer);
+        finish(() => reject(e instanceof Error ? e : new Error(String(e))));
       }
     });
-  }
-
-  async signInWithFacebook(): Promise<SocialAuthResult> {
-    await this.ensureFacebookSdk();
-    if (typeof FB === 'undefined' || !FB?.login) {
-      throw new Error('Facebook SDK failed to load');
-    }
-    if (FACEBOOK_APP_ID.startsWith('__')) {
-      throw new Error(
-        'Facebook sign-in is not configured. Set FACEBOOK_APP_ID in social-auth.service.ts.'
-      );
-    }
-    return new Promise<SocialAuthResult>((resolve, reject) => {
-      FB!.login((resp) => {
-        if (resp.status !== 'connected' || !resp.authResponse) {
-          reject(new Error('Facebook login cancelled or denied'));
-          return;
-        }
-        const at = resp.authResponse.accessToken;
-        const userId = resp.authResponse.userID;
-        FB!.api<{ email?: string; first_name?: string; last_name?: string; id?: string }>(
-          '/me',
-          { fields: 'email,first_name,last_name,id' },
-          (profile) => {
-            if (!profile?.email) {
-              reject(new Error('Facebook profile is missing email'));
-              return;
-            }
-            resolve({
-              provider: 'FACEBOOK',
-              idToken: null,
-              accessToken: at,
-              email: profile.email,
-              firstName: profile.first_name || '',
-              lastName: profile.last_name || '',
-              providerUserId: profile.id || userId,
-            });
-          }
-        );
-      }, { scope: 'public_profile,email' });
-    });
-  }
-
-  /** Apple sign-in placeholder. Wire up AppleID JS + backend JWKS before enabling. */
-  signInWithApple(): Promise<SocialAuthResult> {
-    return Promise.reject(new Error('Apple sign-in is not configured yet.'));
   }
 
   private ensureGoogleSdk(): Promise<void> {
@@ -190,57 +211,17 @@ export class SocialAuthService {
     return this.googleReady;
   }
 
-  private ensureFacebookSdk(): Promise<void> {
-    if (this.facebookReady) return this.facebookReady;
-    this.facebookReady = new Promise<void>((resolve, reject) => {
-      if (typeof document === 'undefined') {
-        reject(new Error('No document — cannot load Facebook SDK'));
-        return;
-      }
-      if (typeof FB !== 'undefined' && typeof FB.login === 'function') {
-        resolve();
-        return;
-      }
-      const w = window as unknown as { fbAsyncInit?: () => void };
-      w.fbAsyncInit = () => {
-        try {
-          FB!.init({ appId: FACEBOOK_APP_ID, cookie: true, xfbml: false, version: 'v18.0' });
-          resolve();
-        } catch (e) {
-          reject(e instanceof Error ? e : new Error(String(e)));
-        }
-      };
-      const script = document.createElement('script');
-      script.src = 'https://connect.facebook.net/en_US/sdk.js';
-      script.async = true;
-      script.defer = true;
-      script.crossOrigin = 'anonymous';
-      script.onerror = () => reject(new Error('Failed to load Facebook SDK'));
-      document.head.appendChild(script);
-    });
-    return this.facebookReady;
-  }
-
-  /**
-   * Decodes a Google ID token (JWT) so the UI can read the email / name without a
-   * round-trip. This is NOT a security check — the backend re-verifies the token
-   * against Google's tokeninfo endpoint before issuing a Bizly session.
-   *
-   * Returned object uses camelCase keys so consumers can use regular property
-   * access (the raw JWT payload uses snake_case which trips
-   * {@code noPropertyAccessFromIndexSignature}).
-   */
-  private static decodeGoogleIdToken(idToken: string): GoogleIdTokenProfile | null {
+  private static decodeJwtPayload(token: string): GoogleJwtProfile | null {
     try {
-      const parts = idToken.split('.');
+      const parts = token.split('.');
       if (parts.length !== 3) return null;
       const json = atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'));
       const raw = JSON.parse(json) as Record<string, unknown>;
       return {
-        email: typeof raw['email'] === 'string' ? (raw['email'] as string) : '',
-        givenName: typeof raw['given_name'] === 'string' ? (raw['given_name'] as string) : '',
-        familyName: typeof raw['family_name'] === 'string' ? (raw['family_name'] as string) : '',
-        sub: typeof raw['sub'] === 'string' ? (raw['sub'] as string) : '',
+        email: typeof raw['email'] === 'string' ? raw['email'] : '',
+        givenName: typeof raw['given_name'] === 'string' ? raw['given_name'] : '',
+        familyName: typeof raw['family_name'] === 'string' ? raw['family_name'] : '',
+        sub: typeof raw['sub'] === 'string' ? raw['sub'] : '',
       };
     } catch {
       return null;
@@ -248,7 +229,7 @@ export class SocialAuthService {
   }
 }
 
-interface GoogleIdTokenProfile {
+interface GoogleJwtProfile {
   email: string;
   givenName: string;
   familyName: string;

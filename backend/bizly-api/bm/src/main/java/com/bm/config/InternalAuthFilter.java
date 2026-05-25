@@ -52,6 +52,22 @@ public class InternalAuthFilter extends OncePerRequestFilter {
 			return;
 		}
 
+		if (isWorkflowReplay(request)) {
+			String username = request.getHeader("X-User");
+			List<GrantedAuthority> authorities = authoritiesFromGatewayRoleHeaders(request);
+			if (username == null || username.isBlank() || authorities.isEmpty()) {
+				response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+				response.setContentType("application/json");
+				response.getWriter().write("{\"error\":\"WORKFLOW_REPLAY_REQUIRES_USER_AND_ROLES\"}");
+				return;
+			}
+			UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(username, null,
+					authorities);
+			SecurityContextHolder.getContext().setAuthentication(auth);
+			applyBusinessContextAndChain(request, response, filterChain);
+			return;
+		}
+
 		String sessionId = request.getHeader("X-Session-Id");
 
 		if (sessionId == null) {
@@ -67,7 +83,7 @@ public class InternalAuthFilter extends OncePerRequestFilter {
 			response.getWriter().write("Session inactive");
 			return;
 		}
-		
+
 		String username = request.getHeader("X-User");
 		List<GrantedAuthority> authorities = resolveAuthoritiesWithSession(session,
 				authoritiesFromGatewayRoleHeaders(request));
@@ -78,6 +94,11 @@ public class InternalAuthFilter extends OncePerRequestFilter {
 			SecurityContextHolder.getContext().setAuthentication(auth);
 		}
 
+		applyBusinessContextAndChain(request, response, filterChain);
+	}
+
+	private void applyBusinessContextAndChain(HttpServletRequest request, HttpServletResponse response,
+			FilterChain filterChain) throws IOException, ServletException {
 		/*
 		 * Tenant scoping: capture business_id + roleLevel from the gateway-validated headers and
 		 * publish them via BusinessContextHolder for the duration of this request. Admin-level
@@ -90,12 +111,25 @@ public class InternalAuthFilter extends OncePerRequestFilter {
 		if ("ADMIN".equalsIgnoreCase(roleLevel)) {
 			override = parseLong(request.getHeader("X-Business-Override"));
 		}
-		BusinessContextHolder.set(bid, roleLevel, override);
+		BusinessContextHolder.set(bid, roleLevel, override, parseTenantBypass(request.getHeader("X-Tenant-Bypass")));
 		try {
 			filterChain.doFilter(request, response);
 		} finally {
 			BusinessContextHolder.clear();
 		}
+	}
+
+	private static Boolean parseTenantBypass(String header) {
+		if (header == null || header.isBlank()) {
+			return null;
+		}
+		String v = header.trim();
+		return "true".equalsIgnoreCase(v) || "1".equals(v);
+	}
+
+	private static boolean isWorkflowReplay(HttpServletRequest request) {
+		String v = request.getHeader("X-Workflow-Replay");
+		return v != null && "true".equalsIgnoreCase(v.trim());
 	}
 
 	private static Long parseLong(String s) {

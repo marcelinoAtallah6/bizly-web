@@ -1,0 +1,203 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Edit tour package' : 'New tour package' }}</h2>
+<mat-dialog-content class="travel-package-dialog__content" *ngIf="!loading">
+  <mat-tab-group animationDuration="200ms" [formGroup]="form" class="travel-package-dialog__tabs">
+    <mat-tab label="General">
+      <div class="travel-package-dialog__panel">
+        <div class="travel-package-dialog__grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Code</mat-label>
+            <input matInput formControlName="code" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Duration (days)</mat-label>
+            <input matInput type="number" min="1" formControlName="durationDays" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="travel-package-dialog__grid__full">
+            <mat-label>Package name</mat-label>
+            <input matInput formControlName="name" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="travel-package-dialog__grid__full">
+            <mat-label>Primary destination</mat-label>
+            <mat-select formControlName="destination">
+              <mat-option value="">— Custom / multi-city —</mat-option>
+              <mat-option *ngFor="let d of destinations" [value]="d.name">{{ d.name }} ({{ d.country }})</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="travel-package-dialog__grid__full travel-package-dialog__textarea">
+            <mat-label>Overview</mat-label>
+            <textarea matInput formControlName="description" rows="4"></textarea>
+          </mat-form-field>
+          <mat-slide-toggle formControlName="active" class="travel-package-dialog__toggle">Active</mat-slide-toggle>
+        </div>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Multi-city">
+      <div class="travel-package-dialog__panel">
+        <div class="travel-package-dialog__grid travel-package-dialog__grid--single">
+          <p class="travel-package-dialog__hint">Add each city in this package.</p>
+          <div class="travel-package-dialog__actions-row">
+            <button mat-stroked-button type="button" (click)="addPackageDestination()">
+              <mat-icon>add_location</mat-icon> Add city
+            </button>
+          </div>
+          <div class="travel-package-dialog__stack-list">
+            <div
+              *ngFor="let d of packageDestinations.controls; let i = index"
+              [formGroup]="$any(d)"
+              class="travel-package-dialog__stack"
+            >
+              <mat-form-field appearance="outline" class="travel-package-dialog__grid__full">
+                <mat-label>Destination (catalog)</mat-label>
+                <mat-select formControlName="destinationId" (selectionChange)="onDestinationSelected(i, $event.value)">
+                  <mat-option [value]="null">— Type manually —</mat-option>
+                  <mat-option *ngFor="let dest of destinations" [value]="dest.id">
+                    {{ dest.name }} — {{ dest.country }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>City label</mat-label>
+                <input matInput formControlName="destinationName" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Nights</mat-label>
+                <input matInput type="number" min="1" formControlName="nights" />
+              </mat-form-field>
+              <button mat-button type="button" color="warn" (click)="removePackageDestination(i)">Remove city</button>
+            </div>
+          </div>
+          <mat-form-field appearance="outline" class="travel-package-dialog__grid__full">
+            <mat-label>Max capacity per day</mat-label>
+            <input matInput type="number" min="1" formControlName="maxCapacityPerDay" />
+          </mat-form-field>
+        </div>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Pricing">
+      <div class="travel-package-dialog__panel">
+        <div class="travel-package-dialog__grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Base price</mat-label>
+            <input matInput type="number" min="0" formControlName="basePrice" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Currency</mat-label>
+            <input matInput formControlName="currency" />
+          </mat-form-field>
+        </div>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Add-ons">
+      <div class="travel-package-dialog__panel">
+        <div class="travel-package-dialog__grid travel-package-dialog__grid--single">
+          <div class="travel-package-dialog__actions-row">
+            <button mat-stroked-button type="button" (click)="addPackageAddon()">
+              <mat-icon>add</mat-icon> Add-on
+            </button>
+          </div>
+          <div class="travel-package-dialog__stack-list">
+            <div
+              *ngFor="let a of packageAddons.controls; let i = index"
+              [formGroup]="$any(a)"
+              class="travel-package-dialog__stack"
+            >
+              <mat-form-field appearance="outline">
+                <mat-label>Name</mat-label>
+                <input matInput formControlName="name" />
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>Price</mat-label>
+                <input matInput type="number" min="0" formControlName="price" />
+              </mat-form-field>
+              <button mat-button type="button" color="warn" (click)="removePackageAddon(i)">Remove</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Inclusions">
+      <div class="travel-package-dialog__panel">
+        <div class="travel-package-dialog__grid travel-package-dialog__grid--single">
+          <mat-form-field appearance="outline" class="travel-package-dialog__grid__full travel-package-dialog__textarea">
+            <mat-label>Included</mat-label>
+            <textarea matInput formControlName="inclusions" rows="6"></textarea>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="travel-package-dialog__grid__full travel-package-dialog__textarea">
+            <mat-label>Excluded</mat-label>
+            <textarea matInput formControlName="exclusions" rows="6"></textarea>
+          </mat-form-field>
+        </div>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Itinerary">
+      <div class="travel-package-dialog__panel">
+        <div class="travel-package-dialog__grid travel-package-dialog__grid--single">
+          <div class="travel-package-dialog__actions-row">
+            <button mat-stroked-button type="button" (click)="addItineraryDay()">
+              <mat-icon>add</mat-icon> Add day
+            </button>
+          </div>
+          <div class="travel-package-dialog__itinerary">
+            <div
+              *ngFor="let day of itineraryDays.controls; let i = index"
+              [formGroup]="$any(day)"
+              class="travel-package-dialog__itinerary-day"
+            >
+              <div class="travel-package-dialog__day-badge">Day {{ day.get('dayNumber')?.value }}</div>
+              <mat-form-field appearance="outline" class="travel-package-dialog__grid__full">
+                <mat-label>Title</mat-label>
+                <input matInput formControlName="title" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="travel-package-dialog__grid__full">
+                <mat-label>Activities</mat-label>
+                <textarea matInput formControlName="details" rows="3"></textarea>
+              </mat-form-field>
+              <button mat-button type="button" color="warn" (click)="removeItineraryDay(i)">Remove</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Media">
+      <div class="travel-package-dialog__panel">
+        <div class="travel-package-dialog__grid travel-package-dialog__grid--single">
+          <div class="travel-package-dialog__actions-row">
+            <button mat-stroked-button type="button" (click)="addMediaItem()">
+              <mat-icon>add_photo_alternate</mat-icon> Add image
+            </button>
+          </div>
+          <div class="travel-package-dialog__media-grid">
+            <div
+              *ngFor="let m of mediaItems.controls; let i = index"
+              [formGroup]="$any(m)"
+              class="travel-package-dialog__media-card"
+            >
+              <app-travel-file-upload
+                [fileName]="m.get('fileName')?.value"
+                label="Browse image"
+                accept="image/*"
+                (fileSelected)="onMediaFilePick(i, $event)"
+              ></app-travel-file-upload>
+              <button mat-button type="button" color="warn" (click)="removeMediaItem(i)">Remove</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</mat-dialog-content>
+<mat-dialog-content class="travel-package-dialog__content" *ngIf="loading">
+  <div class="travel-package-dialog__panel" style="display: flex; align-items: center; justify-content: center">
+    <mat-spinner diameter="36"></mat-spinner>
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <button mat-flat-button color="primary" type="button" (click)="save()" [disabled]="saving || loading">Save</button>
+</mat-dialog-actions>

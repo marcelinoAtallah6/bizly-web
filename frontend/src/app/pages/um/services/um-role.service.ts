@@ -4,6 +4,7 @@ import { GlobalConstants } from 'src/app/common/GlobalConstants';
 import {
   AddRoleRequest,
   AddRoleResponse,
+  RoleLevelResponse,
   DeleteRoleRequest,
   DeleteRoleResponse,
   GetRoleMenuPermissionsRequest,
@@ -13,6 +14,7 @@ import {
   GetsRolesResponse,
   RoleMenuPermissionRowResponse,
   SaveRoleMenuPermissionsRequest,
+  NextRoleTypeResponse,
   UpdateRoleRequest,
   UpdateRoleResponse,
 } from 'src/app/core/models/um.models';
@@ -24,8 +26,22 @@ import { BusinessApiService } from 'src/app/services/business-api.service';
 export class UmRoleService {
   constructor(private readonly api: BusinessApiService) {}
 
+  listRoleLevels(): Observable<RoleLevelResponse[]> {
+    return this.api.postEnvelope<RoleLevelResponse[]>(
+      GlobalConstants.API_ENDPOINTS.um.roleLevel.list,
+      {}
+    );
+  }
+
   gets(body: GetsRolesRequest): Observable<GetsRolesResponse> {
     return this.api.postEnvelope<GetsRolesResponse>(GlobalConstants.API_ENDPOINTS.um.role.gets, body);
+  }
+
+  nextRoleType(): Observable<NextRoleTypeResponse> {
+    return this.api.postEnvelope<NextRoleTypeResponse>(
+      GlobalConstants.API_ENDPOINTS.um.role.nextRoleType,
+      {}
+    );
   }
 
   get(body: GetRoleRequest): Observable<GetRoleResponse> {

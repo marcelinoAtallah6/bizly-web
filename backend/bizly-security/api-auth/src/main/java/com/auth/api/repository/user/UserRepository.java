@@ -13,7 +13,10 @@ import com.auth.api.model.user.UserEntity;
 
 @Repository
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
-	Optional<UserEntity> findByUsername(String username);
+	/** Resolves by username; if duplicates exist, returns the lowest {@code id} row (avoids NonUniqueResultException). */
+	Optional<UserEntity> findFirstByUsernameOrderByIdAsc(String username);
+
+	boolean existsByUsername(String username);
 
 	Optional<UserEntity> findByEmailIgnoreCase(String email);
 

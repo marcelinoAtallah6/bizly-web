@@ -31,8 +31,12 @@ public class SecurityConfig {
 						"/auth/register", "/auth/register-business", "/auth/welcome-complete", "/auth/me",
 						"/auth/me/avatar",
 						"/auth/roles/assignable",
+						"/auth/business-types",
 						"/auth/social/**",
-						"/auth/admin/**")
+						"/auth/admin/**",
+						"/auth/platform-config",
+						"/auth/verify-email/**",
+						"/auth/webhooks/**")
 				.permitAll().anyRequest().authenticated().and().formLogin().disable();
 
 		return http.build();

@@ -1,0 +1,184 @@
+<div class="p-24 travel-page travel-page--client-details">
+  <app-page-action-bar [title]="client?.fullName || 'Client profile'" [toolbar]="toolbar"></app-page-action-bar>
+  <mat-spinner *ngIf="loading" diameter="40"></mat-spinner>
+
+  <ng-container *ngIf="!loading && client">
+    <app-travel-kpi-strip [items]="kpis"></app-travel-kpi-strip>
+
+    <mat-accordion class="travel-client-accordion" multi>
+      <mat-expansion-panel class="travel-client-accordion__panel" [expanded]="true">
+        <mat-expansion-panel-header>
+          <mat-panel-title class="travel-section-title">Personal information</mat-panel-title>
+        </mat-expansion-panel-header>
+        <div class="travel-accordion-body">
+          <dl class="travel-dl">
+            <dt>Full name</dt>
+            <dd>{{ client.fullName }}</dd>
+            <dt>Email</dt>
+            <dd>{{ client.email || '—' }}</dd>
+            <dt>Phone</dt>
+            <dd>{{ client.phone || '—' }}</dd>
+            <dt>Status</dt>
+            <dd>{{ client.active ? 'Active' : 'Inactive' }}</dd>
+          </dl>
+        </div>
+      </mat-expansion-panel>
+
+      <mat-expansion-panel class="travel-client-accordion__panel" *ngIf="client.travelProfile as p" [expanded]="true">
+        <mat-expansion-panel-header>
+          <mat-panel-title class="travel-section-title">Passport details</mat-panel-title>
+        </mat-expansion-panel-header>
+        <div class="travel-accordion-body">
+          <dl class="travel-dl">
+            <dt>Passport number</dt>
+            <dd>{{ client.passportNo || '—' }}</dd>
+            <dt>Type</dt>
+            <dd>{{ p.passportType || '—' }}</dd>
+            <dt>Nationality</dt>
+            <dd>{{ p.nationality || '—' }}</dd>
+            <dt>Issue / Expiry</dt>
+            <dd>{{ p.passportIssueDate || '—' }} → {{ p.passportExpiryDate || '—' }}</dd>
+            <dt>Place of issue</dt>
+            <dd>{{ p.passportPlaceOfIssue || '—' }}</dd>
+          </dl>
+        </div>
+      </mat-expansion-panel>
+
+      <mat-expansion-panel class="travel-client-accordion__panel travel-client-accordion__panel--scan" *ngIf="passportPreview" [expanded]="true">
+        <mat-expansion-panel-header>
+          <mat-panel-title class="travel-section-title">Passport scan</mat-panel-title>
+          <mat-panel-description>Uploaded document preview</mat-panel-description>
+        </mat-expansion-panel-header>
+        <div class="travel-accordion-body travel-passport-scan-view">
+          <p class="travel-passport-scan-view__hint text-muted" *ngIf="!passportPhotoUrl">No passport scan on file — showing profile data.</p>
+          <div class="travel-passport-scan-view__frame">
+            <app-travel-passport-preview
+              title="PASSPORT"
+              [subtitle]="passportPhotoUrl ? 'Uploaded scan' : 'Profile data'"
+              [data]="passportPreview"
+              [photoUrl]="passportPhotoUrl"
+            ></app-travel-passport-preview>
+          </div>
+        </div>
+      </mat-expansion-panel>
+
+      <mat-expansion-panel class="travel-client-accordion__panel travel-client-accordion__panel--notes">
+        <mat-expansion-panel-header>
+          <mat-panel-title class="travel-section-title">Notes</mat-panel-title>
+        </mat-expansion-panel-header>
+        <div class="travel-accordion-body travel-notes-body">
+          <p class="travel-notes-body__text">{{ client.notes || 'No notes recorded.' }}</p>
+        </div>
+      </mat-expansion-panel>
+    </mat-accordion>
+
+    <mat-tab-group
+      animationDuration="200ms"
+      class="travel-client-tabs"
+      mat-stretch-tabs="false"
+      mat-align-tabs="start"
+      color="primary">
+      <mat-tab label="Travel profile">
+        <div class="travel-tab-panel travel-tab-panel--profile" *ngIf="client.travelProfile as p">
+          <div class="travel-profile-grid travel-profile-grid--tab">
+            <mat-card class="travel-info-card">
+              <mat-card-header>
+                <mat-card-title class="travel-section-title">Saved destinations</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <p class="travel-info-card__value">{{ (p.savedDestinations || []).join(', ') || '—' }}</p>
+              </mat-card-content>
+            </mat-card>
+            <mat-card class="travel-info-card">
+              <mat-card-header>
+                <mat-card-title class="travel-section-title">Preferred airlines</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <p class="travel-info-card__value">{{ (p.preferredAirlines || []).join(', ') || '—' }}</p>
+              </mat-card-content>
+            </mat-card>
+            <mat-card class="travel-info-card">
+              <mat-card-header>
+                <mat-card-title class="travel-section-title">Preferred hotels</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <p class="travel-info-card__value">{{ (p.preferredHotels || []).join(', ') || '—' }}</p>
+              </mat-card-content>
+            </mat-card>
+            <mat-card class="travel-info-card">
+              <mat-card-header>
+                <mat-card-title class="travel-section-title">Loyalty</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <dl class="travel-dl">
+                  <dt>Program</dt>
+                  <dd>{{ p.loyaltyProgram || '—' }}</dd>
+                  <dt>Points</dt>
+                  <dd>{{ p.loyaltyPoints ?? '—' }}</dd>
+                  <dt>Status</dt>
+                  <dd>{{ p.loyaltyStatus || '—' }}</dd>
+                </dl>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+        <p *ngIf="!client.travelProfile" class="travel-tab-panel travel-tab-empty text-muted">
+          No travel profile yet. Edit client to add preferences.
+        </p>
+      </mat-tab>
+      <mat-tab label="Bookings ({{ bookings.length }})">
+        <div class="travel-tab-panel">
+          <ag-grid-angular
+            class="ag-theme-quartz travel-client-grid"
+            [rowData]="bookings"
+            [columnDefs]="bookingCols"
+            [defaultColDef]="defaultColDef"
+            [pagination]="gridPagination.pagination"
+            [paginationPageSize]="gridPagination.paginationPageSize"
+          ></ag-grid-angular>
+        </div>
+      </mat-tab>
+      <mat-tab label="Visa applications ({{ visas.length }})">
+        <div class="travel-tab-panel">
+          <ag-grid-angular
+            class="ag-theme-quartz travel-client-grid"
+            [rowData]="visas"
+            [columnDefs]="visaCols"
+            [defaultColDef]="defaultColDef"
+            [pagination]="gridPagination.pagination"
+            [paginationPageSize]="gridPagination.paginationPageSize"
+          ></ag-grid-angular>
+        </div>
+      </mat-tab>
+      <mat-tab label="Documents ({{ documents.length }})">
+        <div class="travel-tab-panel">
+          <app-travel-kpi-strip [items]="docKpis" [horizontal]="true"></app-travel-kpi-strip>
+          <div class="travel-doc-feed travel-doc-feed--embedded" *ngIf="documents.length">
+            <app-travel-document-grid-card
+              *ngFor="let doc of documents"
+              [doc]="doc"
+              clientLabel="This client"
+              [canEdit]="false"
+              [canDelete]="false"
+              (view)="viewDocument($event)"
+              (download)="downloadDocument($event)"
+            ></app-travel-document-grid-card>
+          </div>
+          <p *ngIf="documents.length === 0" class="text-muted travel-tab-empty">No documents for this client.</p>
+        </div>
+      </mat-tab>
+      <mat-tab label="Follow-ups ({{ followUps.length }})">
+        <div class="travel-tab-panel">
+          <ag-grid-angular
+            class="ag-theme-quartz travel-client-grid"
+            [rowData]="followUps"
+            [columnDefs]="followUpCols"
+            [defaultColDef]="defaultColDef"
+            [pagination]="gridPagination.pagination"
+            [paginationPageSize]="gridPagination.paginationPageSize"
+          ></ag-grid-angular>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </ng-container>
+</div>

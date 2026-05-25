@@ -13,6 +13,7 @@ import {
   GetsUsersResponse,
   UpdateUserRequest,
   UpdateUserResponse,
+  UpdateProfileSelfRequest,
 } from 'src/app/core/models/um.models';
 import { BusinessApiService } from 'src/app/services/business-api.service';
 
@@ -79,6 +80,14 @@ export class UmUserService {
   delete(body: DeleteUserRequest): Observable<DeleteUserResponse> {
     return this.api.postEnvelope<DeleteUserResponse>(
       GlobalConstants.API_ENDPOINTS.um.user.delete,
+      body,
+      'success-and-errors'
+    );
+  }
+
+  updateSelfProfile(body: UpdateProfileSelfRequest): Observable<UpdateUserResponse> {
+    return this.api.putEnvelope<UpdateUserResponse>(
+      GlobalConstants.API_ENDPOINTS.um.user.updateProfile,
       body,
       'success-and-errors'
     );

@@ -37,6 +37,11 @@ public class ApiMessages {
     public static final String ROLE_NOT_FOUND = "Role not found";
     public static final String NO_DEFAULT_REGISTRATION_ROLE = "No default registration role is configured. Contact an administrator.";
 
+    // ---- Business-type-as-role registration ----
+    public static final String BUSINESS_TYPE_REQUIRED = "Please pick a business type to continue.";
+    public static final String BUSINESS_TYPE_INVALID = "The selected business type is not available. Refresh the page and choose again.";
+    public static final String NO_BUSINESS_TYPES_CONFIGURED = "No business types are configured yet. Contact an administrator.";
+
     // ---- Social login ----
     public static final String SOCIAL_PROVIDER_UNSUPPORTED = "Unsupported social provider";
     public static final String SOCIAL_TOKEN_INVALID = "Social login token is invalid or expired";

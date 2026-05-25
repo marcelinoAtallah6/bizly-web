@@ -1,0 +1,18 @@
+// Travel module — always use app theme CSS variables (light / dark / dark-blue / white).
+.travel-page,
+.travel-dialog-content,
+.mat-mdc-dialog-container .travel-dialog-content {
+  --travel-surface: var(--cardbg, #fff);
+  --travel-text: var(--textPrimary, #1a1a1a);
+  --travel-text-muted: color-mix(in srgb, var(--textPrimary, #1a1a1a) 65%, transparent);
+  --travel-border: var(--borderColor, rgba(0, 0, 0, 0.12));
+  --travel-accent: var(--primary, #1976d2);
+  --travel-accent-soft: color-mix(in srgb, var(--primary, #1976d2) 12%, var(--cardbg, #fff));
+  --travel-shadow: 0 4px 16px color-mix(in srgb, var(--textPrimary, #000) 8%, transparent);
+  --travel-kpi-clients: var(--primary, #1565c0);
+  --travel-kpi-packages: #2e7d32;
+  --travel-kpi-bookings: #6a1b9a;
+  --travel-kpi-open: #ef6c00;
+  --travel-kpi-finance: #00838f;
+  color: var(--travel-text);
+}

@@ -4,16 +4,17 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 import { CommonMaterialModule } from 'src/app/common/MaterialModule';
 import { ReportBuilderComponent } from './report-builder/report-builder.component';
-import { ReportRunComponent } from './report-run/report-run.component';
 import { ReportingRoutingModule } from './reporting-routing.module';
+import { ReportingSharedModule } from './reporting-shared.module';
 
 @NgModule({
-  declarations: [ReportBuilderComponent, ReportRunComponent],
+  declarations: [ReportBuilderComponent],
   imports: [
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
     CommonMaterialModule,
+    ReportingSharedModule,
     ReportingRoutingModule,
   ],
 })

@@ -1,0 +1,128 @@
+<div class="dash-cal" [class.dash-cal--loading]="loading">
+  <div class="dash-cal__toolbar">
+    <div class="dash-cal__nav">
+      <button mat-icon-button type="button" (click)="prevMonth()" aria-label="Previous month">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+      <span class="dash-cal__month">{{ monthLabel }}</span>
+      <button mat-icon-button type="button" (click)="nextMonth()" aria-label="Next month">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+      <button mat-stroked-button type="button" class="dash-cal__today" (click)="goToday()">Today</button>
+    </div>
+    <div class="dash-cal__filters">
+      <mat-slide-toggle [checked]="travelOnly" (change)="toggleTravelOnly()">
+        Travel events only
+      </mat-slide-toggle>
+      <mat-chip-set class="dash-cal__types" *ngIf="eventTypes.length">
+        <mat-chip
+          *ngFor="let t of eventTypes"
+          [highlighted]="selectedTypes.has(t)"
+          (click)="toggleType(t)"
+        >
+          <span class="dash-cal__legend-dot" [style.background]="colorFor(t)"></span>
+          {{ t }}
+        </mat-chip>
+      </mat-chip-set>
+    </div>
+  </div>
+
+  <div class="dash-cal__weekdays">
+    <span *ngFor="let w of weekdays" class="dash-cal__weekday">{{ w }}</span>
+  </div>
+
+  <div class="dash-cal__grid">
+    <div
+      class="dash-cal__day"
+      *ngFor="let cell of cells"
+      [class.dash-cal__day--muted]="!cell.inMonth"
+      [class.dash-cal__day--today]="cell.isToday"
+      [class.dash-cal__day--has-events]="eventsOnDay(cell).length > 0"
+      (click)="openDay(cell)"
+      role="button"
+      tabindex="0"
+      (keydown.enter)="openDay(cell)"
+    >
+      <span class="dash-cal__day-num">{{ cell.date.getDate() }}</span>
+      <div class="dash-cal__events">
+        <button
+          type="button"
+          class="dash-cal__chip"
+          *ngFor="let ev of visibleEventsForDay(cell)"
+          [style.borderLeftColor]="colorFor(ev.type)"
+          (mouseenter)="showPopover(ev, $event)"
+          (mouseleave)="hidePopoverSoon()"
+          (click)="onEventClick(ev, $event)"
+          [attr.aria-label]="ev.title"
+        >
+          <span class="dash-cal__chip-type" [style.color]="colorFor(ev.type)">{{ shortType(ev.type) }}</span>
+          <span class="dash-cal__chip-title">{{ shortTitle(ev.title) }}</span>
+        </button>
+        <button
+          type="button"
+          class="dash-cal__more"
+          *ngIf="extraCountForDay(cell) > 0"
+          (click)="openDay(cell); $event.stopPropagation()"
+        >
+          +{{ extraCountForDay(cell) }} more
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-cal__panel" *ngIf="panelOpen && selectedDay">
+    <div class="dash-cal__panel-head">
+      <h4 class="m-0">{{ selectedDay.date | date: 'fullDate' }}</h4>
+      <button mat-icon-button type="button" (click)="closePanel()" aria-label="Close">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <p class="dash-muted f-s-12 m-b-8" *ngIf="!dayEvents.length">No events this day.</p>
+    <button
+      type="button"
+      class="dash-cal__event-row"
+      *ngFor="let ev of dayEvents"
+      (click)="onEventClick(ev, $event)"
+    >
+      <span class="dash-cal__chip-badge" [style.background]="colorFor(ev.type)">{{ ev.type }}</span>
+      <span class="dash-cal__event-title">{{ ev.title }}</span>
+      <mat-icon class="dash-cal__event-go" *ngIf="navigationUrl(ev)">open_in_new</mat-icon>
+    </button>
+  </div>
+</div>
+
+<ng-template #popoverTpl>
+  <div
+    class="dash-cal__popover"
+    *ngIf="popoverEvent as ev"
+    (mouseenter)="cancelHidePopover()"
+    (mouseleave)="hidePopoverSoon()"
+  >
+    <div class="dash-cal__popover-accent" [style.background]="colorFor(ev.type)"></div>
+    <div class="dash-cal__popover-body">
+      <div class="dash-cal__popover-head">
+        <span class="dash-cal__popover-type" [style.color]="colorFor(ev.type)">
+          {{ eventTypeLabel(ev.type) }}
+        </span>
+        <span class="dash-cal__popover-date">{{ ev.date | date: 'mediumDate' }}</span>
+      </div>
+      <p class="dash-cal__popover-title">{{ ev.title }}</p>
+      <p class="dash-cal__popover-meta" *ngIf="popoverMetaLine(ev) as meta">
+        <mat-icon class="dash-cal__popover-meta-icon">confirmation_number</mat-icon>
+        {{ meta }}
+      </p>
+      <button
+        mat-flat-button
+        color="primary"
+        type="button"
+        class="dash-cal__popover-action"
+        *ngIf="navigationUrl(ev)"
+        (click)="onEventClick(ev, $event)"
+      >
+        <mat-icon>open_in_new</mat-icon>
+        Open booking
+      </button>
+      <p class="dash-cal__popover-hint" *ngIf="!navigationUrl(ev)">Click the day cell for the full list</p>
+    </div>
+  </div>
+</ng-template>

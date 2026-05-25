@@ -2,7 +2,9 @@ package com.kyc.api.service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,7 @@ import com.kyc.api.repository.KycCustomerRepository;
 import com.kyc.common.ApiMessages;
 import com.kyc.common.PageResponse;
 import com.kyc.exception.ServiceException;
+import com.kyc.integration.workflow.WorkflowTriggerQueueDao;
 import com.kyc.security.BusinessContextHolder;
 
 @Service
@@ -33,6 +36,11 @@ public class CustomerServiceImpl implements ICustomerService {
 
 	@Autowired
 	private KycCustomerRepository repository;
+
+	@Autowired
+	private WorkflowTriggerQueueDao workflowTriggerQueueDao;
+
+	private static final String ACTION_CUSTOMER_CREATED = "CUSTOMER_CREATED_SUCCESS";
 
 	@Override
 	public AddCustomerResponse add(AddCustomerRequest request) {
@@ -44,10 +52,10 @@ public class CustomerServiceImpl implements ICustomerService {
 		customer.setFullName(request.getFirstName() + " " + request.getLastName());
 		customer.setBusinessId(businessId);
 		customer.setCreatedAt(LocalDateTime.now());
-		customer.setNotifWelcomeFlag(0);
-		customer.setNotifWelcomeStatus(0);
 
 		repository.save(customer);
+
+		triggerCustomerCreatedWorkflow(customer, businessId);
 
 		AddCustomerResponse response = new AddCustomerResponse();
 		response.setId(customer.getId());
@@ -69,6 +77,17 @@ public class CustomerServiceImpl implements ICustomerService {
 		UpdateCustomerResponse response = new UpdateCustomerResponse();
 		response.setId(customer.getId());
 		return response;
+	}
+
+	private void triggerCustomerCreatedWorkflow(KycCustomer customer, Long businessId) {
+		Map<String, Object> ctx = new HashMap<>();
+		ctx.put("customerId", customer.getId());
+		ctx.put("email", customer.getEmail());
+		ctx.put("firstName", customer.getFirstName());
+		ctx.put("lastName", customer.getLastName());
+		ctx.put("name", customer.getFullName());
+		ctx.put("businessId", businessId);
+		workflowTriggerQueueDao.enqueue(ACTION_CUSTOMER_CREATED, businessId, ctx);
 	}
 
 	private void mapRequestOntoEntity(AddCustomerRequest request, KycCustomer customer) {

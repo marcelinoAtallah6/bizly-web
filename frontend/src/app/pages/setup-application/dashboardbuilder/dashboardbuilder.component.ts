@@ -51,6 +51,8 @@ export class DashboardbuilderComponent implements OnInit, OnDestroy, AfterViewIn
     'CANDLESTICK_CHART',
     'TREEMAP_CHART',
     'QUICK_ACTION',
+    'CALENDAR',
+    'CARD_LIST',
   ];
 
   /** Visual palette (constant — reset after each drag-from-palette so tiles never disappear). */
@@ -119,6 +121,18 @@ export class DashboardbuilderComponent implements OnInit, OnDestroy, AfterViewIn
       icon: 'account_tree',
     },
     { widgetType: 'QUICK_ACTION', label: 'Quick actions', hint: 'Shortcut buttons', icon: 'bolt' },
+    {
+      widgetType: 'CALENDAR',
+      label: 'Calendar',
+      hint: 'Monthly events with filters & day panel',
+      icon: 'calendar_month',
+    },
+    {
+      widgetType: 'CARD_LIST',
+      label: 'Card list',
+      hint: 'Stacked cards (follow-ups, tasks)',
+      icon: 'view_agenda',
+    },
   ];
 
   paletteItems: DashboardPaletteItem[] = [];
@@ -604,6 +618,8 @@ export class DashboardbuilderComponent implements OnInit, OnDestroy, AfterViewIn
       CANDLESTICK_CHART: 'Candlestick',
       TREEMAP_CHART: 'Treemap',
       QUICK_ACTION: 'Quick actions',
+      CALENDAR: 'Calendar',
+      CARD_LIST: 'Card list',
     };
     return map[t] || `Widget ${index + 1}`;
   }
@@ -861,6 +877,8 @@ export class DashboardbuilderComponent implements OnInit, OnDestroy, AfterViewIn
       CANDLESTICK_CHART: 'candlestick_chart',
       TREEMAP_CHART: 'account_tree',
       QUICK_ACTION: 'bolt',
+      CALENDAR: 'calendar_month',
+      CARD_LIST: 'view_agenda',
     };
     return map[t] ?? 'widgets';
   }

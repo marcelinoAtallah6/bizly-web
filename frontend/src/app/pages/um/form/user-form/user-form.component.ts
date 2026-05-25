@@ -1,14 +1,16 @@
 import { Component, OnInit } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { GetUserResponse } from 'src/app/core/models/um.models';
+import { GetRoleResponse, GetUserResponse, TeamRoleResponse } from 'src/app/core/models/um.models';
 import { AuthService } from 'src/app/services/auth.service';
 import { MenuPermissionService } from 'src/app/services/menu-permission.service';
 import { UserProfileService } from 'src/app/services/user-profile.service';
 import { UmRoleService } from '../../services/um-role.service';
+import { UmTeamRoleService } from '../../services/um-team-role.service';
 import { UmUserService } from '../../services/um-user.service';
 import { ToolbarButton } from 'src/app/pages/ui-components/button/toolbar/toolbar.component';
-import { catchError, finalize, of, switchMap, take } from 'rxjs';
+import { catchError, finalize, forkJoin, map, of, switchMap, take, tap } from 'rxjs';
+import { Observable } from 'rxjs';
 import { compressProfileImage } from 'src/app/common/profile-image.util';
 
 @Component({
@@ -23,6 +25,8 @@ export class UserFormComponent implements OnInit {
   loading = false;
   saving = false;
   roles: { id: number; name: string }[] = [];
+  /** Loaded in edit mode — used to block portal-admin edits on team members. */
+  private editingUser: GetUserResponse | null = null;
 
   /** Preview URL (existing image or newly picked file). */
   profilePreviewUrl: string | null = null;
@@ -37,6 +41,24 @@ export class UserFormComponent implements OnInit {
 
   readonly statusOptions = ['ACTIVE', 'INACTIVE', 'LOCKED'];
 
+  get isBusinessTenant(): boolean {
+    return this.auth.isBusinessTenant();
+  }
+
+  get rolesHint(): string {
+    if (this.isBusinessTenant) {
+      return 'Team roles you may assign (your hierarchy and business-owner scope).';
+    }
+    if (this.auth.isSystemAdmin() && this.auth.getAdminBusinessContext() != null) {
+      return 'Business-type template role for the tenant owner (team roles are managed in the business portal).';
+    }
+    return 'Portal admin roles (ADMIN level) only.';
+  }
+
+  get isPortalAdminManagingOwner(): boolean {
+    return this.auth.getAdminBusinessContext() != null && !this.auth.isBusinessTenant();
+  }
+
   get formToolbar(): ToolbarButton[] {
     return [{ id: 'back', icon: 'arrow_back', tooltip: 'Back to list', action: () => this.cancel() }];
   }
@@ -47,6 +69,7 @@ export class UserFormComponent implements OnInit {
     private readonly router: Router,
     private readonly umUserService: UmUserService,
     private readonly umRoleService: UmRoleService,
+    private readonly umTeamRoleService: UmTeamRoleService,
     private readonly auth: AuthService,
     private readonly userProfile: UserProfileService,
     private readonly menuPerm: MenuPermissionService
@@ -57,6 +80,10 @@ export class UserFormComponent implements OnInit {
     const idParam = this.route.snapshot.paramMap.get('id');
     this.userId = idParam ? Number(idParam) : null;
 
+    if (this.mode === 'create' && this.auth.isSystemAdmin() && this.auth.getAdminBusinessContext() != null) {
+      this.router.navigate(['/um', 'user']);
+      return;
+    }
     if (this.mode === 'create' && !this.menuPerm.can('/um/user', 'add')) {
       this.router.navigate(['/um', 'user']);
       return;
@@ -83,13 +110,15 @@ export class UserFormComponent implements OnInit {
     }
 
     this.loading = true;
-    this.umRoleService
-      .gets({ pageNumber: 0, pageSize: 200 })
+    this.loadAssignableRoles()
       .pipe(
-        switchMap((page) => {
-          this.roles = (page.items ?? []).map((r) => ({ id: r.id, name: r.name }));
+        switchMap(() => {
           if (this.mode === 'edit' && this.userId != null && !Number.isNaN(this.userId)) {
-            return this.umUserService.get({ id: this.userId });
+            return this.umUserService.get({ id: this.userId }).pipe(
+              switchMap((user) =>
+                this.ensureRoleOptionsCover(user?.roleIds).pipe(map(() => user))
+              )
+            );
           }
           return of(null as GetUserResponse | null);
         }),
@@ -100,6 +129,15 @@ export class UserFormComponent implements OnInit {
       .subscribe({
         next: (user) => {
           if (user) {
+            this.editingUser = user;
+            if (
+              this.mode === 'edit' &&
+              this.isPortalAdminManagingOwner &&
+              !this.isEditableBusinessOwner(user)
+            ) {
+              this.router.navigate(['/um', 'user']);
+              return;
+            }
             this.form.patchValue({
               username: user.username ?? '',
               firstName: user.firstName ?? '',
@@ -178,6 +216,63 @@ export class UserFormComponent implements OnInit {
     return v?.length ? null : { roles: true };
   }
 
+  private ensureRoleOptionsCover(ids: number[] | undefined): Observable<void> {
+    const roleIds = ids ?? [];
+    const present = new Set(this.roles.map((r) => r.id));
+    const missing = roleIds.filter((id) => !present.has(id));
+    if (missing.length === 0) {
+      return of(undefined);
+    }
+    return forkJoin(
+      missing.map((id) =>
+        this.umRoleService.get({ id }).pipe(catchError(() => of(null as GetRoleResponse | null)))
+      )
+    ).pipe(
+      tap((rows) => {
+        for (const row of rows) {
+          if (row?.id != null) {
+            this.roles.push({ id: row.id, name: row.name ?? `Role #${row.id}` });
+          }
+        }
+      }),
+      map(() => undefined)
+    );
+  }
+
+  private loadAssignableRoles(): Observable<void> {
+    if (this.isPortalAdminManagingOwner) {
+      return this.umRoleService.gets({ pageNumber: 0, pageSize: 500, globalTemplatesOnly: true }).pipe(
+        map((page) => {
+          this.roles = (page.items ?? []).map((r) => ({ id: r.id, name: r.name }));
+        })
+      );
+    }
+    if (this.auth.isBusinessTenant()) {
+      return this.umTeamRoleService.listAssignable().pipe(
+        tap((items: TeamRoleResponse[]) => {
+          const list = Array.isArray(items) ? items : [];
+          this.roles = list.map((r: TeamRoleResponse) => ({ id: r.id, name: r.name }));
+        }),
+        map(() => undefined)
+      );
+    }
+    return this.umRoleService.gets({ pageNumber: 0, pageSize: 500 }).pipe(
+      map((page) => {
+        this.roles = (page.items ?? [])
+          .filter((r) => r.roleLevelCode === 'ADMIN' || r.roleKind === 'ADMIN_INTERNAL')
+          .map((r) => ({ id: r.id, name: r.name }));
+      })
+    );
+  }
+
+  private isEditableBusinessOwner(user: GetUserResponse): boolean {
+    if (user.businessOwner === true) {
+      return true;
+    }
+    const ut = (user.userType ?? '').toUpperCase();
+    return ut === 'BUSINESS_OWNER';
+  }
+
   cancel(): void {
     this.router.navigate(['/um', 'user']);
   }
@@ -190,7 +285,7 @@ export class UserFormComponent implements OnInit {
         .refreshToken()
         .pipe(
           catchError(() => of(null)),
-          switchMap(() => this.userProfile.refresh(true)),
+          switchMap(() => this.userProfile.refreshAndWait(true)),
           take(1)
         )
         .subscribe();

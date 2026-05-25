@@ -5,6 +5,7 @@ import { finalize } from 'rxjs';
 import { GetCustomerResponse } from 'src/app/core/models/kyc.models';
 import { ToolbarButton } from 'src/app/pages/ui-components/button/toolbar/toolbar.component';
 import { MenuPermissionService } from 'src/app/services/menu-permission.service';
+import { gridListPaginationMixin } from 'src/app/shared/ag-grid/ag-grid-list-pagination.mixin';
 import { KycCustomerService } from '../../services/kyc-customer.service';
 
 @Component({
@@ -13,6 +14,7 @@ import { KycCustomerService } from '../../services/kyc-customer.service';
   styleUrl: './customer-list.component.scss',
 })
 export class CustomerListComponent implements OnInit {
+  readonly gridPagination = gridListPaginationMixin;
   rowData: GetCustomerResponse[] = [];
   loading = false;
 

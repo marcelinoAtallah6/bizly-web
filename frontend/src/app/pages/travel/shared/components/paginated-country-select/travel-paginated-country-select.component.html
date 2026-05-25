@@ -1,0 +1,23 @@
+<mat-form-field appearance="outline" class="full travel-country-select">
+  <mat-label>{{ label }}</mat-label>
+  <mat-select
+    [value]="value"
+    [required]="required"
+    (selectionChange)="onSelect($event)"
+    (openedChange)="onOpened($event)"
+  >
+    <mat-option disabled class="travel-country-select__search-option">
+      <input
+        matInput
+        class="travel-country-select__search"
+        [formControl]="searchCtrl"
+        placeholder="Search country…"
+        (click)="$event.stopPropagation()"
+        (keydown)="$event.stopPropagation()"
+      />
+    </mat-option>
+    <mat-option *ngFor="let c of countries" [value]="c.name">{{ c.label }}</mat-option>
+    <mat-option *ngIf="loading" disabled>Loading…</mat-option>
+    <mat-option *ngIf="!loading && countries.length === 0" disabled>No countries found</mat-option>
+  </mat-select>
+</mat-form-field>

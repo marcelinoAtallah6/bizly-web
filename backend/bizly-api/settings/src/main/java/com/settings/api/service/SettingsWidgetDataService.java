@@ -2,6 +2,7 @@ package com.settings.api.service;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -58,6 +59,15 @@ public class SettingsWidgetDataService {
 		if (w.getQueryDef() == null || w.getQueryDef().getSqlText() == null) {
 			throw new ServiceException(ApiMessages.SETTINGS_QUERY_NOT_FOUND, HttpStatus.BAD_REQUEST);
 		}
-		return jdbcQueryService.executeSelect(w.getQueryDef().getSqlText());
+		String sql = w.getQueryDef().getSqlText();
+		Map<String, Object> params = new HashMap<>();
+		Long callerBiz = BusinessContextHolder.currentBusinessId();
+		if (callerBiz != null) {
+			params.put("business_id", callerBiz);
+		}
+		if (sql.contains(":business_id") || sql.contains(":BUSINESS_ID")) {
+			return jdbcQueryService.executeSelectWithParams(sql, params, null);
+		}
+		return jdbcQueryService.executeSelect(sql);
 	}
 }

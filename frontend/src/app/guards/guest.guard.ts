@@ -8,6 +8,7 @@ import {
   UrlTree,
 } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { MenuPermissionService } from '../services/menu-permission.service';
 
 /**
  * Allows access to login/register only when the user is not authenticated.
@@ -19,6 +20,7 @@ import { AuthService } from '../services/auth.service';
 export class GuestGuard implements CanActivate, CanActivateChild {
   constructor(
     private readonly authService: AuthService,
+    private readonly menuPerm: MenuPermissionService,
     private readonly router: Router
   ) {}
 
@@ -41,9 +43,15 @@ export class GuestGuard implements CanActivate, CanActivateChild {
   private allowOnlyGuests(url: string): boolean | UrlTree {
     const isAuthed = this.authService.isAuthenticated();
     if (!isAuthed) return true;
+    if (this.authService.getCachedPendingBusinessApproval()) {
+      if (!url.startsWith('/authentication/pending-business-approval')) {
+        return this.router.parseUrl('/authentication/pending-business-approval');
+      }
+      return true;
+    }
     if (GuestGuard.POST_LOGIN_PATHS.some((p) => url.startsWith(p))) {
       return true;
     }
-    return this.router.parseUrl('/dashboard');
+    return this.router.parseUrl(this.menuPerm.landingRoute());
   }
 }

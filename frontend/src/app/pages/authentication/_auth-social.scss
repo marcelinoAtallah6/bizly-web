@@ -1,0 +1,91 @@
+/* Google sign-in button on login and register */
+.auth-social-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+@media (min-width: 576px) {
+  .auth-social-row {
+    flex-direction: row;
+    align-items: stretch;
+  }
+}
+
+.auth-social-btn {
+  width: 100%;
+  min-height: 44px;
+  flex: 1 1 0;
+  min-width: 0;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  line-height: 1.25;
+  padding: 0 12px !important;
+}
+
+.auth-social-btn img,
+.auth-social-btn i-tabler {
+  flex-shrink: 0;
+}
+
+.auth-social-btn__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Google Identity Services picker overlay (appended to document.body) */
+.bizly-google-signin-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.bizly-google-signin-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: min(100%, 320px);
+  padding: 24px 20px 20px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.18);
+}
+
+.bizly-google-signin-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a2240;
+  text-align: center;
+}
+
+.bizly-google-signin-button-host {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+  width: 100%;
+}
+
+.bizly-google-signin-cancel {
+  border: none;
+  background: transparent;
+  color: #5b657f;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.bizly-google-signin-cancel:hover {
+  color: #1a2240;
+}

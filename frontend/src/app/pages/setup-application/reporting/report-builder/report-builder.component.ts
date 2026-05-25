@@ -18,6 +18,7 @@ import { ReportingService } from '../reporting.service';
 import {
   ReportBuilderItem,
   ReportBuilderSaveRequest,
+  ReportColumnConfig,
   ReportFilterConfig,
   ReportFilterType,
   ReportStatus,
@@ -62,6 +63,9 @@ export class ReportBuilderComponent implements OnInit, OnDestroy {
 
   /** Read-only echo of detected columns for the last saved report. */
   detectedColumns: { key: string; label: string }[] = [];
+
+  /** Column config sent on save when auto-detect is off (updates). */
+  columns: ReportColumnConfig[] = [];
 
   // ---- Visibility (mirrors Dashboard Builder) ----
   /** Selected role NAMES to grant (server resolves to role_type). Empty = no role restriction. */
@@ -209,6 +213,7 @@ export class ReportBuilderComponent implements OnInit, OnDestroy {
     this.filters = [];
     this.autoDetectColumns = true;
     this.detectedColumns = [];
+    this.columns = [];
     this.selectedGrantRoles = [];
     this.selectedUsernames = [];
     this.userSearchTerm = '';
@@ -228,7 +233,8 @@ export class ReportBuilderComponent implements OnInit, OnDestroy {
     this.defaultSortDir = (r.defaultSortDir as 'ASC' | 'DESC') ?? 'DESC';
     this.filters = (r.filters ?? []).map((f) => ({ ...f }));
     this.autoDetectColumns = false;
-    this.detectedColumns = (r.columns ?? []).map((c) => ({ key: c.key, label: c.label ?? c.key }));
+    this.columns = (r.columns ?? []).map((c) => ({ ...c }));
+    this.detectedColumns = this.columns.map((c) => ({ key: c.key, label: c.label ?? c.key }));
     this.selectedGrantRoles = [...(r.grantRoles ?? [])];
     this.selectedUsernames = [...(r.grantUsernames ?? [])];
     this.userSearchTerm = '';
@@ -265,6 +271,7 @@ export class ReportBuilderComponent implements OnInit, OnDestroy {
       defaultSortDir: this.defaultSortDir,
       sortOrder: this.sortOrder ?? 0,
       autoDetectColumns: this.autoDetectColumns,
+      columns: this.autoDetectColumns ? undefined : this.columns,
       grantRoles: this.selectedGrantRoles.filter(Boolean),
       grantUsernames: this.selectedUsernames.filter(Boolean),
     };
@@ -278,12 +285,14 @@ export class ReportBuilderComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (saved) => {
           this.snack.open(`Report "${saved.name}" saved.`, 'Dismiss', { duration: 2500 });
-          this.detectedColumns = (saved.columns ?? []).map((c) => ({
+          this.columns = (saved.columns ?? []).map((c) => ({ ...c }));
+          this.detectedColumns = this.columns.map((c) => ({
             key: c.key,
             label: c.label ?? c.key,
           }));
           this.editingId = saved.id ?? null;
           this.code = saved.code ?? this.code;
+          this.autoDetectColumns = false;
           this.loadReports();
           void this.menuCatalog.reload();
         },

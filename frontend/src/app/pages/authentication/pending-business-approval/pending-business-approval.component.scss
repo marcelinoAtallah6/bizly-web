@@ -1,0 +1,30 @@
+@import '../auth-page';
+
+:host {
+  display: block;
+}
+
+.card {
+  width: 100%;
+}
+
+.content {
+  padding-top: 8px;
+}
+
+.spinner-row {
+  display: flex;
+  justify-content: center;
+  margin: 8px 0 20px;
+}
+
+.lead {
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 0 0 12px;
+}
+
+.muted {
+  color: rgba(0, 0, 0, 0.6);
+  font-size: 14px;
+}

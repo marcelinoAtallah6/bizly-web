@@ -1,0 +1,24 @@
+<div class="auth-page pending-approval-page">
+  <div class="auth-page__wrap">
+    <div class="auth-page__col">
+      <mat-card class="cardWithShadow auth-page__card card">
+    <mat-card-title>Your account is pending approval</mat-card-title>
+    <mat-card-content class="content">
+      <div class="spinner-row">
+        <mat-spinner diameter="40" mode="indeterminate"></mat-spinner>
+      </div>
+      <p class="lead">
+        Your organisation is being reviewed. You cannot use the portal until a checker approves your
+        business.
+      </p>
+      <p class="muted">You will get full access automatically after approval. You can sign out and try again later.</p>
+    </mat-card-content>
+    <mat-card-actions align="end">
+      <button mat-stroked-button color="primary" type="button" (click)="logout()" [disabled]="loggingOut">
+        {{ loggingOut ? 'Signing out…' : 'Sign out' }}
+      </button>
+    </mat-card-actions>
+      </mat-card>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,40 @@
+export const TRAVEL_BOOKING_STATUSES = ['ENQUIRY', 'QUOTED', 'CONFIRMED', 'CANCELLED', 'COMPLETED'] as const;
+
+export const TRAVEL_VISA_STATUSES = ['PENDING', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'REJECTED'] as const;
+
+export const TRAVEL_VISA_TYPES = ['TOURIST', 'BUSINESS', 'TRANSIT', 'STUDENT', 'OTHER'] as const;
+
+export const TRAVEL_INVOICE_STATUSES = ['DRAFT', 'ISSUED', 'PAID', 'PARTIAL', 'OVERDUE', 'CANCELLED'] as const;
+
+export const TRAVEL_PAYMENT_METHODS = ['CASH', 'CARD', 'BANK_TRANSFER', 'CHEQUE', 'ONLINE'] as const;
+
+export const TRAVEL_FOLLOW_UP_STATUSES = ['OPEN', 'IN_PROGRESS', 'DONE', 'CANCELLED'] as const;
+
+export const TRAVEL_DOCUMENT_TYPES = [
+  'PASSPORT',
+  'VISA',
+  'INVOICE',
+  'TICKET',
+  'INSURANCE',
+  'ID',
+  'CONTRACT',
+  'OTHER',
+] as const;
+
+export const TRAVEL_COMMISSION_RULE_TYPES = ['PERCENT', 'FLAT'] as const;
+
+export const TRAVEL_SUPPLIER_TYPES = ['AIRLINE', 'HOTEL', 'DMC', 'TRANSPORT', 'INSURANCE', 'OTHER'] as const;
+
+export const TRAVEL_RISK_LEVELS = ['LOW', 'MEDIUM', 'HIGH', 'EXTREME'] as const;
+
+export const TRAVEL_TIMELINE_STAGES = [
+  'QUOTATION',
+  'CONFIRMATION',
+  'INVOICING',
+  'TRAVEL',
+  'CLOSURE',
+] as const;
+
+export const TRAVEL_APPROVAL_STATUSES = ['NOT_REQUIRED', 'PENDING', 'APPROVED', 'REJECTED'] as const;
+
+export const TRAVEL_TRIP_REQUEST_STATUSES = ['PENDING', 'QUOTED', 'ACCEPTED', 'REJECTED', 'CONVERTED'] as const;

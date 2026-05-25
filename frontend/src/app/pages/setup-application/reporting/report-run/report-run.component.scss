@@ -1,10 +1,9 @@
-// Report runner page — keeps parity with the rest of the settings pages:
-// outer 24px padding, mat-cards, mat-form-fields with appearance="outline",
-// flat/stroked Material buttons, and theme-aware dark variants via :host-context.
+// Report runner — uses app theme tokens (light / white / dark-mode / dark-blue-mode).
 
 :host {
   display: block;
   padding: 24px;
+  color: var(--textPrimary);
 }
 
 .reporting-page {
@@ -24,11 +23,13 @@
     margin: 8px 0 4px;
     font-size: 22px;
     font-weight: 600;
+    color: var(--textPrimary);
   }
 
   &__intro {
     margin: 0;
     max-width: 640px;
+    color: color-mix(in srgb, var(--textPrimary) 72%, transparent);
   }
 
   &__head-actions {
@@ -45,10 +46,12 @@
 }
 
 .reporting-card {
-  background: var(--mat-app-background-color, #fff);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  background: var(--cardbg);
+  border: 1px solid var(--borderColor);
   border-radius: 12px;
   padding: 16px 18px 18px;
+  color: var(--textPrimary);
+  box-shadow: var(--cardshadow, none);
 
   &__head {
     display: flex;
@@ -73,10 +76,12 @@
     margin: 0;
     font-size: 16px;
     font-weight: 600;
+    color: var(--textPrimary);
   }
 
   &__sub {
     margin: 4px 0 0;
+    color: color-mix(in srgb, var(--textPrimary) 70%, transparent);
   }
 
   &--results {
@@ -102,7 +107,7 @@
   &__label {
     font-size: 12px;
     font-weight: 500;
-    color: rgba(0, 0, 0, 0.7);
+    color: var(--labelText);
     margin-bottom: 2px;
   }
 
@@ -112,37 +117,54 @@
     gap: 8px;
   }
 
-  &--single { width: 100%; }
-  mat-form-field { width: 100%; }
+  &--single {
+    width: 100%;
+  }
+
+  mat-form-field {
+    width: 100%;
+  }
 }
 
 .reporting-table-wrap {
   position: relative;
   overflow-x: auto;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--borderColor);
   border-radius: 10px;
+  background: var(--cardbg);
 }
 
 .reporting-table {
   width: 100%;
   min-width: 720px;
+  background: var(--cardbg);
 
-  th.mat-header-cell {
-    background: rgba(0, 0, 0, 0.03);
+  th.mat-header-cell,
+  th.mat-mdc-header-cell {
+    background: var(--hoverBgColor) !important;
     font-weight: 600;
     font-size: 12.5px;
-    color: rgba(0, 0, 0, 0.85);
+    color: var(--textPrimary) !important;
     user-select: none;
 
     &.is-sortable {
       cursor: pointer;
-      &:hover { background: rgba(33, 150, 243, 0.08); }
+
+      &:hover {
+        background: color-mix(in srgb, var(--primary) 12%, var(--hoverBgColor)) !important;
+      }
     }
   }
 
-  td.mat-cell {
+  td.mat-cell,
+  td.mat-mdc-cell {
     font-size: 13px;
-    color: rgba(0, 0, 0, 0.85);
+    color: var(--textPrimary) !important;
+    border-bottom-color: var(--borderColor) !important;
+  }
+
+  tr.mat-mdc-row:hover {
+    background: var(--hoverBgColor) !important;
   }
 }
 
@@ -159,6 +181,7 @@
   align-items: center;
   gap: 8px;
   padding: 36px 12px;
+  color: var(--textPrimary);
 }
 
 .reporting-empty {
@@ -168,8 +191,19 @@
   gap: 8px;
   padding: 48px 12px;
   text-align: center;
-  h4 { margin: 4px 0 0; font-weight: 600; }
-  p { margin: 0; max-width: 360px; }
+  color: var(--textPrimary);
+
+  h4 {
+    margin: 4px 0 0;
+    font-weight: 600;
+    color: var(--textPrimary);
+  }
+
+  p {
+    margin: 0;
+    max-width: 360px;
+    color: color-mix(in srgb, var(--textPrimary) 70%, transparent);
+  }
 }
 
 .reporting-error {
@@ -178,25 +212,39 @@
   gap: 8px;
   padding: 10px 14px;
   border-radius: 10px;
-  background: rgba(244, 67, 54, 0.08);
-  color: #d32f2f;
+  background: color-mix(in srgb, var(--error) 14%, var(--cardbg));
+  color: var(--error);
   font-size: 13px;
 }
 
-:host-context(.dark-theme),
-:host-context(.dark-blue_theme) {
-  .reporting-card {
-    background: var(--mat-app-background-color, #1f2937);
-    border-color: rgba(255, 255, 255, 0.08);
+:host ::ng-deep {
+  .reporting-card--results mat-paginator {
+    background: var(--cardbg) !important;
+    color: var(--textPrimary);
+    border-top: 1px solid var(--borderColor);
   }
-  .reporting-filter__label { color: rgba(255, 255, 255, 0.72); }
-  .reporting-table {
-    th.mat-header-cell {
-      background: rgba(255, 255, 255, 0.06);
-      color: rgba(255, 255, 255, 0.92);
-      &.is-sortable:hover { background: rgba(96, 165, 250, 0.18); }
-    }
-    td.mat-cell { color: rgba(255, 255, 255, 0.9); }
+
+  .reporting-card--results .mat-mdc-paginator-container {
+    color: var(--textPrimary);
   }
-  .reporting-error { background: rgba(239, 68, 68, 0.18); color: #fca5a5; }
+
+  .reporting-card--results .mat-mdc-paginator-icon {
+    fill: var(--iconColor);
+  }
+
+  .reporting-filters .mat-mdc-text-field-wrapper {
+    background-color: var(--cardbg) !important;
+  }
+
+  .reporting-filters .mdc-text-field--outlined .mdc-notched-outline__leading,
+  .reporting-filters .mdc-text-field--outlined .mdc-notched-outline__notch,
+  .reporting-filters .mdc-text-field--outlined .mdc-notched-outline__trailing {
+    border-color: var(--borderformColor, var(--borderColor)) !important;
+  }
+
+  .reporting-filters .mat-mdc-select-value,
+  .reporting-filters .mat-mdc-input-element,
+  .reporting-filters .mat-mdc-form-field-label {
+    color: var(--textPrimary) !important;
+  }
 }

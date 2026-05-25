@@ -15,7 +15,6 @@ public class UpdateRoleRequest {
 	@Size(max = 100)
 	private String name;
 
-	@NotNull(message = ApiDefaultValdiation.ROLE_TYPE)
 	private Integer roleType;
 
 	public Long getId() {

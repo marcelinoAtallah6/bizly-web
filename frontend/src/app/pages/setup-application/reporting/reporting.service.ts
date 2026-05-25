@@ -108,4 +108,15 @@ export class ReportingService {
       'silent'
     );
   }
+
+  /**
+   * Reports menu ({@code /reports}): ACTIVE reports assigned to the current user/roles only.
+   */
+  listAssignedReports(): Observable<ActiveReportRef[]> {
+    return this.api.postEnvelope<ActiveReportRef[]>(
+      GlobalConstants.API_ENDPOINTS.settings.reporting.viewer.list,
+      {},
+      'errors'
+    );
+  }
 }

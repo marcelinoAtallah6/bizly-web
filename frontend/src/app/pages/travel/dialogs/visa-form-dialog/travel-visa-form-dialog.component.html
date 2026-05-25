@@ -1,0 +1,64 @@
+<h2 mat-dialog-title>{{ isEdit ? 'Edit visa application' : 'New visa application' }}</h2>
+<mat-dialog-content class="travel-dialog-content travel-dialog-content--wide" *ngIf="ready">
+  <div class="travel-visa-layout" [formGroup]="form">
+    <div class="travel-visa-layout__form">
+      <app-travel-entity-picker formControlName="client" entityType="client" label="Client" [required]="true"></app-travel-entity-picker>
+      <p class="travel-visa-hint">Passport details load from the traveler profile — update the client record to change them.</p>
+      <app-travel-entity-picker
+        formControlName="booking"
+        entityType="booking"
+        label="Booking (optional)"
+        [filterBookingByClientId]="filterClientId"
+      ></app-travel-entity-picker>
+      <app-travel-paginated-country-select formControlName="country" label="Destination country" [required]="true"></app-travel-paginated-country-select>
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Visa type</mat-label>
+        <mat-select formControlName="visaType">
+          <mat-option *ngFor="let t of visaTypes" [value]="t">{{ t }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Status</mat-label>
+        <mat-select formControlName="status">
+          <mat-option *ngFor="let s of statusOptions" [value]="s">{{ s }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <div class="row-datetime">
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Submitted</mat-label>
+          <input matInput [matDatepicker]="subDate" formControlName="submittedDate" />
+          <mat-datepicker-toggle matSuffix [for]="subDate"></mat-datepicker-toggle>
+          <mat-datepicker #subDate></mat-datepicker>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full">
+          <mat-label>Decision</mat-label>
+          <input matInput [matDatepicker]="decDate" formControlName="decisionDate" />
+          <mat-datepicker-toggle matSuffix [for]="decDate"></mat-datepicker-toggle>
+          <mat-datepicker #decDate></mat-datepicker>
+        </mat-form-field>
+      </div>
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Notes</mat-label>
+        <textarea matInput formControlName="notes" rows="2"></textarea>
+      </mat-form-field>
+    </div>
+    <aside class="travel-visa-layout__preview">
+      <div class="travel-visa-stamp" [ngClass]="'travel-visa-stamp--' + visaStatusClass">
+        <span class="travel-visa-stamp__country">{{ form.get('country')?.value || 'Destination' }}</span>
+        <div class="travel-visa-stamp__meta">
+          <span class="travel-visa-stamp__type">{{ form.get('visaType')?.value || 'Type' }}</span>
+          <span class="travel-visa-stamp__status">{{ form.get('status')?.value || 'Status' }}</span>
+        </div>
+      </div>
+      <app-travel-passport-preview
+        [title]="'VISA · ' + (form.get('country')?.value || '—')"
+        subtitle="Passport from traveler profile"
+        [data]="passportPreview"
+      ></app-travel-passport-preview>
+    </aside>
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" (click)="cancel()">Cancel</button>
+  <button mat-flat-button color="primary" type="button" (click)="save()" [disabled]="saving || !ready">Save</button>
+</mat-dialog-actions>

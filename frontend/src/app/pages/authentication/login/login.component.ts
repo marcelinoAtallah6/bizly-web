@@ -7,14 +7,17 @@ import { SocialAuthService } from 'src/app/services/social-auth.service';
 import { UserProfileService } from 'src/app/services/user-profile.service';
 import { MenuCatalogService } from 'src/app/services/menu-catalog.service';
 import { UserFavoritesService } from 'src/app/services/user-favorites.service';
+import { MenuPermissionService } from 'src/app/services/menu-permission.service';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
+  styleUrls: ['./login.component.scss'],
 })
 export class AppSideLoginComponent {
   isLoading = false;
   errorMessage = '';
+  hidePassword = true;
 
   loginForm = this.formBuilder.group({
     username: ['', [Validators.required]],
@@ -29,6 +32,7 @@ export class AppSideLoginComponent {
     private readonly userProfile: UserProfileService,
     private readonly menuCatalog: MenuCatalogService,
     private readonly favorites: UserFavoritesService,
+    private readonly menuPerm: MenuPermissionService,
     private readonly router: Router
   ) {}
 
@@ -51,7 +55,7 @@ export class AppSideLoginComponent {
       .pipe(finalize(() => (this.isLoading = false)))
       .subscribe({
         next: () => {
-          this.userProfile.refresh();
+          this.userProfile.refresh(true);
           void this.routeAfterLogin();
         },
         error: (error) => {
@@ -62,47 +66,32 @@ export class AppSideLoginComponent {
   }
 
   /**
-   * Social-login click handler. Drives the real Google Identity Services / Facebook JS SDK
-   * popup (no token prompt). The provider returns a verified ID token / access token, which
-   * we POST to {@code /auth/social/<provider>}; the backend re-verifies it with the provider
-   * before issuing a Bizly JWT.
-   *
-   * Flow per provider:
-   *   - Google   → ID token via Google One-Tap popup.
-   *   - Facebook → access token via FB.login.
-   *   - Apple    → not yet configured.
-   *
-   * If the email is unknown to Bizly, the backend auto-provisions the user with
-   * {@code first_login = 1} and {@code business_id = null}; the {@code OnboardingGuard}
-   * then funnels them to {@code /authentication/register-business} to finish setup.
+   * Google sign-in. The provider returns a verified ID token, which we POST to
+   * {@code /auth/social/google}; the backend re-verifies it before issuing a Bizly JWT.
+   * New users without a business are routed to register-business.
    */
-  async signInWithProvider(provider: 'google' | 'facebook' | 'apple'): Promise<void> {
+  async signInWithGoogle(): Promise<void> {
     this.errorMessage = '';
     this.isLoading = true;
     try {
-      let result;
-      switch (provider) {
-        case 'google':   result = await this.socialAuth.signInWithGoogle();   break;
-        case 'facebook': result = await this.socialAuth.signInWithFacebook(); break;
-        case 'apple':    result = await this.socialAuth.signInWithApple();   break;
-      }
+      const result = await this.socialAuth.signInWithGoogle();
       const rememberDevice = this.loginForm.controls.rememberDevice.value ?? true;
       this.authService
-        .socialLogin(provider, result.idToken ?? null, result.accessToken ?? null, rememberDevice)
+        .socialLogin('google', result.idToken ?? null, result.accessToken ?? null, rememberDevice)
         .pipe(finalize(() => (this.isLoading = false)))
         .subscribe({
           next: () => {
-            this.userProfile.refresh();
+            this.userProfile.refresh(true);
             void this.routeAfterLogin();
           },
           error: (error) => {
             this.errorMessage =
-              error?.error?.message ?? `Sign-in with ${provider} failed.`;
+              error?.error?.message ?? 'Sign-in with Google failed.';
           },
         });
     } catch (e) {
       this.isLoading = false;
-      this.errorMessage = e instanceof Error ? e.message : `Sign-in with ${provider} failed.`;
+      this.errorMessage = e instanceof Error ? e.message : 'Sign-in with Google failed.';
     }
   }
 
@@ -141,6 +130,11 @@ export class AppSideLoginComponent {
       console.warn('[LOGIN] /auth/me failed; relying on cached session state', err);
     }
 
+    if (this.authService.getCachedPendingBusinessApproval()) {
+      this.router.navigateByUrl('/authentication/pending-business-approval');
+      return;
+    }
+
     if (firstLogin) {
       this.router.navigateByUrl('/authentication/welcome');
       return;
@@ -150,7 +144,10 @@ export class AppSideLoginComponent {
       return;
     }
 
-    let target = '/dashboard';
+    /* Default landing comes from {@link MenuPermissionService#landingRoute} — admin → /dashboard,
+     * BUSINESS with permissions → first accessible screen, BUSINESS with empty matrix →
+     * /no-access. A pinned favorite still wins when it points to a screen the role can reach. */
+    let target = this.menuPerm.landingRoute();
     try {
       const defaultRoute = await this.favorites.fetchDefaultRoute();
       if (defaultRoute) {
@@ -160,7 +157,7 @@ export class AppSideLoginComponent {
         }
       }
     } catch (err) {
-      console.warn('[LOGIN] failed to resolve default screen, falling back to dashboard', err);
+      console.warn('[LOGIN] failed to resolve default screen, falling back to landingRoute()', err);
     }
     this.router.navigateByUrl(target);
   }

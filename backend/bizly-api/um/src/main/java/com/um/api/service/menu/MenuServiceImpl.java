@@ -1,6 +1,7 @@
 package com.um.api.service.menu;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -17,14 +18,19 @@ import com.um.api.model.menu.UmApplication;
 import com.um.api.model.menu.UmMenu;
 import com.um.api.model.role.RoleMenuPermission;
 import com.um.api.repository.menu.UmApplicationRepository;
+import com.um.api.repository.menu.UmMenuRepository;
 import com.um.api.repository.role.RoleMenuPermissionRepository;
 import com.um.api.service.security.MenuPermissionService;
+import com.um.security.BusinessContextHolder;
 
 @Service
 public class MenuServiceImpl implements IMenuService {
 
 	@Autowired
 	private UmApplicationRepository applicationRepository;
+
+	@Autowired
+	private UmMenuRepository menuRepository;
 
 	@Autowired
 	private RoleMenuPermissionRepository permissionRepository;
@@ -37,7 +43,13 @@ public class MenuServiceImpl implements IMenuService {
 
 		Set<String> grantedRoles = menuPermissionService.currentNormalizedRoles();
 		List<Long> assignedRoleIds = menuPermissionService.resolveAllAssignedRoleIds();
-		boolean strict = assignedRoleIds.stream().anyMatch(id -> permissionRepository.countByIdRoleId(id) > 0);
+		/* Strict-mode is decided by role LEVEL, not by whether the active role happens to have rows.
+		 * Without this rule a BUSINESS role with zero entries in {@code UM_ROLE_MENU_PERM} would fall
+		 * back to "show every menu", which is exactly the bug where switching to an empty role still
+		 * surfaces the full sidebar. ADMIN-level roles (e.g. SUPER_ADMIN) are trusted across the
+		 * board and continue to receive the unfiltered tree — the server still enforces every API. */
+		boolean adminBypass = BusinessContextHolder.canBypassTenant();
+		boolean strict = !adminBypass;
 
 		Map<Long, MenuPermBits> mergedByMenu = new HashMap<>();
 		Set<Long> viewGrantedIds = new HashSet<>();
@@ -58,7 +70,7 @@ public class MenuServiceImpl implements IMenuService {
 			}
 		}
 
-		List<UmApplication> applications = applicationRepository.findByIsActiveOrderByNameAsc(true);
+		List<UmApplication> applications = applicationRepository.findByIsActiveOrderBySortOrderAscNameAsc(true);
 
 		List<NavGroupItemResponse> groups = new ArrayList<>();
 
@@ -75,10 +87,18 @@ public class MenuServiceImpl implements IMenuService {
 			group.setRoute(app.getRoute());
 			group.setDescription(app.getDescription());
 
-			group.setMenus(buildMenuTree(app.getMenus(), grantedRoles, strict, viewGrantedIds, mergedByMenu));
+			List<UmMenu> flatMenus = menuRepository.findByApplicationIdOrderBySortOrderAscNameAsc(app.getId());
+			group.setMenus(buildNavMenuTree(flatMenus, grantedRoles, strict, viewGrantedIds, mergedByMenu, flatMenus));
 
-			if (group.getMenus().isEmpty() && app.getRoute() == null) {
-				continue;
+			/* Drop empty groups. In strict (BUSINESS) mode we ALWAYS drop them, even when the
+			 * application itself has a {@code route} like {@code /dashboard} — application rows
+			 * have no entry in {@code UM_ROLE_MENU_PERM}, so a standalone app-route can never be
+			 * permission-checked and would otherwise leak through as a "free" sidebar entry. In
+			 * admin-bypass mode we keep the legacy fallback so standalone apps still render. */
+			if (group.getMenus().isEmpty()) {
+				if (strict || app.getRoute() == null) {
+					continue;
+				}
 			}
 
 			groups.add(group);
@@ -115,54 +135,49 @@ public class MenuServiceImpl implements IMenuService {
 		return false;
 	}
 
-	private boolean menuPasses(UmMenu menu, Set<String> grantedRoles, boolean strict, Set<Long> viewGrantedIds) {
+	private boolean menuPasses(UmMenu menu, Set<String> grantedRoles, boolean strict, Set<Long> viewGrantedIds,
+			List<UmMenu> flatMenus) {
 		if (!visibleForRoles(menu.getAllowedRoles(), grantedRoles)) {
 			return false;
 		}
 		if (!strict) {
 			return true;
 		}
-		return subtreeContainsAllowedView(menu, viewGrantedIds);
+		return subtreeContainsAllowedView(menu, viewGrantedIds, flatMenus);
 	}
 
-	private boolean subtreeContainsAllowedView(UmMenu menu, Set<Long> viewGrantedIds) {
+	private boolean subtreeContainsAllowedView(UmMenu menu, Set<Long> viewGrantedIds, List<UmMenu> flatMenus) {
 		if (viewGrantedIds.contains(menu.getId())) {
 			return true;
 		}
-		if (menu.getMenus() == null) {
-			return false;
-		}
-		for (UmMenu child : menu.getMenus()) {
-			if (!Boolean.TRUE.equals(child.getIsActive())) {
+		Long id = menu.getId();
+		for (UmMenu candidate : flatMenus) {
+			if (!Boolean.TRUE.equals(candidate.getIsActive())) {
 				continue;
 			}
-			if (subtreeContainsAllowedView(child, viewGrantedIds)) {
+			Long parentId = MenuTreeSupport.parentIdOf(candidate);
+			if (id.equals(parentId) && subtreeContainsAllowedView(candidate, viewGrantedIds, flatMenus)) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	private List<NavMenuItemResponse> buildMenuTree(List<UmMenu> menus, Set<String> grantedRoles, boolean strict,
-			Set<Long> viewGrantedIds, Map<Long, MenuPermBits> mergedByMenu) {
-
-		if (menus == null || menus.isEmpty()) {
+	private List<NavMenuItemResponse> buildNavMenuTree(List<UmMenu> flatMenus, Set<String> grantedRoles, boolean strict,
+			Set<Long> viewGrantedIds, Map<Long, MenuPermBits> mergedByMenu, List<UmMenu> flatForPermCheck) {
+		if (flatMenus == null || flatMenus.isEmpty()) {
 			return new ArrayList<>();
 		}
-
-		List<NavMenuItemResponse> result = new ArrayList<>();
-
-		for (UmMenu menu : menus) {
-			if (!Boolean.TRUE.equals(menu.getIsActive())) {
-				continue;
-			}
-			if (!menuPasses(menu, grantedRoles, strict, viewGrantedIds)) {
-				continue;
-			}
-			result.add(toMenuItem(menu, grantedRoles, strict, viewGrantedIds, mergedByMenu));
-		}
-
-		return result;
+		List<NavMenuItemResponse> roots = MenuTreeSupport.buildTree(flatMenus,
+				m -> Boolean.TRUE.equals(m.getIsActive())
+						&& menuPasses(m, grantedRoles, strict, viewGrantedIds, flatForPermCheck),
+				m -> toMenuItem(m, grantedRoles, strict, viewGrantedIds, mergedByMenu),
+				NavMenuItemResponse::getMenus);
+		MenuTreeSupport.sortTree(roots,
+				Comparator.comparing(NavMenuItemResponse::getSortOrder, Comparator.nullsLast(Integer::compareTo))
+						.thenComparing(NavMenuItemResponse::getName, Comparator.nullsLast(String::compareToIgnoreCase)),
+				NavMenuItemResponse::getMenus);
+		return roots;
 	}
 
 	private NavMenuItemResponse toMenuItem(UmMenu entity, Set<String> grantedRoles, boolean strict,
@@ -173,9 +188,11 @@ public class MenuServiceImpl implements IMenuService {
 		dto.setId(entity.getId());
 		dto.setName(entity.getName());
 		dto.setRoute(entity.getRoute());
+		dto.setSortOrder(entity.getSortOrder());
 		dto.setIcon(entity.getIcon());
 		dto.setDescription(entity.getApplication().getDescription());
 		dto.setIsActive(Boolean.TRUE.equals(entity.getIsActive()));
+		dto.setMenus(new ArrayList<>());
 
 		if (strict) {
 			MenuPermBits bits = mergedByMenu.get(entity.getId());
@@ -190,23 +207,6 @@ public class MenuServiceImpl implements IMenuService {
 				dto.setAllowEdit(false);
 				dto.setAllowDelete(false);
 			}
-		}
-
-		if (entity.getMenus() != null && !entity.getMenus().isEmpty()) {
-
-			List<NavMenuItemResponse> childDtos = new ArrayList<>();
-
-			for (UmMenu child : entity.getMenus()) {
-				if (!Boolean.TRUE.equals(child.getIsActive())) {
-					continue;
-				}
-				if (!menuPasses(child, grantedRoles, strict, viewGrantedIds)) {
-					continue;
-				}
-				childDtos.add(toMenuItem(child, grantedRoles, strict, viewGrantedIds, mergedByMenu));
-			}
-
-			dto.setMenus(childDtos);
 		}
 
 		return dto;

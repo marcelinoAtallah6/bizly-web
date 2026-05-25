@@ -16,7 +16,7 @@ const routes: Routes = [
         path: '',
         pathMatch: 'full',
         canActivate: [ModuleIndexGuard],
-        data: { moduleIndex: '/broadcast' },
+        data: { moduleIndex: '/broadcast', moduleIndexDefault: 'messages' },
         children: [],
       },
       {

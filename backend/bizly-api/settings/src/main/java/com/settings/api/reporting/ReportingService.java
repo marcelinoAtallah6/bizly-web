@@ -34,14 +34,11 @@ public class ReportingService {
 	@Autowired
 	private ReportSqlExecutor executor;
 
-	/** Active reports as the type list shown in the runner. */
+	/** Active reports the caller may run (visibility grants applied). */
 	@Transactional(readOnly = true)
 	public List<ReportTypeMeta> listTypes() {
-		List<SettingsReport> active = reportService.listActiveForSidebar().stream()
-				.map(ref -> reportService.getEntity(ref.getId()))
-				.collect(java.util.stream.Collectors.toList());
-		List<ReportTypeMeta> out = new ArrayList<>(active.size());
-		for (SettingsReport r : active) {
+		List<ReportTypeMeta> out = new ArrayList<>();
+		for (SettingsReport r : reportService.listActiveEntitiesForCaller()) {
 			out.add(toMeta(r));
 		}
 		return out;
@@ -65,16 +62,21 @@ public class ReportingService {
 			throw new ServiceException(ApiMessages.REPORTING_TYPE_NOT_FOUND, HttpStatus.NOT_FOUND);
 		}
 		String key = req.getTypeKey().trim();
-		// Accept either the report code (slug) or a numeric id, so the
-		// runner can be linked from either /reporting/run/<id> or by code.
+		SettingsReport report;
+		// Accept either the report code (slug) or a numeric id.
 		if (key.chars().allMatch(Character::isDigit)) {
 			try {
-				return reportService.getEntity(Long.parseLong(key));
+				report = reportService.getEntity(Long.parseLong(key));
 			} catch (NumberFormatException nfe) {
-				// fall through to code lookup
+				report = reportService.getEntityByCode(key);
 			}
+		} else {
+			report = reportService.getEntityByCode(key);
 		}
-		return reportService.getEntityByCode(key);
+		if (!"ACTIVE".equalsIgnoreCase(report.getStatus())) {
+			throw new ServiceException(ApiMessages.REPORTING_TYPE_NOT_FOUND, HttpStatus.NOT_FOUND);
+		}
+		return report;
 	}
 
 	private ReportTypeMeta toMeta(SettingsReport r) {

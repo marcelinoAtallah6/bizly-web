@@ -3,6 +3,7 @@ package com.auth.api.service.social;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -32,29 +33,6 @@ import com.auth.config.Exception.ServiceException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-/**
- * Social-login implementation.
- *
- * <p><strong>Verification status:</strong></p>
- * <ul>
- *   <li><strong>Google</strong> — fully implemented. Verifies the ID token against Google's
- *       {@code tokeninfo} endpoint. Replace with the {@code google-auth-library-java}
- *       client if you prefer offline JWKS validation.</li>
- *   <li><strong>Facebook</strong> — implemented via the Graph API {@code /me} call. Pass the
- *       Facebook user access token in {@code accessToken}.</li>
- *   <li><strong>Apple</strong> — skeleton only. The identity token is a signed JWT that must be
- *       validated against Apple's JWKS at {@code https://appleid.apple.com/auth/keys}. The
- *       email + sub claims are extracted but the signature is currently NOT verified —
- *       you must add Apple JWKS verification before enabling this provider in production.
- *       The method throws {@link ServiceException} until that is done.</li>
- * </ul>
- *
- * <p>For each provider, after verification we resolve the user by email; if a user with that
- * email does not exist we create one with {@code first_login = 1} so the welcome wizard
- * triggers on next page load. The user is then logged in through the standard
- * {@link ILoginService#reissueAccessTokenForUser(Long, String, String)} path so the JWT/session
- * pipeline is identical to email/password login.</p>
- */
 @Service
 public class SocialLoginServiceImpl implements ISocialLoginService {
 
@@ -63,6 +41,13 @@ public class SocialLoginServiceImpl implements ISocialLoginService {
 
 	@Value("${social.google.clientId:}")
 	private String googleClientId;
+
+	/** Outbound call to {@code oauth2.googleapis.com} — 5s was too tight on slow/VPN links. */
+	@Value("${social.google.connect-timeout-ms:15000}")
+	private int googleConnectTimeoutMs;
+
+	@Value("${social.google.read-timeout-ms:30000}")
+	private int googleReadTimeoutMs;
 
 	@Autowired private UserRepository userRepository;
 	@Autowired private SessionRepository sessionRepository;
@@ -83,13 +68,10 @@ public class SocialLoginServiceImpl implements ISocialLoginService {
 
 		ProviderProfile p;
 		String lower = provider.toLowerCase(Locale.ROOT);
-		switch (lower) {
-			case "google":   p = verifyGoogle(req); break;
-			case "facebook": p = verifyFacebook(req); break;
-			case "apple":    p = verifyApple(req); break;
-			default:
-				throw new ServiceException(ApiMessages.SOCIAL_PROVIDER_UNSUPPORTED, HttpStatus.BAD_REQUEST);
+		if (!"google".equals(lower)) {
+			throw new ServiceException(ApiMessages.SOCIAL_PROVIDER_UNSUPPORTED, HttpStatus.BAD_REQUEST);
 		}
+		p = verifyGoogle(req);
 
 		UserEntity user = userRepository.findByEmailIgnoreCase(p.email).orElseGet(() -> createUser(p, lower));
 		// Track provider for the user (idempotent; only changes if different).
@@ -112,16 +94,22 @@ public class SocialLoginServiceImpl implements ISocialLoginService {
 
 	private UserEntity createUser(ProviderProfile p, String provider) {
 		UserEntity u = new UserEntity();
-		u.setUsername(deriveUsernameFromEmail(p.email));
+		u.setUsername(allocateUsernameFromProviderProfile(p, provider));
 		u.setFirstName(p.firstName != null ? p.firstName : "");
 		u.setLastName(p.lastName != null ? p.lastName : "");
 		u.setEmail(p.email);
 		u.setPassword(BCrypt.hashpw(UUID.randomUUID().toString(), BCrypt.gensalt())); // disabled local password
 		u.setFailedLoginAttempts(0);
 		u.setAccountLocked(false);
-		u.setFirstLogin(1);
+		// firstLogin=0 on purpose: the welcome wizard exists to make admin-issued temp passwords
+		// rotate; a social user has no temp password to rotate. The SPA's OnboardingGuard will
+		// detect business_id == null and funnel the user to /authentication/register-business,
+		// which is the right next step for the Google flow.
+		u.setFirstLogin(0);
 		u.setAuthProvider(provider.toUpperCase(Locale.ROOT));
 		u.setProviderUserId(p.providerUserId);
+		u.setStatus("ACTIVE");
+		u.setMobileNumber("-");
 		return userRepository.save(u);
 	}
 
@@ -145,32 +133,19 @@ public class SocialLoginServiceImpl implements ISocialLoginService {
 
 	private ProviderProfile verifyGoogle(SocialLoginRequest req) {
 		try {
-			String token = req.getIdToken();
-			URL url = new URL("https://oauth2.googleapis.com/tokeninfo?id_token=" + URLEncoder.encode(token, StandardCharsets.UTF_8));
-			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-			conn.setRequestMethod("GET");
-			conn.setConnectTimeout(5000);
-			conn.setReadTimeout(5000);
-			if (conn.getResponseCode() != 200) {
-				throw new ServiceException(ApiMessages.SOCIAL_TOKEN_INVALID, HttpStatus.UNAUTHORIZED);
+			for (int attempt = 0; attempt < 2; attempt++) {
+				try {
+					return verifyGoogleTokenInfoOnce(req.getIdToken());
+				} catch (SocketTimeoutException e) {
+					if (attempt == 0) {
+						log.warn("[SOCIAL_GOOGLE] tokeninfo read timed out (attempt {}), retrying once — connect={}ms read={}ms",
+								attempt + 1, googleConnectTimeoutMs, googleReadTimeoutMs);
+						continue;
+					}
+					throw e;
+				}
 			}
-			JsonNode body = M.readTree(readAll(conn));
-			String aud = textOrNull(body, "aud");
-			String email = textOrNull(body, "email");
-			String emailVerified = textOrNull(body, "email_verified");
-			if (!isBlank(googleClientId) && (aud == null || !aud.equals(googleClientId))) {
-				log.warn("[SECURITY_EVENT][SOCIAL_GOOGLE_REJECTED] reason=audience_mismatch aud={}", aud);
-				throw new ServiceException(ApiMessages.SOCIAL_TOKEN_INVALID, HttpStatus.UNAUTHORIZED);
-			}
-			if (email == null || !"true".equalsIgnoreCase(emailVerified)) {
-				throw new ServiceException(ApiMessages.SOCIAL_TOKEN_INVALID, HttpStatus.UNAUTHORIZED);
-			}
-			ProviderProfile p = new ProviderProfile();
-			p.email = email;
-			p.providerUserId = textOrNull(body, "sub");
-			p.firstName = textOrNull(body, "given_name");
-			p.lastName = textOrNull(body, "family_name");
-			return p;
+			throw new IllegalStateException("unreachable");
 		} catch (ServiceException e) {
 			throw e;
 		} catch (Exception e) {
@@ -179,48 +154,39 @@ public class SocialLoginServiceImpl implements ISocialLoginService {
 		}
 	}
 
-	private ProviderProfile verifyFacebook(SocialLoginRequest req) {
-		try {
-			String token = req.getAccessToken() != null ? req.getAccessToken() : req.getIdToken();
-			URL url = new URL("https://graph.facebook.com/me?fields=id,email,first_name,last_name&access_token="
-					+ URLEncoder.encode(token, StandardCharsets.UTF_8));
-			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-			conn.setRequestMethod("GET");
-			conn.setConnectTimeout(5000);
-			conn.setReadTimeout(5000);
-			if (conn.getResponseCode() != 200) {
-				throw new ServiceException(ApiMessages.SOCIAL_TOKEN_INVALID, HttpStatus.UNAUTHORIZED);
-			}
-			JsonNode body = M.readTree(readAll(conn));
-			String email = textOrNull(body, "email");
-			if (email == null) {
-				throw new ServiceException(ApiMessages.SOCIAL_TOKEN_INVALID, HttpStatus.UNAUTHORIZED);
-			}
-			ProviderProfile p = new ProviderProfile();
-			p.email = email;
-			p.providerUserId = textOrNull(body, "id");
-			p.firstName = textOrNull(body, "first_name");
-			p.lastName = textOrNull(body, "last_name");
-			return p;
-		} catch (ServiceException e) {
-			throw e;
-		} catch (Exception e) {
-			log.warn("[SOCIAL_FACEBOOK] verification failed", e);
+	/**
+	 * Verifies the ID token against Google's tokeninfo endpoint. Timeouts are generous
+	 * because {@code oauth2.googleapis.com} can exceed 5s on congested networks; a single
+	 * retry on {@link SocketTimeoutException} covers transient stalls.
+	 */
+	private ProviderProfile verifyGoogleTokenInfoOnce(String idToken) throws Exception {
+		URL url = new URL("https://oauth2.googleapis.com/tokeninfo?id_token="
+				+ URLEncoder.encode(idToken, StandardCharsets.UTF_8));
+		HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+		conn.setRequestMethod("GET");
+		conn.setConnectTimeout(googleConnectTimeoutMs);
+		conn.setReadTimeout(googleReadTimeoutMs);
+		conn.setUseCaches(false);
+		if (conn.getResponseCode() != 200) {
 			throw new ServiceException(ApiMessages.SOCIAL_TOKEN_INVALID, HttpStatus.UNAUTHORIZED);
 		}
-	}
-
-	/**
-	 * Apple identity-token verification stub. Production usage requires verifying the JWT signature
-	 * against Apple's JWKS endpoint (https://appleid.apple.com/auth/keys) and checking the
-	 * {@code iss}, {@code aud}, and {@code exp} claims. We refuse the request until that is wired up
-	 * so a forged token cannot grant access.
-	 */
-	private ProviderProfile verifyApple(SocialLoginRequest req) {
-		log.warn("[SECURITY_EVENT][SOCIAL_APPLE_REJECTED] reason=verifier_not_configured");
-		throw new ServiceException(
-				"Apple sign-in is not yet wired up — provide a JWKS verifier in SocialLoginServiceImpl.verifyApple",
-				HttpStatus.NOT_IMPLEMENTED);
+		JsonNode body = M.readTree(readAll(conn));
+		String aud = textOrNull(body, "aud");
+		String email = textOrNull(body, "email");
+		String emailVerified = textOrNull(body, "email_verified");
+		if (!isBlank(googleClientId) && (aud == null || !aud.equals(googleClientId))) {
+			log.warn("[SECURITY_EVENT][SOCIAL_GOOGLE_REJECTED] reason=audience_mismatch aud={}", aud);
+			throw new ServiceException(ApiMessages.SOCIAL_TOKEN_INVALID, HttpStatus.UNAUTHORIZED);
+		}
+		if (email == null || !"true".equalsIgnoreCase(emailVerified)) {
+			throw new ServiceException(ApiMessages.SOCIAL_TOKEN_INVALID, HttpStatus.UNAUTHORIZED);
+		}
+		ProviderProfile p = new ProviderProfile();
+		p.email = email;
+		p.providerUserId = textOrNull(body, "sub");
+		p.firstName = textOrNull(body, "given_name");
+		p.lastName = textOrNull(body, "family_name");
+		return p;
 	}
 
 	/* --------------------------- helpers --------------------------- */
@@ -246,9 +212,52 @@ public class SocialLoginServiceImpl implements ISocialLoginService {
 
 	private static boolean isBlank(String s) { return s == null || s.isBlank(); }
 
-	private static String deriveUsernameFromEmail(String email) {
-		int at = email.indexOf('@');
-		String base = at > 0 ? email.substring(0, at) : email;
-		return base.toLowerCase(Locale.ROOT) + "_" + UUID.randomUUID().toString().substring(0, 6);
+	/**
+	 * Google: username is the email local-part (sanitized); a numeric suffix is only appended if
+	 * that base is already taken. Other providers keep the prior given-name + family-name rule.
+	 */
+	private String allocateUsernameFromProviderProfile(ProviderProfile p, String provider) {
+		String base;
+		if ("google".equalsIgnoreCase(provider) && !isBlank(p.email)) {
+			int at = p.email.indexOf('@');
+			String local = at > 0 ? p.email.substring(0, at) : p.email;
+			base = lettersDigitsDotOnly(local);
+		} else {
+			String fn = p.firstName == null ? "" : p.firstName.trim();
+			String ln = p.lastName == null ? "" : p.lastName.trim();
+			String merged = (fn + ln).replaceAll("\\s+", "");
+			if (merged.isEmpty()) {
+				merged = "User";
+			}
+			base = lettersDigitsDotOnly(merged);
+		}
+		if (base.isBlank()) {
+			base = "User";
+		}
+		if (base.length() < 4) {
+			base = base + "User";
+		}
+		if (base.length() > 60) {
+			base = base.substring(0, 60);
+		}
+		String candidate = base;
+		int n = 2;
+		while (userRepository.existsByUsername(candidate)) {
+			String suffix = String.valueOf(n++);
+			int keep = Math.max(4, 64 - suffix.length());
+			candidate = base.substring(0, Math.min(base.length(), keep)) + suffix;
+		}
+		return candidate;
+	}
+
+	private static String lettersDigitsDotOnly(String s) {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < s.length(); i++) {
+			char c = s.charAt(i);
+			if (Character.isLetter(c) || Character.isDigit(c) || c == '.') {
+				sb.append(c);
+			}
+		}
+		return sb.toString();
 	}
 }

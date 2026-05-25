@@ -5,13 +5,18 @@ import javax.validation.Valid;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.um.api.dto.user.profile.UpdateProfileSelfRequest;
 import com.um.api.dto.user.add.AddUserRequest;
 import com.um.api.dto.user.add.AddUserResponse;
 import com.um.api.dto.user.delete.DeleteUserRequest;
@@ -28,6 +33,7 @@ import com.um.api.service.user.IUserService;
 import com.um.common.ApiMessages;
 import com.um.common.ApiResponse;
 import com.um.common.PageResponse;
+import com.um.exception.ServiceException;
 
 @RestController
 @RequestMapping("/user")
@@ -82,5 +88,22 @@ public class UserController {
 
 		log.info("[UM_USER][GETS] page={} size={}", request.getPageNumber(), request.getPageSize());
 		return ResponseEntity.ok(ApiResponse.success(service.gets(request), ApiMessages.SUCCESS));
+	}
+
+	/**
+	 * Self-service profile update (first / last / phone / optional photo). Identity fields
+	 * (email, provider, google id) are never changed here — see {@link IUserService#updateSelfProfile}.
+	 */
+	@PutMapping("/update-profile")
+	public @ResponseBody ResponseEntity<ApiResponse<UpdateUserResponse>> updateSelfProfile(
+			@RequestBody @Valid UpdateProfileSelfRequest request) {
+
+		Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+		if (auth == null || auth.getName() == null || auth.getName().isBlank()) {
+			throw new ServiceException(ApiMessages.USER_NOT_FOUND, HttpStatus.UNAUTHORIZED);
+		}
+		log.info("[UM_USER][SELF_PROFILE] user={}", auth.getName());
+		return ResponseEntity.ok(ApiResponse.success(service.updateSelfProfile(auth.getName(), request),
+				ApiMessages.USER_UPDATED));
 	}
 }

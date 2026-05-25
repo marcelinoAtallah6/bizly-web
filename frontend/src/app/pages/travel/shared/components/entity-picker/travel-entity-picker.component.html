@@ -1,0 +1,31 @@
+<mat-form-field appearance="outline" class="travel-entity-picker full">
+  <mat-label>{{ label }}</mat-label>
+  <input
+    matInput
+    type="text"
+    [formControl]="searchCtrl"
+    [matAutocomplete]="auto"
+    [required]="required"
+    [placeholder]="hint"
+    (blur)="onInputBlur()"
+  />
+  <button
+    *ngIf="selected && !disabled"
+    matSuffix
+    mat-icon-button
+    type="button"
+    aria-label="Clear"
+    (click)="clear()"
+  >
+    <mat-icon>close</mat-icon>
+  </button>
+  <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onOptionSelected($event.option.value)">
+    <mat-option *ngIf="loading" disabled>Loading…</mat-option>
+    <mat-option *ngFor="let p of filtered" [value]="p">
+      <span class="travel-entity-picker__primary">{{ p.primaryLabel }}</span>
+      <span *ngIf="p.secondaryLabel" class="travel-entity-picker__secondary">{{ p.secondaryLabel }}</span>
+    </mat-option>
+    <mat-option *ngIf="!loading && filtered.length === 0" disabled>No matches</mat-option>
+  </mat-autocomplete>
+  <mat-hint>{{ hint }}</mat-hint>
+</mat-form-field>

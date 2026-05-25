@@ -10,7 +10,15 @@
             <dd>{{ role.id }}</dd>
             <dt>Name</dt>
             <dd>{{ role.name }}</dd>
-            <dt>Role type</dt>
+            <dt>Level</dt>
+            <dd>{{ role.roleLevelCode ?? '—' }}</dd>
+            <dt>Kind</dt>
+            <dd>{{ role.roleKind ?? '—' }}</dd>
+            <dt *ngIf="role.parentRoleId != null">Parent role ID</dt>
+            <dd *ngIf="role.parentRoleId != null">{{ role.parentRoleId }}</dd>
+            <dt *ngIf="role.businessId != null">Business ID</dt>
+            <dd *ngIf="role.businessId != null">{{ role.businessId }}</dd>
+            <dt>Role type code</dt>
             <dd>{{ role.roleType ?? '—' }}</dd>
             <dt>Created</dt>
             <dd>{{ role.createdAt ?? '—' }}</dd>

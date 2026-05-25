@@ -1,0 +1,18 @@
+<div
+  class="travel-kpi-strip"
+  [class.travel-kpi-strip--horizontal]="horizontal"
+  *ngIf="items.length"
+>
+  <div
+    class="travel-kpi-card"
+    *ngFor="let k of items"
+    [ngClass]="k.tone ? 'travel-kpi-card--' + k.tone : 'travel-kpi-card--default'"
+  >
+    <div class="travel-kpi-card__head">
+      <mat-icon *ngIf="k.icon" class="travel-kpi-card__icon">{{ k.icon }}</mat-icon>
+      <p class="travel-kpi-card__label">{{ k.label }}</p>
+    </div>
+    <p class="travel-kpi-card__value">{{ k.value }}</p>
+    <p class="travel-kpi-card__hint" *ngIf="k.hint">{{ k.hint }}</p>
+  </div>
+</div>

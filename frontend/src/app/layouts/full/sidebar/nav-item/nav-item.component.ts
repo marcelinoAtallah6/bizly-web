@@ -11,7 +11,7 @@ import { NavService } from '../../../../services/nav.service';
 export class AppNavItemComponent implements OnChanges {
   @Input() item: NavItem | any;
   @Input() depth: any;
-  expandedItems: { [key: string]: boolean } = {};
+  expandedItems: { [key: number]: boolean } = {};
 
   constructor(public navService: NavService, public router: Router) {
     if (this.depth === undefined) {
@@ -22,14 +22,30 @@ export class AppNavItemComponent implements OnChanges {
   ngOnChanges() {
   }
 
+  tablerIcon(icon: string | null | undefined): string | null {
+    if (icon == null) {
+      return null;
+    }
+    const t = icon.trim();
+    if (t.length < 2 || !/^[a-z][a-z0-9-]*$/i.test(t)) {
+      return null;
+    }
+    return t;
+  }
+
   onItemSelected(item: NavItem) {
-    //set the menus child with there values
-    // this.sharedService.setMenus(item.menus);
+    if (item.menus?.length) {
+      return;
+    }
+    const route = (item.route ?? '').trim();
+    if (!route) {
+      return;
+    }
+    const url = route.startsWith('/') ? route : `/${route}`;
+    this.router.navigateByUrl(url).catch(() => {
+      /* invalid or unknown route — avoid freezing the app with unhandled router errors */
+    });
 
-    //navigate
-    this.router.navigate([item.route]);
-
-    // scroll
     document.querySelector('.page-wrapper')?.scroll({
       top: 0,
       left: 0,
@@ -37,14 +53,20 @@ export class AppNavItemComponent implements OnChanges {
   }
 
   toggleSubMenu(item: any, event: Event) {
-    event.stopPropagation(); // Prevent click from propagating
+    event.stopPropagation();
     if (item.menus?.length) {
-      this.expandedItems[item.name] = !this.expandedItems[item.name];
+      const key = this.expandKey(item);
+      this.expandedItems[key] = !this.expandedItems[key];
     } else {
       this.onItemSelected(item);
     }
   }
+
   isExpanded(item: any): boolean {
-    return this.expandedItems[item.name] || false;
+    return this.expandedItems[this.expandKey(item)] || false;
+  }
+
+  private expandKey(item: any): number {
+    return item?.id != null ? Number(item.id) : 0;
   }
 }

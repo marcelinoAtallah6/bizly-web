@@ -1,0 +1,17 @@
+<div class="p-24 travel-page">
+  <h2 class="m-b-16">Payments & invoicing</h2>
+  <app-travel-kpi-strip *ngIf="!loading" [items]="financeKpis"></app-travel-kpi-strip>
+  <mat-spinner *ngIf="loading" diameter="32"></mat-spinner>
+  <mat-tab-group animationDuration="0ms">
+    <mat-tab label="Invoices">
+      <div class="p-t-16">
+        <app-travel-invoice-list></app-travel-invoice-list>
+      </div>
+    </mat-tab>
+    <mat-tab label="Payments">
+      <div class="p-t-16">
+        <app-travel-payment-list></app-travel-payment-list>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

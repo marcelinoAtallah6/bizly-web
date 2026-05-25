@@ -15,6 +15,9 @@
     [defaultColDef]="defaultColDef"
     [context]="gridContext"
     [animateRows]="true"
+    [pagination]="gridPagination.pagination"
+    [paginationPageSize]="gridPagination.paginationPageSize"
+    [paginationPageSizeSelector]="gridPagination.paginationPageSizeSelector"
     (gridReady)="onGridReady($event)"
     (rowDoubleClicked)="onRowDoubleClicked($event)"
   ></ag-grid-angular>

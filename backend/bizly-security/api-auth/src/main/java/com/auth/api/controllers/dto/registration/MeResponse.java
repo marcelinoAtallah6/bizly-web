@@ -14,6 +14,13 @@ public class MeResponse {
 	private String firstName;
 	private String lastName;
 
+	/** Mirrors {@code um_user.mobile_number} for profile / shell forms. */
+	private String mobileNumber;
+
+	/** Present when the profile photo is small enough for the SPA shell; otherwise empty (use /auth/me/avatar). */
+	private String profileImageMime;
+	private String profileImageBase64;
+
 	private Boolean firstLogin;
 	private Long businessId;
 	private String businessName;
@@ -23,6 +30,12 @@ public class MeResponse {
 
 	/** True when the current account can register a brand new business. */
 	private Boolean canRegisterBusiness;
+
+	/** Raw {@code um_business.status} when the user belongs to a tenant. */
+	private String businessStatus;
+
+	/** Convenience flag derived from {@link #businessStatus} for the SPA shell. */
+	private Boolean pendingBusinessApproval;
 
 	public Long getUserId() { return userId; }
 	public void setUserId(Long userId) { this.userId = userId; }
@@ -38,6 +51,15 @@ public class MeResponse {
 
 	public String getLastName() { return lastName; }
 	public void setLastName(String lastName) { this.lastName = lastName; }
+
+	public String getMobileNumber() { return mobileNumber; }
+	public void setMobileNumber(String mobileNumber) { this.mobileNumber = mobileNumber; }
+
+	public String getProfileImageMime() { return profileImageMime; }
+	public void setProfileImageMime(String profileImageMime) { this.profileImageMime = profileImageMime; }
+
+	public String getProfileImageBase64() { return profileImageBase64; }
+	public void setProfileImageBase64(String profileImageBase64) { this.profileImageBase64 = profileImageBase64; }
 
 	public Boolean getFirstLogin() { return firstLogin; }
 	public void setFirstLogin(Boolean firstLogin) { this.firstLogin = firstLogin; }
@@ -56,4 +78,12 @@ public class MeResponse {
 
 	public Boolean getCanRegisterBusiness() { return canRegisterBusiness; }
 	public void setCanRegisterBusiness(Boolean canRegisterBusiness) { this.canRegisterBusiness = canRegisterBusiness; }
+
+	public String getBusinessStatus() { return businessStatus; }
+	public void setBusinessStatus(String businessStatus) { this.businessStatus = businessStatus; }
+
+	public Boolean getPendingBusinessApproval() { return pendingBusinessApproval; }
+	public void setPendingBusinessApproval(Boolean pendingBusinessApproval) {
+		this.pendingBusinessApproval = pendingBusinessApproval;
+	}
 }

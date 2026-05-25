@@ -1,0 +1,27 @@
+<div class="travel-file-row">
+  <div class="travel-file-row__preview" *ngIf="showPreview && (previewUrl || (displayName && !isImage))">
+    <img
+      *ngIf="previewUrl && isImage"
+      [src]="previewUrl"
+      alt="Preview"
+      class="travel-file-row__thumb"
+    />
+    <div class="travel-file-row__file-icon" *ngIf="displayName && !isImage">
+      <mat-icon>picture_as_pdf</mat-icon>
+    </div>
+    <div class="travel-file-row__hover" *ngIf="previewUrl && isImage">
+      <img [src]="previewUrl" alt="" />
+    </div>
+  </div>
+  <span class="travel-file-row__name" [class.travel-file-row__name--empty]="!displayName">
+    <mat-icon>{{ isImage ? 'image' : 'insert_drive_file' }}</mat-icon>
+    <span class="travel-file-row__name-text">{{ displayName || 'No file selected' }}</span>
+  </span>
+  <input #fileInput type="file" class="travel-file-row__input" [accept]="accept" (change)="onFile($event)" />
+  <button mat-stroked-button type="button" color="primary" class="travel-btn" (click)="fileInput.click()">
+    <mat-icon>upload_file</mat-icon>
+    {{ label }}
+  </button>
+  <button mat-button type="button" class="travel-btn" *ngIf="displayName" (click)="clear()">Clear</button>
+</div>
+<p class="travel-file-row__hint" *ngIf="hint">{{ hint }}</p>

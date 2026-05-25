@@ -8,5 +8,9 @@ import com.auth.api.model.user.RoleEntity;
 
 public interface RoleRepository extends JpaRepository<RoleEntity, Long> {
 
-	Optional<RoleEntity> findByNameIgnoreCase(String name);
+	/**
+	 * Lowest {@code id} wins when duplicate role names exist (avoids NonUniqueResultException during login JWT
+	 * resolution).
+	 */
+	Optional<RoleEntity> findFirstByNameIgnoreCaseOrderByIdAsc(String name);
 }

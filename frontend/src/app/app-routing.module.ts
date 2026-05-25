@@ -5,6 +5,7 @@ import { FullComponent } from './layouts/full/full.component';
 import { AuthGuard } from './guards/auth.guard';
 import { GuestGuard } from './guards/guest.guard';
 import { OnboardingGuard } from './guards/onboarding.guard';
+import { PermissionGuard } from './guards/permission.guard';
 
 const routes: Routes = [
   {
@@ -30,9 +31,22 @@ const routes: Routes = [
       },
       {
         path: 'dashboard',
+        /* PermissionGuard with strict=false treats /dashboard as "allowed by default", but if a
+         * matching matrix row exists it must grant view. Combined with the FE bypass for admin
+         * roles, this means: admin → always allowed; BUSINESS with empty matrix → denied and
+         * redirected to /no-access by the guard's fallback computation. */
+        canActivate: [PermissionGuard],
+        data: { permission: { action: 'view', strict: true } },
         loadChildren: () =>
           import('./pages/dashboard/dashboard.module').then(
             (m) => m.DashboardModule
+          ),
+      },
+      {
+        path: 'no-access',
+        loadChildren: () =>
+          import('./pages/no-access/no-access.module').then(
+            (m) => m.NoAccessModule
           ),
       },
       {
@@ -56,6 +70,11 @@ const routes: Routes = [
         path: 'bm',
         loadChildren: () =>
           import('./pages/bm/bm.module').then((m) => m.BmModule),
+      },
+      {
+        path: 'travel',
+        loadChildren: () =>
+          import('./pages/travel/travel.module').then((m) => m.TravelModule),
       },
       {
         path: 'users',
@@ -127,6 +146,12 @@ const routes: Routes = [
           import('./pages/setup-application/reporting/reporting.module').then(
             (m) => m.ReportingModule
           ),
+      },
+      {
+        // End-user reports viewer (assigned reports only; no builder).
+        path: 'reports',
+        loadChildren: () =>
+          import('./pages/reports/reports.module').then((m) => m.ReportsModule),
       },
       {
         path: 'extra',

@@ -40,6 +40,16 @@ export interface UpdateUserRequest {
   profileImageBase64?: string;
 }
 
+/** com.um.api.dto.user.profile.UpdateProfileSelfRequest */
+export interface UpdateProfileSelfRequest {
+  firstName: string;
+  lastName: string;
+  phoneNumber?: string;
+  profileImageMimeType?: string;
+  profileImageBase64?: string;
+  clearProfileImage?: boolean;
+}
+
 /** com.um.api.dto.user.delete.DeleteUserRequest */
 export interface DeleteUserRequest {
   id: number;
@@ -56,6 +66,11 @@ export interface GetUserResponse {
   status: string;
   createdAt?: string;
   roleIds?: number[];
+  businessId?: number | null;
+  businessName?: string | null;
+  /** True when this user is the tenant business owner (not a team member). */
+  businessOwner?: boolean;
+  userType?: string;
   profileImageMimeType?: string;
   profileImageBase64?: string;
 }
@@ -82,19 +97,37 @@ export interface DeleteUserResponse {
 export interface GetsRolesRequest {
   pageNumber: number;
   pageSize: number;
+  /** Admin portal: list tenant team roles when acting in a business context. */
+  forBusinessId?: number;
+  /** Admin portal: before a tenant is selected, list global ADMIN_INTERNAL + BUSINESS_TYPE_TEMPLATE roles. */
+  globalTemplatesOnly?: boolean;
+}
+
+/** com.um.api.dto.role.level.RoleLevelResponse */
+export interface RoleLevelResponse {
+  id: number;
+  code: string;
+  name: string;
+  description?: string;
+}
+
+/** com.um.api.dto.role.NextRoleTypeResponse */
+export interface NextRoleTypeResponse {
+  nextRoleType: number;
 }
 
 /** com.um.api.dto.role.add.AddRoleRequest */
 export interface AddRoleRequest {
   name: string;
-  roleType: number;
+  roleLevelId: number;
+  roleType?: number;
 }
 
 /** com.um.api.dto.role.update.UpdateRoleRequest */
 export interface UpdateRoleRequest {
   id: number;
   name: string;
-  roleType: number;
+  roleType?: number;
 }
 
 /** com.um.api.dto.role.delete.DeleteRoleRequest */
@@ -112,7 +145,12 @@ export interface GetRoleResponse {
   id: number;
   name: string;
   roleType?: number;
+  roleLevelId?: number;
+  roleLevelCode?: string;
+  roleKind?: string;
   createdAt?: string;
+  parentRoleId?: number;
+  businessId?: number;
 }
 
 /** com.um.common.PageResponse<GetRoleResponse> */
@@ -131,6 +169,28 @@ export interface UpdateRoleResponse {
 /** com.um.api.dto.role.delete.DeleteRoleResponse */
 export interface DeleteRoleResponse {
   id: number;
+}
+
+/** com.um.api.dto.role.team.TeamRoleResponse */
+export interface TeamRoleResponse {
+  id: number;
+  name: string;
+  parentRoleId?: number;
+  businessId?: number;
+}
+
+/** com.um.api.dto.role.team.ParentRoleOptionResponse */
+export interface ParentRoleOptionResponse {
+  id: number;
+  name: string;
+  optionKind?: string;
+}
+
+/** com.um.api.dto.role.team.CreateTeamRoleRequest */
+export interface CreateTeamRoleRequest {
+  name: string;
+  parentRoleId?: number;
+  sourceTemplateRoleId?: number;
 }
 
 /** com.um.api.dto.audit.GetsAuditLogsRequest */

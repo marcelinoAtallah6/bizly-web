@@ -1,0 +1,79 @@
+.travel-availability-calendar {
+  &__hint {
+    font-size: 13px;
+    opacity: 0.8;
+    margin: 0 0 8px;
+  }
+
+  &__nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  &__month-label {
+    font-weight: 600;
+    min-width: 140px;
+    text-align: center;
+  }
+
+  &__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-size: 12px;
+  }
+
+  &__legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    display: inline-block;
+  }
+}
+
+:host ::ng-deep {
+  .travel-cal-available .mat-calendar-body-cell-content {
+    background: #e8f5e9;
+    border-radius: 50%;
+  }
+
+  .travel-cal-pending .mat-calendar-body-cell-content {
+    background: #fff8e1;
+    border-radius: 50%;
+  }
+
+  .travel-cal-booked .mat-calendar-body-cell-content {
+    background: #ffebee;
+    color: #b71c1c;
+    border-radius: 50%;
+  }
+
+  .travel-cal-unavailable .mat-calendar-body-cell-content {
+    background: #eeeeee;
+    color: #757575;
+    border-radius: 50%;
+  }
+
+  .travel-availability-calendar__swatch.travel-cal-available {
+    background: #66bb6a;
+  }
+  .travel-availability-calendar__swatch.travel-cal-pending {
+    background: #ffca28;
+  }
+  .travel-availability-calendar__swatch.travel-cal-booked {
+    background: #ef5350;
+  }
+  .travel-availability-calendar__swatch.travel-cal-unavailable {
+    background: #bdbdbd;
+  }
+}

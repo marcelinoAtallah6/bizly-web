@@ -1,5 +1,6 @@
 package com.um.api.model.menu;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -9,6 +10,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
@@ -48,18 +50,28 @@ public class UmApplication {
 	@Column(name = "is_active")
 	private Boolean isActive;
 
+	@Column(name = "sort_order")
+	private Integer sortOrder;
+
 	/** Comma-separated role names (with or without ROLE_ prefix). Empty = visible to all roles. */
 	@Column(name = "allowed_roles", length = 512)
 	private String allowedRoles;
 
 	@JsonManagedReference
+	@OrderBy("sortOrder ASC, name ASC")
 	@OneToMany(mappedBy = "application")
 	private List<UmMenu> menus;
 
 	public List<UmMenu> getMenus() {
-		if (menus == null)
+		if (menus == null) {
 			return null;
-		return menus.stream().filter(menu -> menu.getParentMenu() == null).collect(Collectors.toList());
+		}
+		return menus.stream()
+				.filter(menu -> menu.getParentMenu() == null)
+				.sorted(Comparator
+						.comparing(UmMenu::getSortOrder, Comparator.nullsLast(Integer::compareTo))
+						.thenComparing(UmMenu::getName, Comparator.nullsLast(String::compareToIgnoreCase)))
+				.collect(Collectors.toList());
 	}
 
 	public void setMenus(List<UmMenu> menus) {
@@ -112,5 +124,13 @@ public class UmApplication {
 
 	public void setAllowedRoles(String allowedRoles) {
 		this.allowedRoles = allowedRoles;
+	}
+
+	public Integer getSortOrder() {
+		return sortOrder;
+	}
+
+	public void setSortOrder(Integer sortOrder) {
+		this.sortOrder = sortOrder;
 	}
 }

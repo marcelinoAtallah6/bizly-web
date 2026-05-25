@@ -19,8 +19,11 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -61,12 +64,15 @@ import com.auth.api.repository.session.SessionRepository;
 import com.auth.api.repository.user.RoleRepository;
 import com.auth.api.repository.user.UserRepository;
 import com.auth.api.repository.user.UserRoleRepository;
+import com.auth.audit.AuthAuditService;
 import com.auth.common.ApiMessages;
 import com.auth.common.PasswordUtil;
 import com.auth.config.Exception.ServiceException;
 
 @Service
 public class LoginServiceImpl implements ILoginService {
+
+	private static final Logger log = LoggerFactory.getLogger(LoginServiceImpl.class);
 	private static final String RESET_PURPOSE = "PASSWORD_RESET";
 
 	/** Cap embedded avatar base64 so access tokens stay within practical header / cookie limits. */
@@ -142,13 +148,24 @@ public class LoginServiceImpl implements ILoginService {
 	@Autowired(required = false)
 	private JavaMailSender mailSender;
 
+	@Value("${app.registration.require-super-admin-business-approval:true}")
+	private boolean requireSuperAdminBusinessApproval;
+
+	@PostConstruct
+	void logRegistrationConfig() {
+		log.info("[LOGIN][CONFIG] requireSuperAdminBusinessApproval={}", requireSuperAdminBusinessApproval);
+	}
+
 	@Autowired
 	HttpServletRequest request;
+
+	@Autowired
+	private AuthAuditService authAuditService;
 
 	@Override
 	public LoginResponse login(String username, String password) {
 
-		UserEntity user = userRepository.findByUsername(username)
+		UserEntity user = userRepository.findFirstByUsernameOrderByIdAsc(username)
 				.orElseThrow(() -> new ServiceException(ApiMessages.USER_NOT_FOUND, HttpStatus.CONFLICT));
 
 		String decryptedPassword = "";
@@ -170,6 +187,10 @@ public class LoginServiceImpl implements ILoginService {
 				.orElseThrow(() -> new ServiceException(ApiMessages.USER_NOT_FOUND, HttpStatus.CONFLICT));
 		if (secured.isAccountLocked()) {
 			throw new ServiceException(ApiMessages.ACCOUNT_LOCKED, HttpStatus.FORBIDDEN);
+		}
+		if ("PENDING_EMAIL_VERIFICATION".equalsIgnoreCase(secured.getStatus())) {
+			throw new ServiceException(
+					"Verify your email and set your password before signing in.", HttpStatus.FORBIDDEN);
 		}
 
 		Authentication authentication;
@@ -223,6 +244,9 @@ public class LoginServiceImpl implements ILoginService {
 
 		String accessToken = generateAccessToken(user, authentication, now, expiry, ipAddress, deviceId,
 				refreshedSession.getSessionId(), roles, refreshedSession);
+
+		authAuditService.recordLogin(user, refreshedSession.getSessionId(), ipAddress, deviceId,
+				request.getRequestURI());
 
 		return buildLoginResponse(accessToken, refreshToken, refreshedSession.getSessionId(), roles,
 				refreshedSession.getActiveRoleName(), user, refreshedSession);
@@ -336,15 +360,24 @@ public class LoginServiceImpl implements ILoginService {
 			throw new ServiceException(ApiMessages.DEVICE_MISMATCH, HttpStatus.FORBIDDEN);
 		}
 
+		UserEntity user = userRepository.findById(session.getUserId()).orElse(null);
+		String endedSessionId = session.getSessionId();
+		String ipAddress = request != null ? request.getRemoteAddr() : null;
+		String path = request != null ? request.getRequestURI() : "/auth/logout";
+
 		session.setActive("0");
 		session.setRefreshTokenHash(null);
 		session.setSessionId(null);
 		sessionRepository.save(session);
+
+		if (user != null) {
+			authAuditService.recordLogout(user, endedSessionId, ipAddress, deviceId, path);
+		}
 	}
 
 	@Override
 	public void forgotPassword(ForgotPasswordRequest request) {
-		Optional<UserEntity> user = userRepository.findByUsername(request.getUsername().trim());
+		Optional<UserEntity> user = userRepository.findFirstByUsernameOrderByIdAsc(request.getUsername().trim());
 		sendPasswordResetEmail(user.orElseThrow(() -> new ServiceException("Success", HttpStatus.OK)));
 	}
 
@@ -475,23 +508,36 @@ public class LoginServiceImpl implements ILoginService {
 
 	private LoginResponse buildLoginResponse(String accessToken, String refreshToken, String sessionId,
 			List<String> roles, String activeRole, UserEntity user, SessionEntity session) {
+		boolean pendingBiz = user != null && isBusinessPendingApproval(user);
+		List<String> rolesForClient = pendingBiz ? Collections.singletonList("pending_approval")
+				: (roles != null ? roles : Collections.emptyList());
+
 		LoginResponse response = new LoginResponse();
 		response.setToken(accessToken);
 		response.setRefreshToken(refreshToken);
 		response.setSessionId(sessionId);
-		response.setAvailableRoles(roles);
+		response.setAvailableRoles(rolesForClient);
 		response.setActiveRole(activeRole);
 
 		if (user != null) {
 			response.setFirstLogin(user.isFirstLogin());
 			response.setBusinessId(user.getBusinessId());
 			if (user.getBusinessId() != null) {
-				businessRepository.findById(user.getBusinessId())
-						.map(BusinessEntity::getBusinessName)
-						.ifPresent(response::setBusinessName);
+				businessRepository.findById(user.getBusinessId()).ifPresent(b -> {
+					if (b.getBusinessName() != null && !b.getBusinessName().isBlank()) {
+						response.setBusinessName(b.getBusinessName());
+					}
+					response.setBusinessStatus(b.getStatus());
+				});
 			}
+			response.setPendingBusinessApproval(pendingBiz);
 		}
 		response.setRoleLevel(resolveRoleLevelCode(resolveEffectiveRoleIdForClaims(session, roles)));
+		if (user != null && pendingBiz) {
+			log.info("[LOGIN][RESPONSE] user={} businessId={} dbBusinessStatus={} pendingBusinessApproval={} clientRoles={}",
+					user.getUsername(), user.getBusinessId(), response.getBusinessStatus(),
+					response.getPendingBusinessApproval(), rolesForClient);
+		}
 		return response;
 	}
 
@@ -502,14 +548,52 @@ public class LoginServiceImpl implements ILoginService {
 		}
 		UserEntity user = userRepository.findById(userId)
 				.orElseThrow(() -> new ServiceException(ApiMessages.USER_NOT_FOUND, HttpStatus.NOT_FOUND));
+
 		SessionEntity session = sessionRepository.findByUserIdAndDeviceId(userId, deviceId)
-				.orElseThrow(() -> new ServiceException(ApiMessages.INVALID_SESSION, HttpStatus.UNAUTHORIZED));
-		if (!"1".equals(session.isActive())) {
+				.orElse(new SessionEntity());
+		if (session.getSessionId() == null) {
+			/*
+			 * First-time session for this device — {@code /auth/register} creates the user without
+			 * ever calling {@link #login}, so there is no pre-existing row. Social login already
+			 * called {@code ensureSessionForDevice} before this method; password login creates the
+			 * row inline. We mirror the login bootstrap so registration can return a JWT.
+			 */
+			session.setSessionId(UUID.randomUUID().toString());
+			session.setCreatedAt(new Date());
+			session.setUserId(userId);
+			session.setDeviceId(deviceId);
+			session.setActive("1");
+			session.setActiveRoleName(null);
+			session.setIp(ip);
+			String bootstrapRefresh = UUID.randomUUID().toString();
+			session.setRefreshTokenHash(BCrypt.hashpw(bootstrapRefresh, BCrypt.gensalt()));
+			session.setExpiresAt(new Date(System.currentTimeMillis() + (30L * 24 * 60 * 60 * 1000)));
+			sessionRepository.save(session);
+			session = sessionRepository.findBySessionId(session.getSessionId()).orElse(session);
+		} else if (!"1".equals(session.isActive())) {
 			throw new ServiceException(ApiMessages.SESSION_INACTIVE, HttpStatus.UNAUTHORIZED);
+		} else {
+			session.setIp(ip);
 		}
 
 		List<String> roles = loadUserRoleNames(userId);
-		requireRoleProfile(roles);
+		/*
+		 * Onboarding exception. A brand-new social-login user has just been provisioned by
+		 * {@link com.auth.api.service.social.SocialLoginServiceImpl#createUser} and has no
+		 * {@code business_id} and no {@code um_user_role} row yet — the business type (which
+		 * doubles as the user's starting role) is chosen on the next screen
+		 * ({@code /authentication/register-business}). We MUST issue a JWT here so the SPA can
+		 * auto-login and route to that screen. The token carries an empty {@code roles} claim
+		 * and no {@code businessId}; the onboarding guard then forces the user to finish
+		 * registration before any tenant-scoped resource is reachable.
+		 *
+		 * For every other caller (login, refresh, role-switch, manual register, welcome-complete)
+		 * the user is guaranteed to already have a role, so this exception cannot be abused.
+		 */
+		boolean onboardingExempt = (roles == null || roles.isEmpty()) && user.getBusinessId() == null;
+		if (!onboardingExempt) {
+			requireRoleProfile(roles);
+		}
 
 		Authentication auth = new UsernamePasswordAuthenticationToken(user.getUsername(), null);
 		Instant now = Instant.now();
@@ -566,10 +650,13 @@ public class LoginServiceImpl implements ILoginService {
 
 		String activeRoleName = session != null ? session.getActiveRoleName() : null;
 
+		boolean pendingBiz = isBusinessPendingApproval(user);
+		List<String> rolesForClaims = pendingBiz ? Collections.singletonList("pending_approval") : new ArrayList<>(roles);
+
 		// JwtClaimsSet rejects null claim values ("value cannot be null").
 		JwtClaimsSet.Builder claimsBuilder = JwtClaimsSet.builder().issuer("Bizly").issuedAt(now).expiresAt(expiry)
 				.subject(authentication.getName())
-				.claim("roles", new ArrayList<>(roles))
+				.claim("roles", rolesForClaims)
 				.claim("username", user.getUsername() != null ? user.getUsername() : "")
 				.claim("email", user.getEmail() != null ? user.getEmail() : "")
 				.claim("firstName", user.getFirstName() != null ? user.getFirstName() : "")
@@ -587,33 +674,90 @@ public class LoginServiceImpl implements ILoginService {
 		String roleLevel = resolveRoleLevelCode(effectiveRoleId);
 		if (user.getBusinessId() != null) {
 			claimsBuilder.claim("businessId", user.getBusinessId());
+			businessRepository.findById(user.getBusinessId()).ifPresent(b -> {
+				String st = b.getStatus();
+				if (st != null && !st.isBlank()) {
+					claimsBuilder.claim("businessStatus", st);
+				}
+			});
 		}
 		claimsBuilder.claim("firstLogin", user.isFirstLogin());
+		if (user.getUserType() != null && !user.getUserType().isBlank()) {
+			claimsBuilder.claim("userType", user.getUserType());
+		}
 		if (roleLevel != null && !roleLevel.isBlank()) {
 			claimsBuilder.claim("roleLevel", roleLevel);
 		}
+		claimsBuilder.claim("tenantBypass", resolveTenantBypass(effectiveRoleId));
+		if (pendingBiz) {
+			claimsBuilder.claim("pendingBusinessApproval", true);
+		}
 
 		appendProfileImageClaims(claimsBuilder, user);
-		appendPermissionClaims(claimsBuilder, effectiveRoleId);
+		if (pendingBiz) {
+			appendReadOnlyPermissionClaims(claimsBuilder);
+		} else {
+			appendPermissionClaims(claimsBuilder, session, roles);
+		}
 		JwtClaimsSet claims = claimsBuilder.build();
+
+		if (pendingBiz) {
+			String dbStatus = user.getBusinessId() == null ? null
+					: businessRepository.findById(user.getBusinessId()).map(BusinessEntity::getStatus).orElse(null);
+			log.info("[JWT] user={} pendingBiz={} dbBusinessStatus={} claimRoles={} claimBusinessStatus={} claimPendingBusinessApproval={}",
+					user.getUsername(), true, dbStatus, rolesForClaims,
+					claims.getClaim("businessStatus"), claims.getClaim("pendingBusinessApproval"));
+		}
 
 		return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
 	}
 
 	/**
-	 * Resolves the {@code role_level.code} (ADMIN / BUSINESS) for the currently active role. Returns
-	 * {@code null} if the role row, the level row, or both are missing — the JWT then simply omits the
-	 * claim, which downstream services treat as "no level".
+	 * Resolves the {@code role_level.code} (ADMIN / BUSINESS) for the currently active role. When the
+	 * DB row lacks a {@code role_level} link, we infer ADMIN only for the portal root role
+	 * ({@code is_system_restricted = 1}, not a business type) — never from a hardcoded role name.
 	 */
 	private String resolveRoleLevelCode(Optional<Long> roleIdOpt) {
 		if (roleIdOpt.isEmpty()) {
 			return null;
 		}
+		Optional<RoleEntity> roleOpt = roleRepository.findById(roleIdOpt.get());
+		if (roleOpt.isEmpty()) {
+			return null;
+		}
+		RoleEntity role = roleOpt.get();
+		Long levelId = role.getRoleLevelId();
+		String code = levelId == null ? null
+				: roleLevelRepository.findById(levelId).map(RoleLevelEntity::getCode).orElse(null);
+		if (code != null && !code.isBlank()) {
+			return code;
+		}
+		return inferAdminLevelFromRoleFlags(role);
+	}
+
+	/**
+	 * {@code true} only for the portal root admin row (system-restricted, not a business type).
+	 * Delegated internal admin roles use the menu matrix like any other non-root role.
+	 */
+	private boolean resolveTenantBypass(Optional<Long> roleIdOpt) {
+		if (roleIdOpt.isEmpty()) {
+			return false;
+		}
 		return roleRepository.findById(roleIdOpt.get())
-				.map(com.auth.api.model.user.RoleEntity::getRoleLevelId)
-				.flatMap(levelId -> levelId == null ? Optional.<RoleLevelEntity>empty() : roleLevelRepository.findById(levelId))
-				.map(RoleLevelEntity::getCode)
-				.orElse(null);
+				.map(this::isPortalRootAdminRole)
+				.orElse(false);
+	}
+
+	private boolean isPortalRootAdminRole(RoleEntity role) {
+		return role != null && role.isSystemRestricted() && !role.isBusinessType();
+	}
+
+	/** Fallback when {@code role_level_id} is missing — uses DB flags, not role name. */
+	private static String inferAdminLevelFromRoleFlags(RoleEntity role) {
+		if (role != null && role.isSystemRestricted() && !role.isBusinessType()) {
+			return RoleLevelEntity.CODE_ADMIN;
+		}
+		return null;
 	}
 
 	/**
@@ -634,7 +778,7 @@ public class LoginServiceImpl implements ILoginService {
 	private Optional<Long> resolveEffectiveRoleIdForClaims(SessionEntity session, List<String> roles) {
 		if (session != null && session.getActiveRoleName() != null && !session.getActiveRoleName().isBlank()) {
 			String name = stripRolePrefixForDb(session.getActiveRoleName());
-			return roleRepository.findByNameIgnoreCase(name).map(RoleEntity::getId);
+			return roleRepository.findFirstByNameIgnoreCaseOrderByIdAsc(name).map(RoleEntity::getId);
 		}
 		if (roles == null || roles.isEmpty()) {
 			return Optional.empty();
@@ -646,7 +790,7 @@ public class LoginServiceImpl implements ILoginService {
 			if (name == null || name.isEmpty()) {
 				continue;
 			}
-			Optional<RoleEntity> hit = roleRepository.findByNameIgnoreCase(name);
+			Optional<RoleEntity> hit = roleRepository.findFirstByNameIgnoreCaseOrderByIdAsc(name);
 			if (hit.isEmpty()) {
 				continue;
 			}
@@ -654,10 +798,13 @@ public class LoginServiceImpl implements ILoginService {
 				firstRoleId = hit.map(RoleEntity::getId);
 			}
 			Long levelId = hit.get().getRoleLevelId();
-			if (levelId == null) {
-				continue;
+			String code = null;
+			if (levelId != null) {
+				code = roleLevelRepository.findById(levelId).map(RoleLevelEntity::getCode).orElse(null);
 			}
-			String code = roleLevelRepository.findById(levelId).map(RoleLevelEntity::getCode).orElse(null);
+			if (code == null || code.isBlank()) {
+				code = inferAdminLevelFromRoleFlags(hit.orElse(null));
+			}
 			if (RoleLevelEntity.CODE_ADMIN.equalsIgnoreCase(code)) {
 				adminRoleId = hit.map(RoleEntity::getId);
 				break;
@@ -703,43 +850,122 @@ public class LoginServiceImpl implements ILoginService {
 		claimsBuilder.claim("profileImageInJwt", true);
 	}
 
-	private void appendPermissionClaims(JwtClaimsSet.Builder claimsBuilder, Optional<Long> roleIdOpt) {
-		if (roleIdOpt.isEmpty()) {
-			claimsBuilder.claim("permMatrix", false);
-			claimsBuilder.claim("perms", Collections.emptyList());
+	private boolean isBusinessPendingApproval(UserEntity user) {
+		if (user == null || user.getBusinessId() == null) {
+			return false;
+		}
+		return businessRepository.findById(user.getBusinessId())
+				.map(b -> "PENDING_APPROVAL".equalsIgnoreCase(b.getStatus()))
+				.orElse(false);
+	}
+
+	private void appendReadOnlyPermissionClaims(JwtClaimsSet.Builder claimsBuilder) {
+		claimsBuilder.claim("permMatrix", false);
+		claimsBuilder.claim("perms", Collections.emptyList());
+	}
+
+	/**
+	 * Builds JWT {@code perms} from the same union semantics as {@code MenuServiceImpl}: when the
+	 * session pins {@code activeRole}, only that role's matrix is used; otherwise every assigned role
+	 * is merged (OR on each flag). Roles with zero matrix rows are skipped.
+	 */
+	private void appendPermissionClaims(JwtClaimsSet.Builder claimsBuilder, SessionEntity session,
+			List<String> roles) {
+		List<Long> roleIds = resolveRoleIdsForPermissionClaims(session, roles);
+		if (roleIds.isEmpty()) {
+			appendReadOnlyPermissionClaims(claimsBuilder);
 			return;
 		}
-		Long rid = roleIdOpt.get();
-		long rowCount = roleMenuPermissionRepository.countByIdRoleId(rid);
-		boolean matrix = rowCount > 0;
-		claimsBuilder.claim("permMatrix", matrix);
-		if (!matrix) {
-			claimsBuilder.claim("perms", Collections.emptyList());
-			return;
-		}
-		List<RoleMenuPermissionEntity> rows = roleMenuPermissionRepository.findByIdRoleId(rid);
-		Map<Long, String> routesByMenuId = new HashMap<>();
-		if (!rows.isEmpty()) {
-			List<Long> mids = rows.stream().map(r -> r.getId().getMenuId()).collect(Collectors.toList());
-			for (UmMenuRouteEntity m : umMenuRouteRepository.findAllById(mids)) {
-				routesByMenuId.put(m.getId(), m.getRoute() != null ? m.getRoute() : "");
+		Map<Long, MergedMenuPerm> mergedByMenu = new LinkedHashMap<>();
+		boolean anyMatrixRows = false;
+		for (Long rid : roleIds) {
+			if (roleMenuPermissionRepository.countByIdRoleId(rid) == 0) {
+				continue;
+			}
+			anyMatrixRows = true;
+			for (RoleMenuPermissionEntity p : roleMenuPermissionRepository.findByIdRoleId(rid)) {
+				long menuId = p.getId().getMenuId();
+				mergedByMenu.merge(menuId, MergedMenuPerm.from(p), MergedMenuPerm::union);
 			}
 		}
+		claimsBuilder.claim("permMatrix", anyMatrixRows);
+		if (!anyMatrixRows) {
+			claimsBuilder.claim("perms", Collections.emptyList());
+			return;
+		}
+		List<Long> menuIds = new ArrayList<>(mergedByMenu.keySet());
+		Map<Long, String> routesByMenuId = new HashMap<>();
+		for (UmMenuRouteEntity m : umMenuRouteRepository.findAllById(menuIds)) {
+			routesByMenuId.put(m.getId(), m.getRoute() != null ? m.getRoute() : "");
+		}
 		List<Map<String, Object>> perms = new ArrayList<>();
-		for (RoleMenuPermissionEntity p : rows) {
+		for (Map.Entry<Long, MergedMenuPerm> e : mergedByMenu.entrySet()) {
+			MergedMenuPerm p = e.getValue();
+			if (!p.allowView && !p.allowAdd && !p.allowEdit && !p.allowDelete) {
+				continue;
+			}
 			Map<String, Object> m = new LinkedHashMap<>();
-			long menuId = p.getId().getMenuId();
+			long menuId = e.getKey();
 			m.put("m", menuId);
 			String route = routesByMenuId.get(menuId);
 			if (route != null && !route.isEmpty()) {
 				m.put("r", route);
 			}
-			m.put("v", p.isAllowView());
-			m.put("a", p.isAllowAdd());
-			m.put("e", p.isAllowEdit());
-			m.put("d", p.isAllowDelete());
+			m.put("v", p.allowView);
+			m.put("a", p.allowAdd);
+			m.put("e", p.allowEdit);
+			m.put("d", p.allowDelete);
 			perms.add(m);
 		}
 		claimsBuilder.claim("perms", perms);
+	}
+
+	private List<Long> resolveRoleIdsForPermissionClaims(SessionEntity session, List<String> roles) {
+		if (session != null && session.getActiveRoleName() != null && !session.getActiveRoleName().isBlank()) {
+			String name = stripRolePrefixForDb(session.getActiveRoleName());
+			return roleRepository.findFirstByNameIgnoreCaseOrderByIdAsc(name)
+					.map(r -> Collections.singletonList(r.getId()))
+					.orElse(Collections.emptyList());
+		}
+		if (roles == null || roles.isEmpty()) {
+			return Collections.emptyList();
+		}
+		List<Long> ids = new ArrayList<>();
+		for (String raw : roles) {
+			String name = stripRolePrefixForDb(raw);
+			if (name == null || name.isEmpty()) {
+				continue;
+			}
+			roleRepository.findFirstByNameIgnoreCaseOrderByIdAsc(name).ifPresent(r -> {
+				if (!ids.contains(r.getId())) {
+					ids.add(r.getId());
+				}
+			});
+		}
+		return ids;
+	}
+
+	private static final class MergedMenuPerm {
+		boolean allowView;
+		boolean allowAdd;
+		boolean allowEdit;
+		boolean allowDelete;
+
+		static MergedMenuPerm from(RoleMenuPermissionEntity p) {
+			MergedMenuPerm m = new MergedMenuPerm();
+			m.allowView = p.isAllowView();
+			m.allowAdd = p.isAllowAdd();
+			m.allowEdit = p.isAllowEdit();
+			m.allowDelete = p.isAllowDelete();
+			return m;
+		}
+
+		MergedMenuPerm union(MergedMenuPerm other) {
+			this.allowView |= other.allowView;
+			this.allowAdd |= other.allowAdd;
+			this.allowEdit |= other.allowEdit;
+			this.allowDelete |= other.allowDelete;
+			return this;
+		}
 	}
 }

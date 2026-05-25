@@ -1,17 +1,20 @@
-<div class="blank-layout-container justify-content-center align-items-center bg-light-primary">
-  <div class="position-relative row w-100 h-100 bg-gredient justify-content-center">
-    <div class="col-lg-5 d-flex align-items-center">
-      <mat-card class="cardWithShadow boxed-auth">
-        <mat-card-content class="p-32">
-          <div class="text-center">
-            <a [routerLink]="['/authentication/login']">
+<!-- Override the shared .blank-layout-container (height:100vh + align:center)
+     because the register card is much taller than login. On phones we need
+     the page to scroll, not crop. -->
+<div class="auth-page register-page">
+  <div class="auth-page__wrap register-page__wrap">
+    <div class="register-page__col">
+      <mat-card class="cardWithShadow register-page__card">
+        <mat-card-content class="register-page__content">
+          <header class="register-page__header auth-page__header">
+            <a class="auth-page__logo-link" [routerLink]="['/authentication/login']">
               <img
-                src="./assets/images/logos/logo.svg"
-                class="align-middle m-2"
-                alt="logo"
+                src="assets/images/logos/bizly.png"
+                class="auth-page__logo register-page__logo"
+                alt="Bizly"
               />
             </a>
-          </div>
+          </header>
 
           <!-- Step indicator -->
           <div class="d-flex justify-content-center m-t-16 m-b-24">
@@ -37,66 +40,36 @@
               </p>
             </div>
 
-            <!-- Social pre-fill -->
-            <div *ngIf="!socialProfile" class="row m-t-24 custom-row">
-              <div class="col-12 col-sm-6 m-b-8">
-                <button
-                  type="button"
-                  mat-stroked-button
-                  class="w-100"
-                  (click)="signUpWithProvider('google')"
-                >
-                  <div class="d-flex align-items-center justify-content-center">
-                    <img
-                      src="/assets/images/svgs/google-icon.svg"
-                      alt="google"
-                      width="16"
-                      class="m-r-8"
-                    />
-                    Sign up with Google
-                  </div>
-                </button>
-              </div>
-              <div class="col-12 col-sm-6 m-b-8">
-                <button
-                  type="button"
-                  mat-stroked-button
-                  class="w-100"
-                  (click)="signUpWithProvider('facebook')"
-                >
-                  <div class="d-flex align-items-center justify-content-center">
-                    <img
-                      src="/assets/images/svgs/facebook-icon.svg"
-                      alt="facebook"
-                      width="32"
-                      class="m-r-4"
-                    />
-                    Sign up with Facebook
-                  </div>
-                </button>
-              </div>
-            </div>
+            <!-- Social auto-login. Clicking these triggers /auth/social/<provider> and
+                 either logs the user straight in (existing account) or auto-creates an
+                 onboarding session and routes to /authentication/register-business. -->
+            <button
+              type="button"
+              mat-stroked-button
+              class="auth-social-btn w-100 m-t-24"
+              [disabled]="isSocialBusy || isSubmitting"
+              (click)="signUpWithGoogle()"
+            >
+              <img
+                src="/assets/images/svgs/google-icon.svg"
+                alt=""
+                width="16"
+                height="16"
+              />
+              <span class="auth-social-btn__label">
+                {{ isSocialBusy ? 'Signing in…' : 'Sign up with Google' }}
+              </span>
+            </button>
 
-            <div *ngIf="socialProfile" class="alert-soft m-t-16">
-              <i-tabler name="circle-check"></i-tabler>
-              <div class="flex-grow-1">
-                Signing up with {{ socialProfile.provider }} as
-                <b>{{ socialProfile.email }}</b
-                >. Review the details below and continue.
-              </div>
-            </div>
-
-            <div class="or-border m-t-24" *ngIf="!socialProfile">
-              or sign up with email
-            </div>
+            <div class="or-border m-t-24">or sign up with email</div>
 
             <form
               class="m-t-24"
               [formGroup]="accountForm"
               (ngSubmit)="nextStep()"
             >
-              <div class="row">
-                <div class="col-12 col-sm-6">
+              <div class="register-page__name-row">
+                <div class="register-page__name-col">
                   <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-4 d-block"
                     >First name</mat-label
                   >
@@ -115,7 +88,7 @@
                     >
                   </mat-form-field>
                 </div>
-                <div class="col-12 col-sm-6">
+                <div class="register-page__name-col">
                   <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-4 d-block"
                     >Last name</mat-label
                   >
@@ -166,7 +139,6 @@
                   type="email"
                   formControlName="email"
                   autocomplete="email"
-                  [readonly]="!!socialProfile"
                 />
                 <mat-error
                   *ngIf="
@@ -196,56 +168,54 @@
                 />
               </mat-form-field>
 
-              <ng-container *ngIf="!socialProfile">
-                <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-4 d-block"
-                  >Password</mat-label
+              <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-4 d-block"
+                >Password</mat-label
+              >
+              <mat-form-field
+                appearance="outline"
+                class="w-100"
+                color="primary"
+              >
+                <input
+                  matInput
+                  type="password"
+                  formControlName="password"
+                  autocomplete="new-password"
+                />
+                <mat-hint align="start"
+                  >8+ chars · upper · lower · number · special.</mat-hint
                 >
-                <mat-form-field
-                  appearance="outline"
-                  class="w-100"
-                  color="primary"
+                <mat-error
+                  *ngIf="
+                    accountForm.controls.password.touched &&
+                    accountForm.controls.password.hasError('required')
+                  "
+                  >Password is required.</mat-error
                 >
-                  <input
-                    matInput
-                    type="password"
-                    formControlName="password"
-                    autocomplete="new-password"
-                  />
-                  <mat-hint align="start"
-                    >8+ chars · upper · lower · number · special.</mat-hint
-                  >
-                  <mat-error
-                    *ngIf="
-                      accountForm.controls.password.touched &&
-                      accountForm.controls.password.hasError('required')
-                    "
-                    >Password is required.</mat-error
-                  >
-                  <mat-error
-                    *ngIf="
-                      accountForm.controls.password.touched &&
-                      accountForm.controls.password.hasError('minlength')
-                    "
-                    >At least 8 characters.</mat-error
-                  >
-                </mat-form-field>
+                <mat-error
+                  *ngIf="
+                    accountForm.controls.password.touched &&
+                    accountForm.controls.password.hasError('minlength')
+                  "
+                  >At least 8 characters.</mat-error
+                >
+              </mat-form-field>
 
-                <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-t-12 m-b-4 d-block"
-                  >Confirm password</mat-label
-                >
-                <mat-form-field
-                  appearance="outline"
-                  class="w-100"
-                  color="primary"
-                >
-                  <input
-                    matInput
-                    type="password"
-                    formControlName="confirmPassword"
-                    autocomplete="new-password"
-                  />
-                </mat-form-field>
-              </ng-container>
+              <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-t-12 m-b-4 d-block"
+                >Confirm password</mat-label
+              >
+              <mat-form-field
+                appearance="outline"
+                class="w-100"
+                color="primary"
+              >
+                <input
+                  matInput
+                  type="password"
+                  formControlName="confirmPassword"
+                  autocomplete="new-password"
+                />
+              </mat-form-field>
 
               <mat-checkbox formControlName="acceptTerms" color="primary" class="m-t-8">
                 I agree to the
@@ -305,49 +275,43 @@
               <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-t-8 m-b-8 d-block"
                 >Business type</mat-label
               >
-              <div class="register-business__types">
+              <p class="mat-subtitle-2 text-muted m-b-12" *ngIf="!isLoadingTypes && !typesError">
+                Your business type also becomes your starting role inside Bizly.
+              </p>
+              <p class="text-muted m-b-12" *ngIf="isLoadingTypes">Loading business types…</p>
+              <p class="text-error m-b-12" *ngIf="typesError">{{ typesError }}</p>
+
+              <div class="register-business__types" *ngIf="!isLoadingTypes && !typesError">
                 <button
                   type="button"
                   *ngFor="let type of businessTypes"
                   class="register-business__type"
-                  [class.is-selected]="
-                    businessForm.controls.businessType.value === type.code
-                  "
-                  (click)="selectType(type.code)"
+                  [class.is-selected]="businessForm.controls.roleId.value === type.id"
+                  (click)="selectType(type.id)"
                 >
                   <span class="register-business__type-icon">
-                    <i-tabler [name]="type.icon"></i-tabler>
+                    <i-tabler [name]="typeIcon(type)"></i-tabler>
                   </span>
-                  <span class="register-business__type-label">{{
-                    type.label
-                  }}</span>
+                  <span class="register-business__type-label">{{ typeLabel(type) }}</span>
                 </button>
               </div>
               <p
                 class="text-error m-t-4"
                 *ngIf="
-                  businessForm.controls.businessType.touched &&
-                  businessForm.controls.businessType.hasError('required')
+                  businessForm.controls.roleId.touched &&
+                  businessForm.controls.roleId.hasError('required')
                 "
               >
                 Pick the type that best describes your business.
               </p>
 
-              <div class="alert-soft m-t-16">
-                <i-tabler name="shield-check"></i-tabler>
-                <div class="flex-grow-1">
-                  Your role is assigned automatically by the system — you cannot
-                  pick it here. Administrators can grant additional roles later.
-                </div>
-              </div>
-
               <p class="text-error m-t-8" *ngIf="errorMessage">{{ errorMessage }}</p>
 
-              <div class="d-flex gap-3 m-t-16">
+              <div class="register-page__actions m-t-16">
                 <button
                   type="button"
                   mat-stroked-button
-                  class="flex-grow-1"
+                  class="register-page__action-btn"
                   (click)="prevStep()"
                   [disabled]="isSubmitting"
                 >
@@ -357,7 +321,7 @@
                   type="submit"
                   mat-flat-button
                   color="primary"
-                  class="flex-grow-1"
+                  class="register-page__action-btn"
                   [disabled]="isSubmitting"
                 >
                   {{ isSubmitting ? 'Creating account…' : 'Create account' }}

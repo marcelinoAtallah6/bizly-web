@@ -1,7 +1,8 @@
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable, Subject, from, map, switchMap, tap } from 'rxjs';
+import { Observable, Subject, catchError, firstValueFrom, from, map, of, switchMap, tap } from 'rxjs';
 import { GlobalConstants } from '../common/GlobalConstants';
+import { environment } from '../../environments/environment';
 import { DeviceIdService } from './device-id.service';
 
 interface LoginPayload {
@@ -17,6 +18,10 @@ interface LoginPayload {
   businessName?: string | null;
   /** ADMIN | BUSINESS — used by guards to decide whether to allow the registration flow. */
   roleLevel?: string | null;
+  /** True while the business row is pending super-admin approval (governance gate). */
+  pendingBusinessApproval?: boolean | null;
+  /** Raw business status from auth (e.g. PENDING_APPROVAL, ACTIVE). */
+  businessStatus?: string | null;
 }
 
 export interface MeResponse {
@@ -25,9 +30,14 @@ export interface MeResponse {
   email?: string;
   firstName?: string;
   lastName?: string;
+  mobileNumber?: string | null;
+  profileImageMime?: string | null;
+  profileImageBase64?: string | null;
   firstLogin: boolean;
   businessId?: number | null;
   businessName?: string | null;
+  businessStatus?: string | null;
+  pendingBusinessApproval?: boolean;
   roles: string[];
   roleLevel?: string | null;
   canRegisterBusiness: boolean;
@@ -40,8 +50,25 @@ export interface AssignableRole {
   isDefault: boolean;
 }
 
+/**
+ * One row in the public business-type catalog returned by
+ * {@code POST /auth/business-types}. Each entry is just a role flagged
+ * {@code is_business_type = 1} on the backend — the user picking one here
+ * is the same as picking their starting role.
+ */
+export interface BusinessTypeOption {
+  id: number;
+  /** Canonical role name in DB (e.g. {@code RESTAURANT}). */
+  name: string;
+  /** Optional human label (e.g. {@code Beauty Center}). Falls back to {@code name}. */
+  label?: string | null;
+}
+
 export interface RegisterBusinessRequest {
   businessName: string;
+  /** Chosen business-type role id (mandatory in the new flow). */
+  roleId?: number | null;
+  /** Legacy free-form code — kept so old clients keep working. */
   businessType?: string;
 }
 
@@ -49,6 +76,8 @@ export interface RegisterBusinessResponse {
   businessId: number;
   businessName: string;
   session: LoginPayload;
+  /** When true, start the UM business-registration approval workflow (non-ACTIVE businesses). */
+  requiresBusinessApprovalWorkflow?: boolean;
 }
 
 /** Public sign-up payload. {@code authProvider} / {@code providerUserId} are filled when
@@ -62,8 +91,11 @@ export interface RegisterRequest {
   lastName: string;
   mobileNumber?: string;
   businessName: string;
+  /** Chosen business-type role id (mandatory in the new flow). */
+  roleId?: number | null;
+  /** Legacy free-form code (e.g. {@code RESTAURANT}) for older clients. */
   businessType?: string;
-  authProvider?: 'GOOGLE' | 'FACEBOOK' | 'APPLE' | null;
+  authProvider?: 'GOOGLE' | null;
   providerUserId?: string | null;
 }
 
@@ -121,6 +153,10 @@ export interface JwtAccessClaims {
   profileImageInJwt?: boolean;
   /** Backend issued the JWT without the image because it exceeds the embed budget. */
   profileImageOversized?: boolean;
+  /** When true, the tenant is blocked at the governance gate until an administrator activates the business. */
+  pendingBusinessApproval?: boolean;
+  /** Canonical business row status from auth (e.g. ACTIVE, PENDING_APPROVAL). */
+  businessStatus?: string | null;
 }
 
 /** Response of {@code POST /auth/me/avatar} — full avatar bytes when JWT couldn't embed them. */
@@ -261,6 +297,22 @@ DdonpI93CG9kkKqwaKPQnsYX3PyFEH2aA3I7N/0=
       { headers }
     );
   }
+  verifyEmailSetPassword(token: string, password: string): Observable<ApiResponse<string>> {
+    return from(this.encryptPassword(password)).pipe(
+      switchMap((encryptedPassword) => {
+        const headers = new HttpHeaders({
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        });
+        return this.http.post<ApiResponse<string>>(
+          GlobalConstants.API_ENDPOINTS.auth.verifyEmailSetPassword,
+          { token, password: encryptedPassword },
+          { headers }
+        );
+      })
+    );
+  }
+
   resetForgotPassword(
     token: string,
     newPassword: string,
@@ -345,8 +397,35 @@ DdonpI93CG9kkKqwaKPQnsYX3PyFEH2aA3I7N/0=
         { refreshToken, sessionId },
         { headers }
       )
-      .pipe(tap((response) => this.persistSession(response?.data)));
+      .pipe(
+        tap((response) => this.persistSession(response?.data)),
+        tap(() => this.roleRefreshSubject.next())
+      );
   }
+
+  /**
+   * Re-issues the access token from the server (picks up role-matrix edits). Called once per
+   * browser session before the first menu catalog load so F5 reflects UM permission edits.
+   */
+  syncSessionPermissionsOnce(): Promise<void> {
+    if (this.sessionPermsSynced || !this.isAuthenticated()) {
+      return Promise.resolve();
+    }
+    const refreshToken = this.getRefreshToken();
+    const sessionId = this.getSessionId();
+    if (!refreshToken || !sessionId) {
+      return Promise.resolve();
+    }
+    this.sessionPermsSynced = true;
+    return firstValueFrom(
+      this.refreshToken().pipe(
+        map(() => undefined),
+        catchError(() => of(undefined))
+      )
+    );
+  }
+
+  private sessionPermsSynced = false;
 
   isAuthenticated(): boolean {
     return !!this.getAccessToken();
@@ -404,6 +483,7 @@ DdonpI93CG9kkKqwaKPQnsYX3PyFEH2aA3I7N/0=
       profileImageBase64: p['profileImageBase64'] != null ? String(p['profileImageBase64']) : undefined,
       profileImageInJwt: p['profileImageInJwt'] === true,
       profileImageOversized: p['profileImageOversized'] === true,
+      pendingBusinessApproval: p['pendingBusinessApproval'] === true,
     };
   }
 
@@ -429,6 +509,64 @@ DdonpI93CG9kkKqwaKPQnsYX3PyFEH2aA3I7N/0=
     return localStorage.getItem('jwtAccessToken');
   }
 
+  /** Grace period after access-token expiry during which the user may refresh or sign out via the dialog. */
+  getSessionExtendGraceMs(): number {
+    return environment.sessionExtendGraceMs ?? 15 * 60 * 1000;
+  }
+
+  /** JWT {@code exp} (seconds since epoch), or null when missing / undecodable. */
+  getAccessTokenExpEpochSec(): number | null {
+    const p = this.decodeAccessPayload();
+    const exp = p?.['exp'];
+    if (typeof exp === 'number' && Number.isFinite(exp)) {
+      return exp;
+    }
+    if (typeof exp === 'string' && exp.trim() !== '') {
+      const n = Number(exp);
+      return Number.isFinite(n) ? n : null;
+    }
+    return null;
+  }
+
+  /**
+   * Milliseconds since the access token expired. Negative if still valid; null if unknown.
+   */
+  getAccessTokenExpiredForMs(): number | null {
+    const expSec = this.getAccessTokenExpEpochSec();
+    if (expSec == null) {
+      return null;
+    }
+    return Date.now() - expSec * 1000;
+  }
+
+  /** Remaining time (ms) to show the extend-session dialog before forced sign-out. */
+  getSessionExtendGraceRemainingMs(): number {
+    const expiredFor = this.getAccessTokenExpiredForMs();
+    const grace = this.getSessionExtendGraceMs();
+    if (expiredFor == null) {
+      return 0;
+    }
+    if (expiredFor <= 0) {
+      return grace;
+    }
+    return Math.max(0, grace - expiredFor);
+  }
+
+  /**
+   * True when the session has been expired longer than the grace window — caller should sign out
+   * without prompting.
+   */
+  isSessionExtendGraceExceeded(): boolean {
+    const expiredFor = this.getAccessTokenExpiredForMs();
+    if (expiredFor == null) {
+      return true;
+    }
+    if (expiredFor <= 0) {
+      return false;
+    }
+    return expiredFor > this.getSessionExtendGraceMs();
+  }
+
   getRefreshToken(): string | null {
     return localStorage.getItem('jwtRefreshToken');
   }
@@ -438,6 +576,7 @@ DdonpI93CG9kkKqwaKPQnsYX3PyFEH2aA3I7N/0=
   }
 
   clearSession(): void {
+    this.sessionPermsSynced = false;
     localStorage.removeItem('jwtAccessToken');
     localStorage.removeItem('jwtRefreshToken');
     localStorage.removeItem('jwtSessionId');
@@ -447,6 +586,7 @@ DdonpI93CG9kkKqwaKPQnsYX3PyFEH2aA3I7N/0=
     localStorage.removeItem('bizlyBusinessId');
     localStorage.removeItem('bizlyBusinessName');
     localStorage.removeItem('bizlyRoleLevel');
+    localStorage.removeItem('bizlyPendingBusinessApproval');
     localStorage.removeItem('bizlyAdminBusinessOverride');
     localStorage.removeItem('bizlyAdminBusinessOverrideName');
   }
@@ -467,6 +607,43 @@ DdonpI93CG9kkKqwaKPQnsYX3PyFEH2aA3I7N/0=
       return [String(r)];
     }
     return [];
+  }
+
+  /**
+   * Role level (ADMIN / BUSINESS / …) of the **currently active** role, taken straight from the
+   * fresh JWT — not from the localStorage cache that {@link getCachedRoleLevel} reads. The cache
+   * is updated lazily by {@link persistSession}; reading the JWT here guarantees correctness right
+   * after a role switch when guards / permission service need the new value.
+   */
+  getJwtRoleLevel(): string | null {
+    const p = this.decodeAccessPayload();
+    if (!p) {
+      return null;
+    }
+    const v = p['roleLevel'];
+    if (v == null || v === '') {
+      return null;
+    }
+    return String(v);
+  }
+
+  /** True when the active JWT role is ADMIN-level (portal provisioning, business switcher). */
+  isJwtAdminLevel(): boolean {
+    const lvl = this.getJwtRoleLevel();
+    return !!lvl && lvl.toUpperCase() === 'ADMIN';
+  }
+
+  /**
+   * True only for the portal root admin ({@code tenantBypass} in JWT). Delegated internal admin roles
+   * use the menu matrix even though {@link isJwtAdminLevel} may still be true.
+   */
+  isJwtTenantBypass(): boolean {
+    const p = this.decodeAccessPayload();
+    if (!p) {
+      return false;
+    }
+    const tb = p['tenantBypass'];
+    return tb === true;
   }
 
   /** Session-selected role from JWT {@code activeRole} claim (mirrors DB session). */
@@ -522,6 +699,7 @@ DdonpI93CG9kkKqwaKPQnsYX3PyFEH2aA3I7N/0=
       return;
     }
     if (data.token) {
+      this.sessionPermsSynced = true;
       localStorage.setItem('jwtAccessToken', data.token);
     }
     if (data.refreshToken != null && data.refreshToken !== '') {
@@ -556,9 +734,43 @@ DdonpI93CG9kkKqwaKPQnsYX3PyFEH2aA3I7N/0=
     } else if (data.businessName === null) {
       localStorage.removeItem('bizlyBusinessName');
     }
+    // Clearing matters here: an onboarding-stage JWT (e.g. a brand-new Google
+    // user with no role yet) reports {@code roleLevel = null}. If we kept the
+    // previous tab's cached "ADMIN" string the onboarding guard would skip the
+    // /authentication/register-business redirect and drop the user on a screen
+    // their (empty) role cannot reach.
     if (data.roleLevel != null && data.roleLevel !== '') {
       localStorage.setItem('bizlyRoleLevel', data.roleLevel);
+    } else if (data.roleLevel === null || data.roleLevel === '') {
+      localStorage.removeItem('bizlyRoleLevel');
     }
+    if (data.pendingBusinessApproval === true || this.loginPayloadIndicatesPending(data)) {
+      localStorage.setItem('bizlyPendingBusinessApproval', '1');
+    } else if (data.pendingBusinessApproval === false && !this.loginPayloadIndicatesPending(data)) {
+      localStorage.removeItem('bizlyPendingBusinessApproval');
+    } else if (data.token) {
+      const p = this.decodeAccessPayload();
+      if (p && this.jwtPayloadIndicatesPendingApproval(p)) {
+        localStorage.setItem('bizlyPendingBusinessApproval', '1');
+      }
+    }
+  }
+
+  private loginPayloadIndicatesPending(data: LoginPayload): boolean {
+    return AuthService.isBusinessStatusPendingApproval(
+      (data as LoginPayload & { businessStatus?: string | null }).businessStatus
+    );
+  }
+
+  private jwtPayloadIndicatesPendingApproval(p: Record<string, unknown>): boolean {
+    if (p['pendingBusinessApproval'] === true) {
+      return true;
+    }
+    return AuthService.isBusinessStatusPendingApproval(p['businessStatus']);
+  }
+
+  private static isBusinessStatusPendingApproval(status: unknown): boolean {
+    return typeof status === 'string' && status.trim().toUpperCase() === 'PENDING_APPROVAL';
   }
 
   /** Cached helpers backed by the values persistSession wrote. */
@@ -575,6 +787,21 @@ DdonpI93CG9kkKqwaKPQnsYX3PyFEH2aA3I7N/0=
   }
   getCachedBusinessName(): string | null { return localStorage.getItem('bizlyBusinessName'); }
   getCachedRoleLevel(): string | null { return localStorage.getItem('bizlyRoleLevel'); }
+
+  /** True when the session / JWT indicates a pending business approval gate (must stay off main app). */
+  getCachedPendingBusinessApproval(): boolean {
+    if (localStorage.getItem('bizlyPendingBusinessApproval') === '1') {
+      return true;
+    }
+    const p = this.decodeAccessPayload();
+    if (!p) {
+      return false;
+    }
+    if (p['pendingBusinessApproval'] === true) {
+      return true;
+    }
+    return AuthService.isBusinessStatusPendingApproval(p['businessStatus']);
+  }
 
   /** Fresh state from backend — call after login and after every register-business / welcome-complete. */
   fetchMe() {
@@ -600,6 +827,15 @@ DdonpI93CG9kkKqwaKPQnsYX3PyFEH2aA3I7N/0=
           }
           if (d.roleLevel) {
             localStorage.setItem('bizlyRoleLevel', d.roleLevel);
+          } else {
+            // See persistSession() — clear so an onboarding user can't inherit
+            // a stale "ADMIN" cached from the previous session.
+            localStorage.removeItem('bizlyRoleLevel');
+          }
+          if (d.pendingBusinessApproval === true || AuthService.isBusinessStatusPendingApproval(d.businessStatus)) {
+            localStorage.setItem('bizlyPendingBusinessApproval', '1');
+          } else {
+            localStorage.removeItem('bizlyPendingBusinessApproval');
           }
         })
       );
@@ -613,6 +849,27 @@ DdonpI93CG9kkKqwaKPQnsYX3PyFEH2aA3I7N/0=
     });
     return this.http.post<ApiResponse<AssignableRole[]>>(
       GlobalConstants.API_ENDPOINTS.auth.assignableRoles, {}, { headers }
+    );
+  }
+
+  /**
+   * Public catalogue of business-type roles for the registration wizards.
+   * Anonymous endpoint — works on the public "Create Account" page before the
+   * user has any session, and on the post-login "Set up your business" page
+   * after a social sign-up.
+   *
+   * The backend filters out SUPER_ADMIN / system / non-BUSINESS-level rows;
+   * any tampered roleId sent later in the register payload is re-validated on
+   * the server before being assigned.
+   */
+  listBusinessTypes() {
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'X-DEVICE-ID': this.deviceIdService.getDeviceId(),
+    });
+    return this.http.post<ApiResponse<BusinessTypeOption[]>>(
+      GlobalConstants.API_ENDPOINTS.auth.businessTypes, {}, { headers }
     );
   }
 
@@ -724,6 +981,11 @@ DdonpI93CG9kkKqwaKPQnsYX3PyFEH2aA3I7N/0=
     return !!lvl && lvl.toUpperCase() === 'ADMIN';
   }
 
+  /** Business tenant (has business_id, not portal ADMIN). Uses team-role APIs for roles. */
+  isBusinessTenant(): boolean {
+    return this.getCachedBusinessId() != null && !this.isSystemAdmin();
+  }
+
   completeWelcome() {
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
@@ -741,7 +1003,7 @@ DdonpI93CG9kkKqwaKPQnsYX3PyFEH2aA3I7N/0=
    * the provider before issuing the JWT, so a forged client-side token cannot grant access.
    */
   socialLogin(
-    provider: 'google' | 'facebook' | 'apple',
+    provider: 'google',
     idToken: string | null,
     accessToken: string | null,
     rememberDevice: boolean

@@ -1,23 +1,33 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { PermissionGuard } from 'src/app/guards/permission.guard';
 import { ReportBuilderComponent } from './report-builder/report-builder.component';
 import { ReportRunComponent } from './report-run/report-run.component';
+import { ReportingSharedModule } from './reporting-shared.module';
 
 const routes: Routes = [
   {
     path: '',
     component: ReportBuilderComponent,
-    data: { breadcrumb: 'Report Builder' },
+    canActivate: [PermissionGuard],
+    data: {
+      breadcrumb: 'Report Builder',
+      permission: { action: 'view', strict: true },
+    },
   },
   {
     path: 'run/:id',
     component: ReportRunComponent,
-    data: { breadcrumb: 'Run Report' },
+    canActivate: [PermissionGuard],
+    data: {
+      breadcrumb: 'Run Report',
+      permission: { action: 'view', strict: true },
+    },
   },
 ];
 
 @NgModule({
-  imports: [RouterModule.forChild(routes)],
+  imports: [ReportingSharedModule, RouterModule.forChild(routes)],
   exports: [RouterModule],
 })
 export class ReportingRoutingModule {}

@@ -174,7 +174,7 @@
               </mat-card>
             </div>
 
-            <!-- Charts / tables -->
+            <!-- Charts / tables / calendar / cards -->
             <mat-card
               *ngIf="kind(w) !== 'KPI' && kind(w) !== 'QUICK_ACTION'"
               class="widget-card cardWithShadow widget-rise dash-grid-inner"
@@ -184,6 +184,19 @@
                 <span class="dash-widget-type" *ngIf="kindLabel(w)">{{ kindLabel(w) }}</span>
               </div>
               <mat-card-content class="dash-widget-card-content">
+                <app-dashboard-calendar-widget
+                  *ngIf="showCalendar(w)"
+                  [rows]="rowsFor(w.id)"
+                  [config]="calendarConfig(w)"
+                  [loading]="widgetsLoading"
+                ></app-dashboard-calendar-widget>
+
+                <app-dashboard-card-list-widget
+                  *ngIf="showCardList(w)"
+                  [rows]="rowsFor(w.id)"
+                  [config]="cardListConfig(w)"
+                ></app-dashboard-card-list-widget>
+
                 <div class="chart-host" *ngIf="showChart(w) && apexFor(w.id) as ch">
                   <apx-chart
                     class="apex-dash"
@@ -211,14 +224,20 @@
                         <th mat-header-cell *matHeaderCellDef>{{ col }}</th>
                         <td mat-cell *matCellDef="let row">{{ row[col] }}</td>
                       </ng-container>
-                      <tr mat-header-row *matHeaderRowDef="tableColumns(w.id); sticky: true"></tr>
-                      <tr mat-row *matRowDef="let row; columns: tableColumns(w.id)"></tr>
+                      <ng-container matColumnDef="__action" *ngIf="tableLinkRoute(w) as linkRoute">
+                        <th mat-header-cell *matHeaderCellDef>Action</th>
+                        <td mat-cell *matCellDef="let row">
+                          <a mat-button color="primary" [routerLink]="linkRoute">{{ tableLinkLabel(w) }}</a>
+                        </td>
+                      </ng-container>
+                      <tr mat-header-row *matHeaderRowDef="tableColumnsFor(w.id, w); sticky: true"></tr>
+                      <tr mat-row *matRowDef="let row; columns: tableColumnsFor(w.id, w)"></tr>
                     </table>
                   </div>
                 </div>
 
                 <p
-                  *ngIf="!showChart(w) && !showGrid(w)"
+                  *ngIf="!showChart(w) && !showGrid(w) && !showCalendar(w) && !showCardList(w)"
                   class="dash-muted empty-widget-msg"
                 >
                   No data for this widget.

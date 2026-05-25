@@ -72,7 +72,7 @@ public class SettingsDashboardCatalogService {
 		 * (e.g. a SUPER_ADMIN seeded a cross-tenant grant), business users must NOT see it. Admins
 		 * see everything.
 		 */
-		boolean canBypass = BusinessContextHolder.canBypassTenant();
+		boolean crossTenantList = BusinessContextHolder.canListCrossTenantBuilderData();
 		Long businessId = BusinessContextHolder.currentBusinessId();
 
 		List<DashboardSummaryResponse> list = new ArrayList<>();
@@ -80,7 +80,7 @@ public class SettingsDashboardCatalogService {
 			if (Boolean.TRUE.equals(hidden.get(id))) {
 				continue;
 			}
-			java.util.Optional<SettingsDashboard> found = canBypass
+			java.util.Optional<SettingsDashboard> found = crossTenantList
 					? dashboardRepository.findById(id)
 					: (businessId != null
 							? dashboardRepository.findByIdForBusinessOrGlobal(id, businessId)
@@ -99,7 +99,7 @@ public class SettingsDashboardCatalogService {
 		 * definitions" screen would leak rows across businesses.
 		 */
 		List<SettingsDashboard> source;
-		if (BusinessContextHolder.canBypassTenant()) {
+		if (BusinessContextHolder.canListCrossTenantBuilderData()) {
 			source = dashboardRepository.findAll();
 		} else {
 			Long businessId = BusinessContextHolder.currentBusinessId();
@@ -114,10 +114,10 @@ public class SettingsDashboardCatalogService {
 
 	@Transactional(readOnly = true)
 	public SettingsDashboard resolveDashboard(DashboardLoadRequest req) {
-		boolean canBypass = BusinessContextHolder.canBypassTenant();
+		boolean crossTenantList = BusinessContextHolder.canListCrossTenantBuilderData();
 		Long businessId = BusinessContextHolder.currentBusinessId();
 		if (req.getId() != null) {
-			if (canBypass) {
+			if (crossTenantList) {
 				return dashboardRepository.findById(req.getId()).orElse(null);
 			}
 			if (businessId == null) {
@@ -127,7 +127,7 @@ public class SettingsDashboardCatalogService {
 		}
 		if (req.getSlug() != null && !req.getSlug().isBlank()) {
 			String slug = req.getSlug().trim();
-			if (canBypass) {
+			if (crossTenantList) {
 				return dashboardRepository.findBySlugIgnoreCase(slug).orElse(null);
 			}
 			if (businessId == null) {
@@ -169,10 +169,10 @@ public class SettingsDashboardCatalogService {
 		 * Tenant scope: business users see their own + global dashboards. Admin (role-level=ADMIN) sees
 		 * every dashboard regardless of tenant.
 		 */
-		boolean canBypass = BusinessContextHolder.canBypassTenant();
+		boolean crossTenantList = BusinessContextHolder.canListCrossTenantBuilderData();
 		Long businessId = BusinessContextHolder.currentBusinessId();
 		List<SettingsDashboard> source;
-		if (canBypass) {
+		if (crossTenantList) {
 			source = dashboardRepository.findAll();
 		} else if (businessId != null) {
 			source = dashboardRepository.findAllForBusinessOrGlobal(businessId);

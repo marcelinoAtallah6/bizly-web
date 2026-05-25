@@ -5,6 +5,11 @@
  * same CSS variables that drive the rest of the app (light / dark / dark-blue).
  * ------------------------------------------------------------------------- */
 
+/* Match app typography on all overlays (menus, selects, datepickers). */
+.cdk-overlay-container {
+  font-family: var(--font-family, sans-serif);
+}
+
 /* Material tooltips (matTooltip) — used on every widget hover button. */
 .mat-mdc-tooltip {
   --mdc-plain-tooltip-container-color: var(--cardbg);
@@ -161,4 +166,12 @@
 .cdk-overlay-pane > .mat-mdc-paginator {
   background-color: var(--cardbg) !important;
   color: var(--textPrimary) !important;
+}
+
+/* Travel dashboard calendar event hover — must sit above widget cards (overflow hidden). */
+.cdk-overlay-pane.dash-cal-popover-overlay {
+  z-index: 1200;
+  pointer-events: auto;
+  position: fixed !important;
+  max-width: none;
 }

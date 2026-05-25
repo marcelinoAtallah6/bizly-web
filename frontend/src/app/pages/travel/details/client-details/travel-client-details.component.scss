@@ -1,0 +1,230 @@
+:host {
+  display: block;
+}
+
+.travel-page--client-details {
+  padding: 28px 40px 48px !important;
+  max-width: 1400px;
+  margin: 0 auto;
+  box-sizing: border-box;
+
+  @media (max-width: 960px) {
+    padding: 24px 28px 40px !important;
+  }
+
+  @media (max-width: 600px) {
+    padding: 20px 16px 32px !important;
+  }
+}
+
+.travel-section-title {
+  font-size: 1.0625rem !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+  letter-spacing: normal !important;
+  color: var(--travel-text, var(--textPrimary)) !important;
+  margin: 0 !important;
+}
+
+.travel-client-accordion {
+  display: block;
+  margin-bottom: 32px;
+
+  &__panel {
+    margin-bottom: 12px !important;
+    border-radius: 12px !important;
+    border: 1px solid var(--travel-border, var(--borderColor, rgba(0, 0, 0, 0.1))) !important;
+    box-shadow: var(--travel-shadow, 0 2px 8px rgba(0, 0, 0, 0.04)) !important;
+    background: var(--travel-surface, var(--cardbg, #fff)) !important;
+
+    &::before {
+      display: none;
+    }
+
+    &.mat-expanded {
+      margin-bottom: 16px !important;
+    }
+  }
+
+  .mat-expansion-panel-header {
+    min-height: 56px;
+    padding: 0 20px;
+  }
+
+  .mat-expansion-panel-header-title,
+  .mat-expansion-panel-header-description {
+    align-items: center;
+  }
+
+  .mat-expansion-panel-body {
+    padding: 0;
+  }
+
+  &--notes .mat-expansion-panel-body {
+    padding-bottom: 4px;
+  }
+}
+
+.travel-accordion-body {
+  padding: 8px 20px 24px;
+}
+
+.travel-passport-scan-view {
+  padding-top: 4px;
+  padding-bottom: 8px;
+
+  &__hint {
+    margin: 0 0 16px;
+    font-size: 0.875rem;
+    line-height: 1.45;
+  }
+
+  &__frame {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px 16px 28px;
+    margin: 0 auto;
+    max-width: 420px;
+    box-sizing: border-box;
+
+    app-travel-passport-preview {
+      display: block;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    @media (max-width: 480px) {
+      padding: 16px 8px 24px;
+      max-width: 100%;
+    }
+  }
+}
+
+.travel-notes-body {
+  padding-top: 4px;
+  padding-bottom: 28px;
+
+  &__text {
+    margin: 0;
+    padding: 16px 18px;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--travel-text, var(--textPrimary));
+    background: color-mix(in srgb, var(--primary, #5d87ff) 4%, var(--cardbg, #fff));
+    border-radius: 10px;
+    border: 1px solid var(--travel-border, var(--borderColor, rgba(0, 0, 0, 0.08)));
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+}
+
+.travel-client-tabs {
+  margin-top: 8px;
+
+  ::ng-deep {
+    .mat-mdc-tab-header {
+      padding: 20px 4px 16px;
+      border-bottom: 1px solid var(--travel-border, var(--borderColor, rgba(0, 0, 0, 0.1)));
+    }
+
+    .mat-mdc-tab-labels {
+      gap: 8px;
+      justify-content: flex-start;
+    }
+
+    .mat-mdc-tab {
+      min-width: 0;
+      flex-grow: 0 !important;
+      margin: 0 4px;
+      padding: 0 16px;
+      height: 44px;
+      border-radius: 10px 10px 0 0;
+      opacity: 0.82;
+      transition: opacity 0.15s ease, background 0.15s ease;
+    }
+
+    .mat-mdc-tab.mdc-tab--active {
+      opacity: 1;
+      background: color-mix(in srgb, var(--primary, #5d87ff) 10%, transparent);
+    }
+
+    .mat-mdc-tab .mdc-tab__text-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+    }
+
+    .mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+      font-weight: 600;
+      color: var(--primary, #5d87ff);
+    }
+
+    .mdc-tab-indicator__content--underline {
+      border-top-width: 3px;
+      border-radius: 3px 3px 0 0;
+    }
+
+    .mat-mdc-tab-body-wrapper {
+      padding-top: 4px;
+    }
+  }
+}
+
+.travel-tab-panel {
+  padding: 28px 8px 16px;
+  box-sizing: border-box;
+
+  &--profile {
+    padding-top: 32px;
+  }
+
+  &--empty,
+  &.travel-tab-empty {
+    padding: 24px 8px;
+    font-size: 0.9375rem;
+  }
+}
+
+.travel-profile-grid--tab {
+  margin-bottom: 0;
+  gap: 20px;
+
+  .travel-info-card {
+    margin: 0;
+    border-radius: 12px;
+    border: 1px solid var(--travel-border, var(--borderColor, rgba(0, 0, 0, 0.1)));
+    box-shadow: var(--travel-shadow, 0 2px 8px rgba(0, 0, 0, 0.04));
+    background: var(--travel-surface, var(--cardbg, #fff));
+
+    mat-card-header {
+      padding: 18px 20px 0;
+    }
+
+    mat-card-content {
+      padding: 12px 20px 22px;
+    }
+
+    .travel-section-title {
+      font-size: 1rem !important;
+    }
+
+    &__value {
+      margin: 0;
+      font-size: 0.9375rem;
+      line-height: 1.55;
+      color: var(--travel-text, var(--textPrimary));
+      word-break: break-word;
+    }
+  }
+}
+
+.travel-client-grid {
+  width: 100%;
+  height: 300px;
+  min-height: 240px;
+}
+
+.travel-doc-feed--embedded {
+  margin-top: 16px;
+}

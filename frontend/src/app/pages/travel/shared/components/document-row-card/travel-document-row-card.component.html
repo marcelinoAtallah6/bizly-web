@@ -1,0 +1,49 @@
+<article class="travel-doc-row" (dblclick)="edit.emit(doc)">
+  <div class="travel-doc-row__preview">
+    <span class="travel-doc-row__ext">{{ fileExt }}</span>
+    <mat-icon class="travel-doc-row__type-icon">{{ iconForType }}</mat-icon>
+  </div>
+  <div class="travel-doc-row__body">
+    <h3 class="travel-doc-row__title">{{ doc.fileName || doc.docType || 'Document' }}</h3>
+    <div class="travel-doc-row__chips">
+      <span class="travel-doc-row__chip">{{ doc.docType }}</span>
+      <span class="travel-doc-row__chip" *ngIf="clientLabel !== '—'">{{ clientLabel }}</span>
+      <span class="travel-doc-row__chip" *ngIf="doc.bookingId">Booking: {{ bookingLabel }}</span>
+    </div>
+    <p class="travel-doc-row__meta" *ngIf="doc.uploadedAt">
+      <mat-icon inline>schedule</mat-icon>
+      Uploaded {{ doc.uploadedAt | date : 'medium' }}
+      <span *ngIf="doc.uploadedBy"> · {{ doc.uploadedBy }}</span>
+    </p>
+    <p class="travel-doc-row__ref" *ngIf="doc.storageRef" [matTooltip]="doc.storageRef">
+      {{ doc.storageRef }}
+    </p>
+  </div>
+  <div class="travel-doc-row__actions">
+    <button mat-stroked-button type="button" (click)="view.emit(doc); $event.stopPropagation()">
+      <mat-icon>visibility</mat-icon> View
+    </button>
+    <button mat-stroked-button type="button" (click)="download.emit(doc); $event.stopPropagation()">
+      <mat-icon>download</mat-icon>
+    </button>
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      *ngIf="canEdit"
+      (click)="edit.emit(doc); $event.stopPropagation()"
+    >
+      <mat-icon>edit</mat-icon>
+    </button>
+    <button
+      mat-icon-button
+      color="warn"
+      type="button"
+      *ngIf="canDelete"
+      matTooltip="Delete"
+      (click)="remove.emit(doc); $event.stopPropagation()"
+    >
+      <mat-icon>delete</mat-icon>
+    </button>
+  </div>
+</article>

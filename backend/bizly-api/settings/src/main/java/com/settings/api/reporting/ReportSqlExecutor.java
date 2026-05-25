@@ -29,6 +29,7 @@ import com.settings.api.repository.SettingsQueryDefRepository;
 import com.settings.api.service.SettingsJdbcQueryService;
 import com.settings.common.ApiMessages;
 import com.settings.exception.ServiceException;
+import com.settings.security.BusinessContextHolder;
 
 /**
  * Executes one {@link SettingsReport} against its linked SQL.
@@ -70,8 +71,11 @@ public class ReportSqlExecutor {
 		List<ReportColumnConfig> columns = parseColumns(report.getColumnsJson());
 
 		Map<String, Object> binds = bindFilters(filters, req.getFilters());
-
 		String inner = qd.getSqlText();
+		Long callerBiz = BusinessContextHolder.currentBusinessId();
+		if (callerBiz != null && (inner.contains(":business_id") || inner.contains(":BUSINESS_ID"))) {
+			binds.put("business_id", callerBiz);
+		}
 		Map<String, String> sortable = buildSortMap(columns);
 
 		String orderBy = ReportingSupport.resolveOrderBy(req.getSortBy(), req.getSortDir(),
@@ -140,7 +144,11 @@ public class ReportSqlExecutor {
 			case SELECT:
 			default: {
 				String s = ReportingSupport.getString(values, f.getKey());
-				putParam(binds, f.getParamName(), s);
+				if (s != null && s.matches("-?\\d+")) {
+					putParam(binds, f.getParamName(), Long.parseLong(s));
+				} else {
+					putParam(binds, f.getParamName(), s);
+				}
 				break;
 			}
 			}

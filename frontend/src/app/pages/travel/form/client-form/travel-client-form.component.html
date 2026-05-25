@@ -1,0 +1,188 @@
+<div class="p-24 travel-page travel-client-form">
+  <app-page-action-bar [title]="mode === 'edit' ? 'Edit client' : 'New client'" [toolbar]="formToolbar"></app-page-action-bar>
+  <mat-card class="travel-client-card" *ngIf="!loading">
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <mat-tab-group animationDuration="200ms" class="travel-client-tabs">
+          <mat-tab label="Identity">
+            <section class="travel-form-section">
+              <h3 class="travel-form-section__title">Identity</h3>
+              <p class="travel-form-section__desc">Contact and account details for this traveler.</p>
+              <div class="travel-enterprise-grid">
+                <mat-form-field appearance="outline" class="travel-enterprise-grid__full">
+                  <mat-label>Full name</mat-label>
+                  <input matInput formControlName="fullName" autocomplete="name" />
+                  <mat-error *ngIf="form.get('fullName')?.hasError('required')">Required</mat-error>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Email</mat-label>
+                  <input matInput formControlName="email" type="email" autocomplete="email" />
+                  <mat-error *ngIf="form.get('email')?.hasError('email')">Enter a valid email</mat-error>
+                </mat-form-field>
+                <div class="travel-phone-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Country code</mat-label>
+                    <mat-select formControlName="phoneCountryCode">
+                      <mat-option *ngFor="let c of phoneCodes" [value]="c.code">{{ c.label }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>Phone number</mat-label>
+                    <input matInput formControlName="phoneNumber" type="tel" autocomplete="tel-national" />
+                  </mat-form-field>
+                </div>
+                <mat-form-field appearance="outline" class="travel-enterprise-grid__full">
+                  <mat-label>Notes</mat-label>
+                  <textarea matInput formControlName="notes" rows="3"></textarea>
+                </mat-form-field>
+                <mat-slide-toggle formControlName="active" class="travel-enterprise-grid__full">Active client</mat-slide-toggle>
+              </div>
+            </section>
+          </mat-tab>
+
+          <mat-tab label="Passport">
+            <section class="travel-form-section">
+              <h3 class="travel-form-section__title">Passport</h3>
+              <p class="travel-form-section__desc">Official travel identity — used across visa applications.</p>
+              <div class="travel-enterprise-grid travel-enterprise-grid--2">
+                <mat-form-field appearance="outline">
+                  <mat-label>Passport type</mat-label>
+                  <mat-select formControlName="passportType">
+                    <mat-option *ngFor="let t of passportTypes" [value]="t.value">{{ t.label }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <app-travel-paginated-country-select
+                  formControlName="nationality"
+                  label="Nationality"
+                ></app-travel-paginated-country-select>
+                <mat-form-field appearance="outline">
+                  <mat-label>Passport number</mat-label>
+                  <input matInput formControlName="passportNo" />
+                  <mat-error *ngIf="form.get('passportNo')?.hasError('passportFormat')">5–15 letters or digits</mat-error>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>National ID (optional)</mat-label>
+                  <input matInput formControlName="nationalId" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Issue date</mat-label>
+                  <input matInput [matDatepicker]="issuePicker" formControlName="passportIssueDate" />
+                  <mat-datepicker-toggle matSuffix [for]="issuePicker"></mat-datepicker-toggle>
+                  <mat-datepicker #issuePicker></mat-datepicker>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Expiry date</mat-label>
+                  <input matInput [matDatepicker]="expiryPicker" formControlName="passportExpiryDate" />
+                  <mat-datepicker-toggle matSuffix [for]="expiryPicker"></mat-datepicker-toggle>
+                  <mat-datepicker #expiryPicker></mat-datepicker>
+                  <mat-error *ngIf="form.get('passportExpiryDate')?.hasError('passportExpired')">Passport is expired</mat-error>
+                </mat-form-field>
+                <div class="travel-enterprise-grid__full" *ngIf="passportExpiryWarning">
+                  <div class="travel-expiry-warn">
+                    <mat-icon>warning</mat-icon>
+                    Expiry date is in the past — update before travel.
+                  </div>
+                </div>
+                <div class="travel-enterprise-grid__full">
+                  <app-travel-paginated-country-select
+                    formControlName="passportPlaceOfIssue"
+                    label="Place of issue"
+                  ></app-travel-paginated-country-select>
+                </div>
+
+                <div class="travel-passport-scan-panel travel-enterprise-grid__full">
+                  <mat-expansion-panel [(expanded)]="scanPreviewOpen">
+                    <mat-expansion-panel-header>
+                      <mat-panel-title>Passport scan (optional)</mat-panel-title>
+                      <mat-panel-description>Upload to auto-fill from MRZ</mat-panel-description>
+                    </mat-expansion-panel-header>
+                    <app-travel-file-upload
+                      label="Upload scan"
+                      accept=".pdf,.jpg,.jpeg,.png,.webp"
+                      [fileName]="passportFile?.name || form.get('passportScanRef')?.value"
+                      [showPreview]="true"
+                      (fileSelected)="onPassportFile($event)"
+                    ></app-travel-file-upload>
+                    <div class="travel-scan-status" *ngIf="scanProcessing">
+                      <mat-spinner diameter="24"></mat-spinner>
+                      <span>Reading passport…</span>
+                    </div>
+                    <p class="travel-scan-hint">
+                      Optional: upload a passport photo (JPG/PNG) to read the MRZ and auto-fill fields. Always verify before saving.
+                    </p>
+                    <mat-expansion-panel class="m-t-8" *ngIf="scanPreviewData && passportPhotoUrl">
+                      <mat-expansion-panel-header>
+                        <mat-panel-title>Uploaded passport preview</mat-panel-title>
+                      </mat-expansion-panel-header>
+                      <app-travel-passport-preview
+                        title="PASSPORT"
+                        subtitle="From uploaded scan"
+                        [data]="scanPreviewData"
+                        [photoUrl]="passportPhotoUrl"
+                      ></app-travel-passport-preview>
+                    </mat-expansion-panel>
+                  </mat-expansion-panel>
+                </div>
+              </div>
+            </section>
+          </mat-tab>
+
+          <mat-tab label="Travel preferences">
+            <section class="travel-form-section">
+              <h3 class="travel-form-section__title">Travel preferences</h3>
+              <p class="travel-form-section__desc">Loyalty and preferred suppliers for personalized offers.</p>
+              <div class="travel-enterprise-grid">
+                <mat-form-field appearance="outline" class="travel-enterprise-grid__full">
+                  <mat-label>Saved destinations</mat-label>
+                  <mat-select formControlName="savedDestinations" multiple>
+                    <mat-option *ngFor="let d of destinationOptions" [value]="d">{{ d }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Preferred airlines</mat-label>
+                  <mat-select formControlName="preferredAirlines" multiple>
+                    <mat-option *ngFor="let a of airlineOptions" [value]="a">{{ a }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Preferred hotels</mat-label>
+                  <mat-select formControlName="preferredHotels" multiple>
+                    <mat-option *ngFor="let h of hotelOptions" [value]="h">{{ h }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Loyalty program</mat-label>
+                  <mat-select formControlName="loyaltyProgram">
+                    <mat-option *ngFor="let p of loyaltyPrograms" [value]="p">{{ p }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Loyalty points</mat-label>
+                  <input matInput type="number" min="0" formControlName="loyaltyPoints" />
+                </mat-form-field>
+                <mat-form-field appearance="outline">
+                  <mat-label>Loyalty status</mat-label>
+                  <mat-select formControlName="loyaltyStatus">
+                    <mat-option *ngFor="let s of loyaltyStatuses" [value]="s">{{ s }}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </div>
+            </section>
+          </mat-tab>
+        </mat-tab-group>
+
+        <div class="travel-form__actions m-t-16">
+          <span class="travel-autosave" *ngIf="mode === 'edit'">
+            <ng-container *ngIf="autoSaving">Saving…</ng-container>
+            <ng-container *ngIf="!autoSaving && lastAutoSaved">Saved {{ lastAutoSaved | date : 'shortTime' }}</ng-container>
+          </span>
+          <button mat-button type="button" class="travel-btn" (click)="cancel()">Cancel</button>
+          <button mat-flat-button color="primary" type="submit" class="travel-btn-primary" [disabled]="saving || autoSaving">
+            {{ mode === 'edit' ? 'Save' : 'Create client' }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+  <mat-spinner *ngIf="loading" diameter="40" class="m-t-16"></mat-spinner>
+</div>

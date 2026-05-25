@@ -1,123 +1,146 @@
-<div class="blank-layout-container justify-content-center align-items-center bg-light-primary">
-  <div
-    class="position-relative row w-100 h-100 bg-gredient justify-content-center"
-  >
-    <div class="col-lg-4 d-flex align-items-center">
-      <mat-card class="cardWithShadow boxed-auth">
-        <mat-card-content class="p-32">
-          <div class="text-center">
-            <a [routerLink]="['/authentication/login']">
-              <img
-                src="./assets/images/logos/logo.svg"
-                class="align-middle m-2"
-                alt="Bizly logo"
-              />
-            </a>
-          </div>
-
-          <div class="row m-t-24 custom-row">
-            <div class="col-12 col-sm-6">
-              <button
-                mat-stroked-button
-                class="w-100"
-                type="button"
-                [disabled]="isLoading"
-                (click)="signInWithProvider('google')"
-              >
-                <div class="d-flex align-items-center">
-                  <img
-                    src="/assets/images/svgs/google-icon.svg"
-                    alt="google"
-                    width="16"
-                    class="m-r-8"
-                  />
-                  Sign in with Google
-                </div>
-              </button>
-            </div>
-            <div class="col-12 col-sm-6">
-              <button
-                mat-stroked-button
-                class="w-100 d-flex align-items-center"
-                type="button"
-                [disabled]="isLoading"
-                (click)="signInWithProvider('facebook')"
-              >
-                <div class="d-flex align-items-center">
-                  <img
-                    src="/assets/images/svgs/facebook-icon.svg"
-                    alt="facebook"
-                    width="40"
-                    class="m-r-4"
-                  />
-                  Sign in with FB
-                </div>
-              </button>
-            </div>
-          </div>
-
-          <div class="or-border m-t-30">or sign in with</div>
-
-          <form class="m-t-30" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-            <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block"
-              >Username</mat-label
-            >
-            <mat-form-field appearance="outline" class="w-100" color="primary">
-              <input matInput formControlName="username" />
-              <mat-error
-                *ngIf="loginForm.controls.username.touched && loginForm.controls.username.hasError('required')"
-              >
-                Username is required.
-              </mat-error>
-            </mat-form-field>
-            <!-- password -->
-            <mat-label class="mat-subtitle-2 f-s-14 f-w-600 m-b-12 d-block"
-              >Password</mat-label
-            >
-            <mat-form-field appearance="outline" class="w-100" color="primary">
-              <input matInput type="password" formControlName="password" />
-              <mat-error
-                *ngIf="loginForm.controls.password.touched && loginForm.controls.password.hasError('required')"
-              >
-                Password is required.
-              </mat-error>
-            </mat-form-field>
-
-            <div class="d-flex align-items-center m-b-12">
-              <mat-checkbox color="primary" formControlName="rememberDevice"
-                >Remember this Device</mat-checkbox
-              >
+﻿<div class="auth-page login-page">
+  <div class="auth-page__wrap login-page__wrap">
+    <div class="login-page__layout">
+      <aside class="login-page__hero">
+        <div class="login-page__hero-inner">
+          <a class="login-page__logo-link" [routerLink]="['/authentication/login']">
+            <img
+              src="assets/images/logos/bizly.png"
+              class="login-page__logo login-page__logo--hero"
+              alt="Bizly"
+            />
+          </a>
+          <h1 class="login-page__title">Welcome back</h1>
+          <p class="login-page__lead">
+            Sign in to manage your business, team, and day-to-day operations in one place.
+          </p>
+          <ul class="login-page__highlights">
+            <li>
+              <i-tabler name="shield-check" class="login-page__highlight-icon"></i-tabler>
+              Secure sign-in for your team
+            </li>
+            <li>
+              <i-tabler name="devices" class="login-page__highlight-icon"></i-tabler>
+              Works on desktop, tablet, and mobile
+            </li>
+            <li>
+              <i-tabler name="clock-hour-4" class="login-page__highlight-icon"></i-tabler>
+              Pick up right where you left off
+            </li>
+          </ul>
+        </div>
+      </aside>
+      <main class="login-page__main">
+        <mat-card class="cardWithShadow login-page__card">
+          <mat-card-content class="login-page__content">
+            <div class="login-page__card-header">
               <a
-                [routerLink]="['/authentication/forgot-password']"
-                class="text-primary f-w-600 text-decoration-none m-l-auto f-s-14"
-                >Forgot Password ?</a
+                class="login-page__logo-link login-page__logo-link--mobile"
+                [routerLink]="['/authentication/login']"
               >
+                <img
+                  src="assets/images/logos/bizly.png"
+                  class="login-page__logo login-page__logo--card"
+                  alt="Bizly"
+                />
+              </a>
+              <h2 class="login-page__card-title">Sign in</h2>
+              <p class="login-page__card-subtitle">Use your Bizly account to continue</p>
             </div>
             <button
-              type="submit"
-              mat-flat-button
-              color="primary"
-              class="w-100"
+              mat-stroked-button
+              class="auth-social-btn login-page__google-btn"
+              type="button"
               [disabled]="isLoading"
+              (click)="signInWithGoogle()"
             >
-              {{ isLoading ? 'Signing In...' : 'Sign In' }}
+              <img src="/assets/images/svgs/google-icon.svg" alt="" width="18" height="18" />
+              <span class="auth-social-btn__label">
+                {{ isLoading ? 'Signing in…' : 'Continue with Google' }}
+              </span>
             </button>
-            <p *ngIf="errorMessage" class="text-danger m-t-12 m-b-0 f-s-12">
-              {{ errorMessage }}
+            <div class="login-page__divider" role="presentation">
+              <span>or sign in with email</span>
+            </div>
+            <form class="login-page__form" [formGroup]="loginForm" (ngSubmit)="onSubmit()" novalidate>
+              <mat-form-field appearance="outline" class="w-100" color="primary">
+                <mat-label>Username</mat-label>
+                <input
+                  matInput
+                  formControlName="username"
+                  autocomplete="username"
+                  autocapitalize="none"
+                  spellcheck="false"
+                  [disabled]="isLoading"
+                />
+                <mat-error
+                  *ngIf="loginForm.controls.username.touched && loginForm.controls.username.hasError('required')"
+                >
+                  Username is required
+                </mat-error>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="w-100" color="primary">
+                <mat-label>Password</mat-label>
+                <input
+                  matInput
+                  [type]="hidePassword ? 'password' : 'text'"
+                  formControlName="password"
+                  autocomplete="current-password"
+                  [disabled]="isLoading"
+                />
+                <button
+                  mat-icon-button
+                  matSuffix
+                  type="button"
+                  class="login-page__password-toggle"
+                  [attr.aria-label]="hidePassword ? 'Show password' : 'Hide password'"
+                  [attr.aria-pressed]="!hidePassword"
+                  (click)="hidePassword = !hidePassword"
+                >
+                  <i-tabler [name]="hidePassword ? 'eye' : 'eye-off'"></i-tabler>
+                </button>
+                <mat-error
+                  *ngIf="loginForm.controls.password.touched && loginForm.controls.password.hasError('required')"
+                >
+                  Password is required
+                </mat-error>
+              </mat-form-field>
+              <div class="login-page__options">
+                <mat-checkbox color="primary" formControlName="rememberDevice">
+                  Remember this device
+                </mat-checkbox>
+                <a [routerLink]="['/authentication/forgot-password']" class="auth-page__link">
+                  Forgot password?
+                </a>
+              </div>
+              <div
+                *ngIf="errorMessage"
+                class="auth-page__alert auth-page__alert--error"
+                role="alert"
+                aria-live="polite"
+              >
+                <i-tabler name="alert-circle" class="login-page__alert-icon"></i-tabler>
+                <span>{{ errorMessage }}</span>
+              </div>
+              <button
+                type="submit"
+                mat-flat-button
+                color="primary"
+                class="auth-page__submit w-100"
+                [disabled]="isLoading"
+              >
+                {{ isLoading ? 'Signing in…' : 'Sign in' }}
+              </button>
+            </form>
+            <p class="auth-page__footer">
+              New to Bizly?
+              <a [routerLink]="['/authentication/register']">
+                Create an account
+              </a>
             </p>
-            <!-- input -->
-          </form>
-          <span class="d-block f-w-500 text-center m-t-24"
-            >New to Bizly?
-            <a
-              [routerLink]="['/authentication/register']"
-              class="text-decoration-none text-primary f-w-500 f-s-14"
-            >
-              Create an account</a
-            >
-          </span>
-        </mat-card-content>
-      </mat-card>
+          </mat-card-content>
+        </mat-card>
+      </main>
     </div>
   </div>
 </div>

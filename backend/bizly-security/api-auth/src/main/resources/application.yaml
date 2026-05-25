@@ -63,3 +63,18 @@ app:
     reset-url: http://localhost:4200/authentication/forgot-password
   security:
     max-failed-login-attempts: 3
+  registration:
+    # When true, new businesses start as PENDING_APPROVAL until a super-admin completes the UM workflow.
+    # Overridden by UM.UM_PLATFORM_CONFIG.approval_flow_enabled when that row exists.
+    require-super-admin-business-approval: true
+    verify-url: http://localhost:4200/authentication/verify-email
+    verify-expiry-minutes: 1440
+  subscription:
+    # Payment provider webhook: POST /auth/webhooks/payment/subscription with header X-Webhook-Secret
+    webhook-secret: change-me-in-production
+
+# Outbound Google tokeninfo (SocialLoginServiceImpl). Raise if you still see read timeouts on slow networks.
+social:
+  google:
+    connect-timeout-ms: 15000
+    read-timeout-ms: 30000

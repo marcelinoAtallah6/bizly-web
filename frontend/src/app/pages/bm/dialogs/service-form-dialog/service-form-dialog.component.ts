@@ -3,6 +3,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { finalize } from 'rxjs';
 import { GetServiceItemResponse } from 'src/app/core/models/bm.models';
+import { isWorkflowDeferredResult } from 'src/app/services/business-api.service';
 import { BmServiceItemService } from '../../services/bm-service-item.service';
 
 export interface ServiceFormDialogData {
@@ -65,7 +66,7 @@ export class ServiceFormDialogComponent implements OnInit {
         })
         .pipe(finalize(() => (this.saving = false)))
         .subscribe({
-          next: () => this.dialogRef.close(true),
+          next: (res) => this.dialogRef.close(!isWorkflowDeferredResult(res)),
           error: () => {},
         });
     } else if (this.data.row?.id != null) {
@@ -80,7 +81,7 @@ export class ServiceFormDialogComponent implements OnInit {
         })
         .pipe(finalize(() => (this.saving = false)))
         .subscribe({
-          next: () => this.dialogRef.close(true),
+          next: (res) => this.dialogRef.close(!isWorkflowDeferredResult(res)),
           error: () => {},
         });
     }

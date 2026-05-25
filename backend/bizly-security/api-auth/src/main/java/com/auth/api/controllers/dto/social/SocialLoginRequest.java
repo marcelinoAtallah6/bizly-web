@@ -2,8 +2,7 @@ package com.auth.api.controllers.dto.social;
 
 /**
  * Payload for {@code POST /auth/social/{provider}}. The {@code idToken} is
- * the token returned by the provider SDK on the client (Google ID token,
- * Facebook access token, Apple identity token).
+ * the token returned by the provider SDK on the client (Google ID token).
  */
 public class SocialLoginRequest {
 

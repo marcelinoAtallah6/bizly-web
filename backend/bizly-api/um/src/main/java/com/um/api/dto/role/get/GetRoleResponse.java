@@ -7,7 +7,12 @@ public class GetRoleResponse {
 	private Long id;
 	private String name;
 	private Integer roleType;
+	private Long roleLevelId;
+	private String roleLevelCode;
+	private String roleKind;
 	private LocalDateTime createdAt;
+	private Long parentRoleId;
+	private Long businessId;
 
 	public Long getId() {
 		return id;
@@ -39,5 +44,28 @@ public class GetRoleResponse {
 
 	public void setCreatedAt(LocalDateTime createdAt) {
 		this.createdAt = createdAt;
+	}
+
+	public Long getRoleLevelId() { return roleLevelId; }
+	public void setRoleLevelId(Long roleLevelId) { this.roleLevelId = roleLevelId; }
+	public String getRoleLevelCode() { return roleLevelCode; }
+	public void setRoleLevelCode(String roleLevelCode) { this.roleLevelCode = roleLevelCode; }
+	public String getRoleKind() { return roleKind; }
+	public void setRoleKind(String roleKind) { this.roleKind = roleKind; }
+
+	public Long getParentRoleId() {
+		return parentRoleId;
+	}
+
+	public void setParentRoleId(Long parentRoleId) {
+		this.parentRoleId = parentRoleId;
+	}
+
+	public Long getBusinessId() {
+		return businessId;
+	}
+
+	public void setBusinessId(Long businessId) {
+		this.businessId = businessId;
 	}
 }

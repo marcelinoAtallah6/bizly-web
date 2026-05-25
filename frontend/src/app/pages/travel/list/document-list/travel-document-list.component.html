@@ -1,0 +1,68 @@
+<div class="travel-doc-saas-page">
+  <header class="travel-doc-saas-page__header">
+    <div class="travel-doc-saas-page__titles">
+      <h1 class="travel-doc-saas-page__title">Documents</h1>
+      <p class="travel-doc-saas-page__desc">Browse, filter, and manage traveler files in a responsive card grid.</p>
+    </div>
+    <app-page-action-bar title="" [toolbar]="listToolbar" class="travel-doc-saas-page__actions"></app-page-action-bar>
+  </header>
+
+  <app-travel-kpi-strip [items]="kpis" [horizontal]="true" class="travel-doc-saas-kpis"></app-travel-kpi-strip>
+
+  <section class="travel-doc-saas-filters">
+    <mat-form-field appearance="outline" class="travel-doc-saas-filters__search">
+      <mat-label>Search documents</mat-label>
+      <input matInput [(ngModel)]="searchQuery" (ngModelChange)="applyFilters()" placeholder="Name, client, type…" />
+      <mat-icon matPrefix>search</mat-icon>
+    </mat-form-field>
+    <mat-form-field appearance="outline" class="travel-doc-saas-filters__select">
+      <mat-label>Category</mat-label>
+      <mat-select [(ngModel)]="categoryFilter" (ngModelChange)="applyFilters()">
+        <mat-option value="ALL">All categories</mat-option>
+        <mat-option *ngFor="let t of docTypeOptions" [value]="t">{{ t }}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <button
+      mat-flat-button
+      color="primary"
+      type="button"
+      class="travel-doc-saas-filters__upload"
+      (click)="openDialog()"
+      *ngIf="menuPerm.can(route, 'add')"
+    >
+      <mat-icon>upload_file</mat-icon>
+      Upload document
+    </button>
+  </section>
+
+  <mat-spinner *ngIf="loading && filteredItems.length === 0" diameter="40" class="travel-doc-saas-loading"></mat-spinner>
+
+  <div class="travel-doc-saas-feed" *ngIf="filteredItems.length">
+    <app-travel-document-grid-card
+      *ngFor="let doc of filteredItems"
+      displayMode="saas"
+      [doc]="doc"
+      [clientLabel]="clientName(doc)"
+      [canEdit]="menuPerm.can(route, 'edit')"
+      [canDelete]="menuPerm.can(route, 'delete')"
+      (view)="view($event)"
+      (download)="download($event)"
+      (edit)="openDialog($event)"
+      (remove)="remove($event)"
+    ></app-travel-document-grid-card>
+  </div>
+
+  <div class="travel-doc-saas-empty" *ngIf="!loading && !filteredItems.length">
+    <mat-icon>folder_open</mat-icon>
+    <h2>{{ items.length ? 'No documents match your filters' : 'No documents yet' }}</h2>
+    <p>{{ items.length ? 'Try a different search or category.' : 'Upload the first file to get started.' }}</p>
+    <button mat-flat-button color="primary" type="button" (click)="openDialog()" *ngIf="menuPerm.can(route, 'add')">
+      Upload document
+    </button>
+  </div>
+
+  <div class="travel-doc-saas-feed__more" *ngIf="loadingMore">
+    <mat-spinner diameter="28"></mat-spinner>
+  </div>
+  <div #scrollSentinel class="travel-doc-saas-sentinel" aria-hidden="true"></div>
+</div>

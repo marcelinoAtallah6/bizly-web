@@ -1,0 +1,43 @@
+<div class="p-24">
+  <app-page-action-bar title="Workflow engine" [toolbar]="toolbar"></app-page-action-bar>
+
+  <p class="wf-intro">
+    Configure action-driven pipelines.
+  </p>
+
+  <mat-card class="filters mat-elevation-z1 m-b-16" *ngIf="!loading">
+    <mat-card-content class="filter-row">
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Status</mat-label>
+        <mat-select [(value)]="statusFilter" (selectionChange)="onStatusFilterChange()">
+          <mat-option value="">All</mat-option>
+          <mat-option value="PUBLISHED">Published</mat-option>
+          <mat-option value="DRAFT">Draft</mat-option>
+          <mat-option value="DISABLED">Disabled</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </mat-card-content>
+  </mat-card>
+
+  <div *ngIf="loading" class="loading">
+    <mat-progress-spinner diameter="36" mode="indeterminate"></mat-progress-spinner>
+  </div>
+
+  <ag-grid-angular
+    *ngIf="!loading"
+    class="ag-theme-quartz"
+    style="width: 100%; height: min(70vh, 640px)"
+    [rowData]="rowData"
+    [columnDefs]="columnDefs"
+    [defaultColDef]="defaultColDef"
+    [rowSelection]="'single'"
+    [animateRows]="true"
+    [pagination]="gridPagination.pagination"
+    [paginationPageSize]="gridPagination.paginationPageSize"
+    [paginationPageSizeSelector]="gridPagination.paginationPageSizeSelector"
+    (gridReady)="onGridReady($event)"
+    (rowClicked)="onRowClicked($event)"
+  ></ag-grid-angular>
+
+  <p class="text-muted f-s-12 m-t-8 m-b-0">Click a row to open the pipeline editor.</p>
+</div>

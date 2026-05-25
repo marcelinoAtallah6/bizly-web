@@ -10,6 +10,7 @@ import {
   saleDetailsIconCellRenderer,
 } from 'src/app/shared/ag-grid/renderers/sale-details-icon.renderer';
 import { PmSaleService } from '../../pm/services/pm-sale.service';
+import { gridListPaginationMixin } from 'src/app/shared/ag-grid/ag-grid-list-pagination.mixin';
 import { SaleDetailDialogComponent } from 'src/app/shared/sale-detail-dialog/sale-detail-dialog.component';
 
 @Component({
@@ -18,6 +19,7 @@ import { SaleDetailDialogComponent } from 'src/app/shared/sale-detail-dialog/sal
   styleUrl: './payment-history.component.scss',
 })
 export class PaymentHistoryComponent implements OnInit {
+  readonly gridPagination = gridListPaginationMixin;
   loading = true;
   rowData: SaleSummaryResponse[] = [];
   columnDefs: ColDef<SaleSummaryResponse>[] = [];
